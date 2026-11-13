@@ -1732,6 +1732,32 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       ),
   };
 
+  Object.assign(mock.aiUsage, {
+    findMany: async ({
+      where,
+      orderBy,
+    }: {
+      where?: { answerId?: string | { in: string[] } | null; createdAt?: { gte?: Date } };
+      orderBy?: { createdAt?: 'asc' | 'desc' };
+    } = {}) => {
+      let matched = aiUsages.filter((u) => {
+        if (where?.createdAt?.gte && u.createdAt < where.createdAt.gte) return false;
+        if (where?.answerId !== undefined) {
+          if (where.answerId === null) return u.answerId === null;
+          if (typeof where.answerId === 'string') return u.answerId === where.answerId;
+          return u.answerId !== null && where.answerId.in.includes(u.answerId);
+        }
+        return true;
+      });
+      if (orderBy?.createdAt === 'desc') {
+        matched = [...matched].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      } else if (orderBy?.createdAt === 'asc') {
+        matched = [...matched].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      }
+      return matched;
+    },
+  });
+
   return mock as unknown as PrismaClient & {
     _state: {
       users: FakeUserRow[];

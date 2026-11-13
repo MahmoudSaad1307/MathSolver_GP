@@ -17,6 +17,8 @@ const TopicBuilderPage = React.lazy(() => import('@/pages/teacher/TopicBuilderPa
 const CohortsPage = React.lazy(() => import('@/pages/teacher/CohortsPage'));
 const ReviewQueuePage = React.lazy(() => import('@/pages/teacher/ReviewQueuePage'));
 const StudentsPage = React.lazy(() => import('@/pages/teacher/StudentsPage'));
+const AnalyticsPage = React.lazy(() => import('@/pages/teacher/AnalyticsPage'));
+const UsagePage = React.lazy(() => import('@/pages/teacher/UsagePage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +61,8 @@ export function App() {
             <Route path="/teacher/cohorts" element={<CohortsPage />} />
             <Route path="/teacher/review" element={<ReviewQueuePage />} />
             <Route path="/teacher/students" element={<StudentsPage />} />
+            <Route path="/teacher/analytics" element={<AnalyticsPage />} />
+            <Route path="/teacher/usage" element={<UsagePage />} />
             <Route path="/teacher/*" element={<TeacherDashboardHome />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

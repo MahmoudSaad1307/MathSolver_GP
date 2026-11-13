@@ -8,6 +8,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.config import get_settings
 from app.routes_grading import router as grading_router
+from app.routes_stats import router as stats_router
 from app.security import require_internal_key
 
 logger = logging.getLogger("mathlens.ai")
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
 
     app.include_router(internal_router)
     app.include_router(grading_router)
+    app.include_router(stats_router)
     return app
 
 

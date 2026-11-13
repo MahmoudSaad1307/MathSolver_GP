@@ -180,3 +180,14 @@ export const RandomizeRosterSplitSchema = z.object({
   seed: z.number().int().optional(),
 });
 export type RandomizeRosterSplitInput = z.infer<typeof RandomizeRosterSplitSchema>;
+
+export const AnalyticsQuerySchema = z.object({
+  topicId: z.string().uuid().optional(),
+  cohortId: z.string().uuid().optional(),
+});
+export type AnalyticsQueryInput = z.infer<typeof AnalyticsQuerySchema>;
+
+export const UsageQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(365).default(30),
+});
+export type UsageQueryInput = z.infer<typeof UsageQuerySchema>;

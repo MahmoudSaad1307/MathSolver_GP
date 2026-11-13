@@ -74,6 +74,32 @@ export async function apiRequest<T>(
   return (await res.json()) as T;
 }
 
+/** Downloads a binary file (CSV/XLSX) from the API using session cookies and token refresh retry. */
+export async function apiDownload(path: string, fallbackFilename: string): Promise<void> {
+  let res = await rawFetch(path, { method: 'GET' });
+  if (res.status === 401) {
+    const refreshRes = await rawFetch('/auth/teacher/refresh', { method: 'POST' });
+    if (refreshRes.ok) {
+      res = await rawFetch(path, { method: 'GET' });
+    }
+  }
+  if (!res.ok) {
+    throw new Error(`Export failed with HTTP ${res.status}`);
+  }
+  const blob = await res.blob();
+  const disp = res.headers.get('Content-Disposition') ?? '';
+  const match = disp.match(/filename="?([^"]+)"?/i);
+  const filename = match?.[1] ?? fallbackFilename;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function getApiErrorMessage(err: unknown, locale: 'ar' | 'en', fallback: string): string {
   if (err instanceof ApiClientError) {
     return locale === 'ar' ? err.messageAr : err.messageEn;

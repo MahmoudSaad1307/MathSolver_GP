@@ -102,12 +102,133 @@ export interface AiGradeEssayResponse {
   cached: boolean;
 }
 
+export interface StatsTTestResult {
+  statistic: number | null;
+  p_value: number | null;
+  df: number;
+}
+
+export interface StatsNonParametricResult {
+  statistic: number | null;
+  p_value: number | null;
+}
+
+export interface StatsEffectSizeCiResult {
+  estimate: number;
+  ci_low: number;
+  ci_high: number;
+}
+
+export interface PairedStatsRequestPayload {
+  pre_scores: number[];
+  post_scores: number[];
+  max_score?: number;
+  n_bootstrap?: number;
+  seed?: number;
+}
+
+export interface PairedStatsResponsePayload {
+  n: number;
+  pre_mean: number;
+  pre_sd: number;
+  pre_median: number;
+  pre_iqr: number;
+  post_mean: number;
+  post_sd: number;
+  post_median: number;
+  post_iqr: number;
+  mean_diff: number;
+  sd_diff: number;
+  median_diff: number;
+  shapiro: { statistic: number | null; p_value: number | null; normal: boolean };
+  paired_t: StatsTTestResult;
+  wilcoxon: StatsNonParametricResult;
+  cohens_dz: StatsEffectSizeCiResult;
+  hake_gain: { mean_gain: number; per_student_gains: Array<number | null> };
+  outlier_indices: number[];
+  warnings: string[];
+  recommended_test: 'PAIRED_T' | 'WILCOXON';
+  interpretation_ar: string;
+  interpretation_en: string;
+}
+
+export interface BetweenStatsRequestPayload {
+  treatment_pre: number[];
+  treatment_post: number[];
+  control_pre: number[];
+  control_post: number[];
+  twin_question_outcomes: Array<{
+    concept_key: string;
+    order_index: number;
+    pre_wrong_post_correct: number;
+    pre_correct_post_wrong: number;
+    both_correct: number;
+    both_wrong: number;
+  }>;
+  reliability_pairs: Array<{
+    ai_score: number;
+    teacher_score: number;
+    max_score: number;
+  }>;
+  n_bootstrap?: number;
+  seed?: number;
+}
+
+export interface BetweenStatsResponsePayload {
+  group_comparison: {
+    treatment_n: number;
+    control_n: number;
+    treatment_gain_mean: number;
+    treatment_gain_sd: number;
+    control_gain_mean: number;
+    control_gain_sd: number;
+    welch_t: StatsTTestResult;
+    mann_whitney: StatsNonParametricResult;
+    hedges_g: StatsEffectSizeCiResult;
+    did: {
+      estimate: number;
+      se: number;
+      t_stat: number;
+      p_value: number;
+      ci_low: number;
+      ci_high: number;
+      clustered_by_student: boolean;
+    };
+  } | null;
+  mcnemar: Array<{
+    concept_key: string;
+    order_index: number;
+    b_improved: number;
+    c_regressed: number;
+    p_value: number;
+    p_adjusted_holm: number;
+    significant: boolean;
+  }>;
+  reliability: {
+    n: number;
+    mae: number;
+    exact_agreement_rate: number;
+    within_one_agreement_rate: number;
+    override_rate: number;
+    cohens_kappa: number;
+    quadratic_weighted_kappa: number;
+  } | null;
+  warnings: string[];
+  interpretation_ar: string;
+  interpretation_en: string;
+}
+
 export interface AiServiceClient {
   gradeEssay(input: AiGradeEssayInput): Promise<AiGradeEssayResponse>;
   transcribeOnly(input: {
     images: AiGradeEssayInput['images'];
     questionPromptLatex?: string;
   }): Promise<AiTranscriptionResult>;
+}
+
+export interface StatsServiceClient {
+  computePairedStats(input: PairedStatsRequestPayload): Promise<PairedStatsResponsePayload>;
+  computeBetweenStats(input: BetweenStatsRequestPayload): Promise<BetweenStatsResponsePayload>;
 }
 
 export class AiServiceHttpError extends Error {
@@ -122,7 +243,7 @@ export class AiServiceHttpError extends Error {
   }
 }
 
-export class HttpAiServiceClient implements AiServiceClient {
+export class HttpAiServiceClient implements AiServiceClient, StatsServiceClient {
   constructor(private readonly env: AppEnv) {}
 
   private async postJson<T>(path: string, body: unknown): Promise<T> {
@@ -162,5 +283,15 @@ export class HttpAiServiceClient implements AiServiceClient {
     questionPromptLatex?: string;
   }): Promise<AiTranscriptionResult> {
     return this.postJson<AiTranscriptionResult>('/v1/transcribe', input);
+  }
+
+  async computePairedStats(input: PairedStatsRequestPayload): Promise<PairedStatsResponsePayload> {
+    return this.postJson<PairedStatsResponsePayload>('/v1/stats/paired', input);
+  }
+
+  async computeBetweenStats(
+    input: BetweenStatsRequestPayload,
+  ): Promise<BetweenStatsResponsePayload> {
+    return this.postJson<BetweenStatsResponsePayload>('/v1/stats/between', input);
   }
 }
