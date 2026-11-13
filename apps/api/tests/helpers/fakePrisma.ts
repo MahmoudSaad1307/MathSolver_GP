@@ -203,6 +203,62 @@ export interface FakeVideoSessionRow {
   updatedAt: Date;
 }
 
+export interface FakeGradingResultRow {
+  id: string;
+  answerId: string;
+  version: number;
+  provider: string;
+  modelName: string;
+  promptVersion: string;
+  rubricVersion: number;
+  imageHash: string;
+  transcriptionJson: unknown;
+  gradingJson: unknown;
+  criteriaScores: unknown;
+  aiTotal: number;
+  finalAnswerCorrect: boolean | null;
+  firstErrorStep: number | null;
+  errorType: string;
+  errorExplanationAr: string;
+  hintAr: string;
+  confidence: number;
+  sympyCheck: unknown;
+  needsReview: boolean;
+  reviewReasons: string[];
+  rawOutput: string;
+  latencyMs: number;
+  costUsd: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FakeTeacherOverrideRow {
+  id: string;
+  gradingResultId: string;
+  teacherId: string;
+  newCriteriaScores: unknown;
+  newTotal: number;
+  newExplanationAr: string | null;
+  note: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FakeAiUsageRow {
+  id: string;
+  answerId: string | null;
+  provider: string;
+  modelName: string;
+  operation: string;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  latencyMs: number;
+  success: boolean;
+  errorCode: string | null;
+  createdAt: Date;
+}
+
 export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   const users: FakeUserRow[] = [...seedUsers];
   const refreshTokens: FakeRefreshTokenRow[] = [];
@@ -219,6 +275,9 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   const answers: FakeAnswerRow[] = [];
   const answerImages: FakeAnswerImageRow[] = [];
   const videoSessions: FakeVideoSessionRow[] = [];
+  const gradingResults: FakeGradingResultRow[] = [];
+  const teacherOverrides: FakeTeacherOverrideRow[] = [];
+  const aiUsages: FakeAiUsageRow[] = [];
 
   const hydrateQuestion = (q: FakeQuestionRow, include?: Record<string, unknown>) => {
     const out: Record<string, unknown> = { ...q };
@@ -290,6 +349,9 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       answers,
       answerImages,
       videoSessions,
+      gradingResults,
+      teacherOverrides,
+      aiUsages,
     },
     $queryRaw: async () => [{ '?column?': 1 }],
     $transaction: async <T>(
@@ -1059,12 +1121,22 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
             .filter((ans) => ans.attemptId === found.id)
             .map((ans) => {
               const q = questions.find((x) => x.id === ans.questionId);
+              const ansGrading = gradingResults
+                .filter((g) => g.answerId === ans.id)
+                .sort((a, b) => b.version - a.version)
+                .map((g) => ({
+                  ...g,
+                  overrides: teacherOverrides
+                    .filter((o) => o.gradingResultId === g.id)
+                    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+                }));
               return {
                 ...ans,
                 question: q ? hydrateQuestion(q, { mcqOptions: true }) : null,
                 images: answerImages
                   .filter((img) => img.answerId === ans.id && img.deletedAt === null)
                   .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+                gradingResults: ansGrading,
               };
             });
         }
@@ -1145,12 +1217,33 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         });
         if (!found) return null;
         const att = attempts.find((a) => a.id === found.attemptId)!;
+        const m = examModels.find((x) => x.id === att.examModelId);
+        const top = m ? topics.find((x) => x.id === m.topicId) : null;
         const q = questions.find((x) => x.id === found.questionId)!;
+        const ansGrading = gradingResults
+          .filter((g) => g.answerId === found.id)
+          .sort((a, b) => b.version - a.version)
+          .map((g) => ({
+            ...g,
+            overrides: teacherOverrides
+              .filter((o) => o.gradingResultId === g.id)
+              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+          }));
         return {
           ...found,
-          attempt: att,
-          question: hydrateQuestion(q, { mcqOptions: true }),
-          images: answerImages.filter((img) => img.answerId === found.id && img.deletedAt === null),
+          attempt: {
+            ...att,
+            examModel: m ? { ...m, topic: top } : null,
+          },
+          question: hydrateQuestion(q, {
+            mcqOptions: true,
+            modelAnswer: true,
+            rubricCriteria: true,
+          }),
+          images: answerImages
+            .filter((img) => img.answerId === found.id && img.deletedAt === null)
+            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+          gradingResults: ansGrading,
         };
       },
       createMany: async ({
@@ -1262,6 +1355,95 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         return row;
       },
     },
+    gradingResult: {
+      count: async ({
+        where,
+      }: {
+        where?: { createdAt?: { gte?: Date }; answer?: { attempt?: { studentId?: string } } };
+      }) => {
+        return gradingResults.filter((g) => {
+          if (where?.createdAt?.gte && g.createdAt < where.createdAt.gte) return false;
+          if (where?.answer?.attempt?.studentId) {
+            const ans = answers.find((a) => a.id === g.answerId);
+            const att = ans ? attempts.find((x) => x.id === ans.attemptId) : undefined;
+            if (!att || att.studentId !== where.answer.attempt.studentId) return false;
+          }
+          return true;
+        }).length;
+      },
+      create: async ({ data }: { data: Omit<FakeGradingResultRow, 'id' | 'createdAt' | 'updatedAt'> }) => {
+        const now = new Date();
+        const row: FakeGradingResultRow = {
+          id: crypto.randomUUID(),
+          ...data,
+          createdAt: now,
+          updatedAt: now,
+        };
+        gradingResults.push(row);
+        return row;
+      },
+      findFirst: async ({ where }: { where: { id?: string; answerId?: string } }) => {
+        const found = gradingResults.find(
+          (g) =>
+            (where.id === undefined || g.id === where.id) &&
+            (where.answerId === undefined || g.answerId === where.answerId),
+        );
+        return found ?? null;
+      },
+      findMany: async ({
+        where,
+      }: {
+        where?: { needsReview?: boolean; answer?: { question?: { examModel?: { topic?: { ownerId?: string } } } } };
+      }) => {
+        return gradingResults.filter((g) => {
+          if (where?.needsReview !== undefined && g.needsReview !== where.needsReview) return false;
+          return true;
+        });
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeGradingResultRow>;
+      }) => {
+        const row = gradingResults.find((g) => g.id === where.id);
+        if (!row) throw new Error('GradingResult not found');
+        Object.assign(row, data, { updatedAt: new Date() });
+        return row;
+      },
+    },
+    teacherOverride: {
+      create: async ({ data }: { data: Omit<FakeTeacherOverrideRow, 'id' | 'createdAt' | 'updatedAt'> }) => {
+        const now = new Date();
+        const row: FakeTeacherOverrideRow = {
+          id: crypto.randomUUID(),
+          ...data,
+          createdAt: now,
+          updatedAt: now,
+        };
+        teacherOverrides.push(row);
+        return row;
+      },
+    },
+    aiUsage: {
+      create: async ({ data }: { data: Omit<FakeAiUsageRow, 'id' | 'createdAt'> }) => {
+        const row: FakeAiUsageRow = {
+          id: crypto.randomUUID(),
+          ...data,
+          createdAt: new Date(),
+        };
+        aiUsages.push(row);
+        return row;
+      },
+      aggregate: async ({ where }: { where?: { createdAt?: { gte?: Date } } }) => {
+        const matched = aiUsages.filter(
+          (u) => !where?.createdAt?.gte || u.createdAt >= where.createdAt.gte,
+        );
+        const sumCost = matched.reduce((acc, u) => acc + u.costUsd, 0);
+        return { _sum: { costUsd: sumCost } };
+      },
+    },
   };
 
   return mock as unknown as PrismaClient & {
@@ -1281,6 +1463,9 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       answers: FakeAnswerRow[];
       answerImages: FakeAnswerImageRow[];
       videoSessions: FakeVideoSessionRow[];
+      gradingResults: FakeGradingResultRow[];
+      teacherOverrides: FakeTeacherOverrideRow[];
+      aiUsages: FakeAiUsageRow[];
     };
   };
 }

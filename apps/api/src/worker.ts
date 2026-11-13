@@ -1,40 +1,34 @@
-import { Worker } from 'bullmq';
+import * as Sentry from '@sentry/node';
 import { loadEnv } from './config/env.js';
 import { createLogger } from './lib/logger.js';
 import { getPrisma } from './lib/prisma.js';
-import { createRedisClient } from './lib/redis.js';
+import { createGradingWorker } from './services/gradingDispatcher.js';
+import { createStorageAdapter } from './services/storage/index.js';
 
 async function main() {
   const env = loadEnv();
   const logger = createLogger(env.LOG_LEVEL);
+
+  if (env.SENTRY_DSN) {
+    Sentry.init({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV });
+  }
+
   const prisma = getPrisma();
   await prisma.$connect();
 
-  const redis = createRedisClient(env.REDIS_URL, logger);
-  await redis.connect();
-
-  const gradingWorker = new Worker(
-    'grading',
-    (job) => {
-      logger.info({ jobId: job.id, name: job.name }, 'Grading worker job received');
-      return Promise.resolve();
-    },
-    {
-      connection: redis,
-      concurrency: env.GRADING_CONCURRENCY,
-    },
-  );
-
-  gradingWorker.on('failed', (job, err) => {
-    logger.error({ jobId: job?.id, err: err.message }, 'Grading job failed');
+  const storage = createStorageAdapter(env);
+  const { close } = createGradingWorker({
+    prisma,
+    env,
+    storage,
+    logger,
   });
 
-  logger.info({ concurrency: env.GRADING_CONCURRENCY }, 'MathLens worker started');
+  logger.info({ concurrency: env.GRADING_CONCURRENCY }, 'MathLens grading worker started');
 
   const shutdown = async (signal: string) => {
-    logger.info({ signal }, 'Shutting down worker gracefully');
-    await gradingWorker.close();
-    await redis.quit();
+    logger.info({ signal }, 'Shutting down grading worker');
+    await close();
     await prisma.$disconnect();
     process.exit(0);
   };
@@ -44,6 +38,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('Fatal worker startup error:', err);
+  console.error('Fatal grading worker startup error:', err);
   process.exit(1);
 });

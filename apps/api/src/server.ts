@@ -4,6 +4,7 @@ import { loadEnv } from './config/env.js';
 import { createLogger } from './lib/logger.js';
 import { getPrisma } from './lib/prisma.js';
 import { createRedisClient } from './lib/redis.js';
+import { BullMqGradingDispatcher } from './services/gradingDispatcher.js';
 
 async function main() {
   const env = loadEnv();
@@ -21,7 +22,8 @@ async function main() {
     logger.warn({ err: err.message }, 'Redis initial connect deferred');
   });
 
-  const app = createApp({ env, prisma, logger, redis });
+  const gradingDispatcher = new BullMqGradingDispatcher(env.REDIS_URL, logger);
+  const app = createApp({ env, prisma, logger, redis, gradingDispatcher });
 
   const server = app.listen(env.API_PORT, () => {
     logger.info({ port: env.API_PORT }, 'MathLens API listening');
@@ -31,6 +33,7 @@ async function main() {
     logger.info({ signal }, 'Shutting down API gracefully');
     server.close(() => {
       void (async () => {
+        await gradingDispatcher.close?.().catch(() => undefined);
         await redis.quit().catch(() => undefined);
         await prisma.$disconnect();
         process.exit(0);

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.config import get_settings
+from app.routes_grading import router as grading_router
 from app.security import require_internal_key
 
 logger = logging.getLogger("mathlens.ai")
@@ -67,6 +68,7 @@ def create_app() -> FastAPI:
         return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     app.include_router(internal_router)
+    app.include_router(grading_router)
     return app
 
 
