@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Environment & local secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+.vite/
+
+# Caches & test artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage/
+htmlcov/
+.coverage
+test-results/
+playwright-report/
+.playwright/
+tmp/
+storage-dev/
+
+# IDE / local history
+.history/
+.DS_Store
+Thumbs.db

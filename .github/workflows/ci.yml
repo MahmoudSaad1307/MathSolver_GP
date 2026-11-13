@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  js-checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: mathlens
+          POSTGRES_PASSWORD: mathlens_test_password
+          POSTGRES_DB: mathlens_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://mathlens:mathlens_test_password@localhost:5432/mathlens_test?schema=public
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ci_access_secret_at_least_32_characters_long
+      JWT_REFRESH_SECRET: ci_refresh_secret_at_least_32_characters_long
+      STUDENT_JWT_SECRET: ci_student_secret_at_least_32_characters_long
+      VIDEO_UNLOCK_HMAC_SECRET: ci_unlock_secret_at_least_32_characters_long
+      IP_HASH_SALT: ci_ip_salt_at_least_32_characters_long
+      AI_INTERNAL_KEY: ci_internal_key_at_least_32_characters_long
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client and migrate
+        run: |
+          npm run prisma:generate
+          npx --workspace=@mathlens/api prisma migrate deploy
+
+      - name: Lint & Format check
+        run: |
+          npm run build:shared
+          npm run lint
+          npm run format:check
+
+      - name: Typecheck & Build
+        run: |
+          npm run typecheck
+          npm run build
+
+      - name: Unit & Integration Tests (with 80% API coverage gate)
+        run: |
+          npm --workspace=@mathlens/shared run test
+          npm --workspace=@mathlens/api run test:coverage
+          npm --workspace=@mathlens/web run test
+
+      - name: Security audit
+        run: npm audit --omit=dev --audit-level=high
+
+  ai-service-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: services/ai/requirements*.txt
+
+      - name: Install AI service dependencies
+        working-directory: services/ai
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint & Typecheck
+        working-directory: services/ai
+        run: |
+          ruff check app tests eval
+          mypy app
+
+      - name: Run pytest with 80% coverage gate
+        working-directory: services/ai
+        run: pytest --cov=app --cov-fail-under=80
+
+      - name: Run AI Evaluation Harness (synthetic dataset + FakeProvider)
+        working-directory: services/ai
+        run: python -m eval.run_eval --provider fake --output-md ../../docs/EVALUATION.md --check-regression
+
+      - name: Python dependency audit
+        working-directory: services/ai
+        run: pip-audit -r requirements.txt

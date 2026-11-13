@@ -1,0 +1,480 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  TEACHER
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum QuestionType {
+  MCQ
+  ESSAY
+}
+
+enum CohortGroup {
+  TREATMENT
+  CONTROL
+}
+
+enum CohortStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADING
+  GRADED
+  NEEDS_REVIEW
+  FINAL
+}
+
+enum ScoreSource {
+  AUTO
+  AI
+  TEACHER_OVERRIDE
+  MIXED
+}
+
+enum VideoEventType {
+  PLAY
+  PAUSE
+  SEEK
+  HEARTBEAT
+  ENDED
+  QUESTION_LINK_CLICK
+  PLAYER_ERROR
+}
+
+enum ActorType {
+  TEACHER
+  STUDENT
+  SYSTEM
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  role         UserRole  @default(TEACHER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  topics        Topic[]
+  cohorts       Cohort[]
+  overrides     TeacherOverride[]
+  refreshTokens RefreshToken[]
+  manualUnlocks VideoSession[]    @relation("ManualUnlockTeacher")
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @db.Uuid
+  tokenHash    String    @unique
+  familyId     String    @db.Uuid
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?   @db.Uuid
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+model Topic {
+  id                   String    @id @default(uuid()) @db.Uuid
+  ownerId              String    @db.Uuid
+  title                String
+  description          String    @default("")
+  videoUrl             String
+  videoId              String?
+  minWatchSeconds      Int       @default(300)
+  correctnessThreshold Float     @default(0.6)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
+
+  owner         User           @relation(fields: [ownerId], references: [id])
+  examModels    ExamModel[]
+  cohorts       Cohort[]
+  videoSessions VideoSession[]
+  videoAlerts   VideoAlert[]
+
+  @@index([ownerId])
+}
+
+model ExamModel {
+  id              String     @id @default(uuid()) @db.Uuid
+  topicId         String     @db.Uuid
+  modelNumber     Int
+  title           String
+  durationMinutes Int        @default(60)
+  totalPoints     Float      @default(0)
+  status          ExamStatus @default(DRAFT)
+  pairedWithId    String?    @unique @db.Uuid
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  topic      Topic      @relation(fields: [topicId], references: [id])
+  pairedWith ExamModel? @relation("ExamModelPairing", fields: [pairedWithId], references: [id])
+  pairedBy   ExamModel? @relation("ExamModelPairing")
+  questions  Question[]
+  attempts   Attempt[]
+
+  @@unique([topicId, modelNumber])
+  @@index([topicId])
+}
+
+model Question {
+  id                       String       @id @default(uuid()) @db.Uuid
+  examModelId              String       @db.Uuid
+  orderIndex               Int
+  conceptKey               String
+  type                     QuestionType
+  promptLatex              String
+  points                   Float
+  videoTimestampSeconds    Int          @default(0)
+  needsTeacherConfirmation Boolean      @default(false)
+  teacherConfirmedAt       DateTime?
+  twinQuestionId           String?      @unique @db.Uuid
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+  deletedAt                DateTime?
+
+  examModel       ExamModel         @relation(fields: [examModelId], references: [id])
+  twinQuestion    Question?         @relation("QuestionTwin", fields: [twinQuestionId], references: [id])
+  twinnedBy       Question?         @relation("QuestionTwin")
+  mcqOptions      McqOption[]
+  modelAnswer     ModelAnswer?
+  rubricCriteria  RubricCriterion[]
+  answers         Answer[]
+  videoClickEvent VideoEvent[]
+
+  @@index([examModelId])
+  @@index([examModelId, orderIndex])
+  @@index([conceptKey])
+}
+
+model McqOption {
+  id         String    @id @default(uuid()) @db.Uuid
+  questionId String    @db.Uuid
+  label      String
+  textLatex  String
+  isCorrect  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  question        Question @relation(fields: [questionId], references: [id])
+  selectedAnswers Answer[]
+
+  @@index([questionId])
+}
+
+model ModelAnswer {
+  id                 String    @id @default(uuid()) @db.Uuid
+  questionId         String    @unique @db.Uuid
+  solutionStepsLatex String[]
+  finalAnswerLatex   String
+  finalAnswerSympy   String?
+  commonMistakes     String    @default("")
+  rubricVersion      Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  question Question @relation(fields: [questionId], references: [id])
+}
+
+model RubricCriterion {
+  id            String    @id @default(uuid()) @db.Uuid
+  questionId    String    @db.Uuid
+  orderIndex    Int
+  key           String
+  descriptionEn String
+  descriptionAr String
+  maxPoints     Float
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@index([questionId])
+}
+
+model Cohort {
+  id                        String       @id @default(uuid()) @db.Uuid
+  topicId                   String       @db.Uuid
+  teacherId                 String       @db.Uuid
+  name                      String
+  joinCode                  String       @unique
+  group                     CohortGroup
+  requireVideoBeforePost    Boolean      @default(true)
+  requireWrongSegmentVisits Boolean      @default(false)
+  showProvisionalScore      Boolean      @default(false)
+  postTestOpensAt           DateTime?
+  status                    CohortStatus @default(OPEN)
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+  deletedAt                 DateTime?
+
+  topic       Topic        @relation(fields: [topicId], references: [id])
+  teacher     User         @relation(fields: [teacherId], references: [id])
+  students    Student[]
+  videoAlerts VideoAlert[]
+
+  @@index([topicId])
+  @@index([teacherId])
+}
+
+model Student {
+  id                String    @id @default(uuid()) @db.Uuid
+  cohortId          String    @db.Uuid
+  displayName       String
+  resumeCode        String    @unique
+  consentAcceptedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  cohort        Cohort         @relation(fields: [cohortId], references: [id])
+  attempts      Attempt[]
+  videoSessions VideoSession[]
+
+  @@index([cohortId])
+}
+
+model Attempt {
+  id          String        @id @default(uuid()) @db.Uuid
+  studentId   String        @db.Uuid
+  examModelId String        @db.Uuid
+  status      AttemptStatus @default(IN_PROGRESS)
+  startedAt   DateTime      @default(now())
+  submittedAt DateTime?
+  deadlineAt  DateTime
+  totalScore  Float?
+  maxScore    Float
+  percentage  Float?
+  scoreSource ScoreSource?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  examModel ExamModel @relation(fields: [examModelId], references: [id])
+  answers   Answer[]
+
+  @@unique([studentId, examModelId])
+  @@index([studentId])
+  @@index([examModelId])
+}
+
+model Answer {
+  id                String    @id @default(uuid()) @db.Uuid
+  attemptId         String    @db.Uuid
+  questionId        String    @db.Uuid
+  selectedOptionId  String?   @db.Uuid
+  isCorrect         Boolean?
+  score             Float?
+  maxScore          Float
+  misreadReportedAt DateTime?
+  misreadNote       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  attempt        Attempt         @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       Question        @relation(fields: [questionId], references: [id])
+  selectedOption McqOption?      @relation(fields: [selectedOptionId], references: [id])
+  images         AnswerImage[]
+  gradingResults GradingResult[]
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+  @@index([selectedOptionId])
+}
+
+model AnswerImage {
+  id              String    @id @default(uuid()) @db.Uuid
+  answerId        String    @db.Uuid
+  storageKey      String
+  sha256          String
+  width           Int
+  height          Int
+  bytes           Int
+  pinnedByTeacher Boolean   @default(false)
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  answer Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+
+  @@index([answerId])
+  @@index([deletedAt])
+}
+
+model GradingResult {
+  id                 String   @id @default(uuid()) @db.Uuid
+  answerId           String   @db.Uuid
+  version            Int
+  provider           String
+  modelName          String
+  promptVersion      String
+  rubricVersion      Int
+  imageHash          String
+  transcriptionJson  Json
+  gradingJson        Json
+  criteriaScores     Json
+  aiTotal            Float
+  finalAnswerCorrect Boolean?
+  firstErrorStep     Int?
+  errorType          String
+  errorExplanationAr String
+  hintAr             String
+  confidence         Float
+  sympyCheck         Json?
+  needsReview        Boolean  @default(false)
+  reviewReasons      String[]
+  rawOutput          String
+  latencyMs          Int
+  costUsd            Float
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  answer    Answer            @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  overrides TeacherOverride[]
+
+  @@unique([answerId, version])
+  @@index([answerId])
+  @@index([needsReview])
+}
+
+model TeacherOverride {
+  id                String   @id @default(uuid()) @db.Uuid
+  gradingResultId   String   @db.Uuid
+  teacherId         String   @db.Uuid
+  newCriteriaScores Json
+  newTotal          Float
+  newExplanationAr  String?
+  note              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  gradingResult GradingResult @relation(fields: [gradingResultId], references: [id], onDelete: Cascade)
+  teacher       User          @relation(fields: [teacherId], references: [id])
+
+  @@index([gradingResultId])
+  @@index([teacherId])
+}
+
+model VideoSession {
+  id                 String    @id @default(uuid()) @db.Uuid
+  studentId          String    @db.Uuid
+  topicId            String    @db.Uuid
+  startedAt          DateTime  @default(now())
+  watchedSeconds     Int       @default(0)
+  watchedIntervals   Json      @default("[]")
+  visitedQuestionIds String[]  @default([])
+  lastPosition       Float     @default(0)
+  lastHeartbeatAt    DateTime?
+  completedAt        DateTime?
+  unlockedPostAt     DateTime?
+  unlockSignature    String?
+  manualUnlockedById String?   @db.Uuid
+  manualUnlockNote   String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  student          Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic            Topic        @relation(fields: [topicId], references: [id])
+  manualUnlockedBy User?        @relation("ManualUnlockTeacher", fields: [manualUnlockedById], references: [id])
+  events           VideoEvent[]
+
+  @@unique([studentId, topicId])
+  @@index([studentId])
+  @@index([topicId])
+  @@index([manualUnlockedById])
+}
+
+model VideoEvent {
+  id             String         @id @default(uuid()) @db.Uuid
+  videoSessionId String         @db.Uuid
+  type           VideoEventType
+  position       Float
+  playbackRate   Float          @default(1)
+  clientTs       DateTime
+  serverTs       DateTime       @default(now())
+  questionId     String?        @db.Uuid
+  metadata       Json?
+
+  videoSession VideoSession @relation(fields: [videoSessionId], references: [id], onDelete: Cascade)
+  question     Question?    @relation(fields: [questionId], references: [id])
+
+  @@index([videoSessionId])
+  @@index([questionId])
+}
+
+model VideoAlert {
+  id         String    @id @default(uuid()) @db.Uuid
+  topicId    String    @db.Uuid
+  cohortId   String?   @db.Uuid
+  errorCode  Int
+  reportedAt DateTime  @default(now())
+  resolvedAt DateTime?
+
+  topic  Topic   @relation(fields: [topicId], references: [id])
+  cohort Cohort? @relation(fields: [cohortId], references: [id])
+
+  @@index([topicId])
+  @@index([cohortId])
+}
+
+model AuditLog {
+  id        String    @id @default(uuid()) @db.Uuid
+  actorType ActorType
+  actorId   String
+  action    String
+  entity    String
+  entityId  String
+  diff      Json?
+  ipHash    String
+  ts        DateTime  @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId, ts])
+}
+
+model AiUsage {
+  id           String   @id @default(uuid()) @db.Uuid
+  answerId     String?  @db.Uuid
+  provider     String
+  modelName    String
+  operation    String
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Float
+  latencyMs    Int
+  success      Boolean
+  errorCode    String?
+  createdAt    DateTime @default(now())
+
+  @@index([answerId])
+  @@index([createdAt])
+}

@@ -1,0 +1,7 @@
+node_modules
+dist
+build
+coverage
+legacy
+services/ai/.venv
+*.tsbuildinfo

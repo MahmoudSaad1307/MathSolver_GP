@@ -1,0 +1,42 @@
+{
+  "name": "mathlens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MathLens: AI-Graded Handwritten Math Exams with Video Remediation",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace=@mathlens/api run dev",
+    "dev:worker": "npm --workspace=@mathlens/api run dev:worker",
+    "dev:web": "npm --workspace=@mathlens/web run dev",
+    "build": "npm run build:shared && npm run build:api && npm run build:web",
+    "build:shared": "npm --workspace=@mathlens/shared run build",
+    "build:api": "npm --workspace=@mathlens/api run build",
+    "build:web": "npm --workspace=@mathlens/web run build",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm --workspace=@mathlens/shared run typecheck && npm --workspace=@mathlens/api run typecheck && npm --workspace=@mathlens/web run typecheck",
+    "test": "npm --workspace=@mathlens/shared run test && npm --workspace=@mathlens/api run test && npm --workspace=@mathlens/web run test",
+    "seed": "npm --workspace=@mathlens/api run seed",
+    "prisma:generate": "npm --workspace=@mathlens/api run prisma:generate",
+    "prisma:migrate": "npm --workspace=@mathlens/api run prisma:migrate",
+    "docs:openapi": "npm --workspace=@mathlens/api run docs:openapi"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "eslint": "^9.22.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "app": {
+    "name": "MathLens",
+    "subtitle": "AI-Graded Handwritten Math Exams with Video Remediation",
+    "skipToContent": "Skip to main content",
+    "loading": "Loading..."
+  },
+  "landing": {
+    "studentTab": "Student Access",
+    "joinTitle": "Start Exam",
+    "joinDesc": "Enter the cohort code from your teacher and your display name.",
+    "cohortCode": "Cohort Code",
+    "displayName": "Display Name",
+    "joinButton": "Join Cohort",
+    "resumeTitle": "Resume Existing Session",
+    "resumeCode": "Resume Code",
+    "resumeButton": "Resume Session",
+    "teacherLink": "Teacher Portal"
+  },
+  "teacher": {
+    "loginTitle": "Teacher Sign In",
+    "loginSubtitle": "Sign in to manage topics, twin exam models, review queues, and analytics.",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signOutAll": "Sign Out Everywhere",
+    "nav": {
+      "overview": "Overview",
+      "topics": "Topics & Exams",
+      "cohorts": "Cohorts",
+      "students": "Students",
+      "review": "Review Queue",
+      "analytics": "Analytics & Stats",
+      "usage": "AI Cost & Usage"
+    },
+    "welcome": "Welcome, {{name}}",
+    "readyBanner": "Platform foundation ready for topic authoring and cohort analytics.",
+    "switchLang": "العربية"
+  },
+  "errors": {
+    "network": "Could not connect to server. Please check your connection.",
+    "generic": "An unexpected error occurred."
+  }
+}
