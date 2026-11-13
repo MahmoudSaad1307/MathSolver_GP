@@ -6,6 +6,7 @@ import { Navigate } from 'react-router-dom';
 import { MathBlock } from '@/components/MathBlock';
 import { TeacherShell } from '@/components/layouts/TeacherShell';
 import { Badge } from '@/components/ui/Badge';
+import { UnlockPostTestButton } from '@/components/teacher/UnlockPostTestButton';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -180,17 +181,20 @@ export default function StudentsPage() {
         {selectedStudentId && detailQuery.data && (
           <Card data-testid="student-detail-panel">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <CardTitle>{detailQuery.data.student.displayName}</CardTitle>
                   <CardDescription>
                     {detailQuery.data.cohort.name} · {detailQuery.data.topic.title}
                   </CardDescription>
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => setSelectedStudentId(null)}>
-                  <X className="h-4 w-4" />
-                  <span>{t('students.closeDetail')}</span>
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <UnlockPostTestButton studentId={detailQuery.data.student.id} />
+                  <Button size="sm" variant="ghost" onClick={() => setSelectedStudentId(null)}>
+                    <X className="h-4 w-4" />
+                    <span>{t('students.closeDetail')}</span>
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -105,6 +105,17 @@ export default function CohortsPage() {
     },
   });
 
+  const openPostTestMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiRequest<{ cohortId: string; postTestOpensAt: string }>(`/cohorts/${id}/open-posttest`, {
+        method: 'POST',
+        retryRefresh: true,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['teacher', 'cohorts'] });
+    },
+  });
+
   const splitMutation = useMutation({
     mutationFn: (payload: { studentNames: string[]; seed?: number }) =>
       apiRequest<RosterSplitResult>('/cohorts/randomize-split', {
@@ -384,6 +395,17 @@ export default function CohortsPage() {
                             ? t('teacher.cohorts.toggleClose')
                             : t('teacher.cohorts.toggleOpen')}
                         </Button>
+
+                        {cohort.group === 'CONTROL' && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={openPostTestMutation.isPending}
+                            onClick={() => openPostTestMutation.mutate(cohort.id)}
+                          >
+                            {t('teacher.cohorts.openPostTestNow')}
+                          </Button>
+                        )}
 
                         {confirmDeleteId === cohort.id ? (
                           <>

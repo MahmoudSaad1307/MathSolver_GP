@@ -148,6 +148,7 @@
       "closedStatus": "Closed",
       "toggleClose": "Close Joining",
       "toggleOpen": "Reopen Joining",
+      "openPostTestNow": "Open Model 2 now",
       "requireVideo": "Require remediation video before Model 2",
       "showProvisional": "Show provisional score while under review",
       "splitTitle": "Random Roster Split Helper",
@@ -181,7 +182,10 @@
       "pretestResultsTitle": "Model 1 Graded",
       "posttestLockedTitle": "Model 2 is Locked",
       "refreshStatus": "Refresh Status",
-      "comparisonReady": "Both exams completed! Full comparison view unlocks here."
+      "comparisonReady": "Both exams completed! Full comparison view unlocks here.",
+      "watchRemediation": "Watch remediation video",
+      "viewComparison": "View pre/post comparison",
+      "viewModel2Results": "View Model 2 results"
     },
     "exam": {
       "modelLabel": "Model {{num}}",
@@ -284,7 +288,41 @@
     "colPost": "Model 2",
     "colGain": "Gain",
     "viewTimeline": "Details",
-    "closeDetail": "Close"
+    "closeDetail": "Close",
+    "unlockPostTestNow": "Unlock Model 2 now",
+    "unlockSuccess": "Model 2 unlocked for this student"
+  },
+  "remediation": {
+    "title": "Remediation Video",
+    "subtitle": "Watch the explanation video cleanly at normal speed (<= 1.5x) in this active tab to unlock Model 2.",
+    "progressLabel": "Verified Watch Time",
+    "remainingLabel": "{{seconds}}s remaining to unlock Model 2",
+    "unlockedBanner": "Video requirement completed! Model 2 (Post-Test) is now unlocked.",
+    "startPostTest": "Start Model 2 (Post-Test)",
+    "wrongSegmentsTitle": "Jump to questions you need to review:",
+    "segmentVisited": "Visited",
+    "segmentPending": "Watch / Click",
+    "playerErrorBanner": "The YouTube player failed to load (Code {{code}}). Your teacher has been alerted and can manually unlock Model 2 if blocked on your network.",
+    "fraudWarning": "Note: skipping ahead, hidden tabs, or speeds above 1.5x do not count toward watch time."
+  },
+  "comparison": {
+    "title": "Before & After Performance Comparison",
+    "subtitle": "Track your improvement between Model 1 (Pre-Test) and Model 2 (Post-Test).",
+    "preTestCard": "Model 1 (Pre-Test)",
+    "postTestCard": "Model 2 (Post-Test)",
+    "gainCard": "Net Gain",
+    "hakeGain": "Normalized Gain <g>",
+    "conceptBreakdown": "Performance by Concept",
+    "questionPairs": "Question-by-Question Comparison",
+    "status": {
+      "IMPROVED": "Improved",
+      "MAINTAINED_HIGH": "Mastered",
+      "NEEDS_REVIEW": "Needs Practice"
+    },
+    "controlEthicsTitle": "Watch the Explanation Video",
+    "controlEthicsDesc": "Even though your group skipped the video before Model 2, the full solution walkthrough is now available for you.",
+    "watchNow": "Watch Remediation Video",
+    "printSummary": "Print Comparison"
   },
   "errors": {
     "network": "Could not connect to server. Please check your connection.",

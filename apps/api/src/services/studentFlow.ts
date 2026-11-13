@@ -25,6 +25,7 @@ export interface GateEvaluationInput {
     unlockedPostAt: Date | null;
     manualUnlockedById: string | null;
   } | null;
+  wrongSegmentsIncomplete?: boolean;
   now?: Date;
 }
 
@@ -91,6 +92,16 @@ export function evaluatePostTestGate(input: GateEvaluationInput): {
           code: 'VIDEO_WATCH_INCOMPLETE',
           message_ar: `يجب مشاهدة فيديو الشرح لمدة ${topic.minWatchSeconds} ثانية على الأقل لفتح النموذج 2.`,
           message_en: `Watch at least ${topic.minWatchSeconds} seconds of the remediation video to unlock Model 2.`,
+        },
+      };
+    }
+    if (input.wrongSegmentsIncomplete) {
+      return {
+        unlocked: false,
+        reason: {
+          code: 'WRONG_SEGMENTS_REQUIRED',
+          message_ar: 'يرجى الانتقال ومشاهدة أجزاء الشرح الخاصة بالأسئلة التي أخطأت فيها.',
+          message_en: 'Please visit the explanation segments for the questions you missed.',
         },
       };
     }

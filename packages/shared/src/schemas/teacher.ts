@@ -170,6 +170,11 @@ export const StudentsQuerySchema = z.object({
 });
 export type StudentsQuery = z.infer<typeof StudentsQuerySchema>;
 
+export const UnlockPostTestSchema = z.object({
+  note: z.string().trim().max(500).optional(),
+});
+export type UnlockPostTestInput = z.infer<typeof UnlockPostTestSchema>;
+
 export const RandomizeRosterSplitSchema = z.object({
   studentNames: z.array(z.string().trim().min(2).max(60)).min(2).max(500),
   seed: z.number().int().optional(),

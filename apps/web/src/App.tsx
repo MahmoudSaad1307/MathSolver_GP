@@ -8,6 +8,8 @@ const StudentConsentPage = React.lazy(() => import('@/pages/student/StudentConse
 const StudentPortalPage = React.lazy(() => import('@/pages/student/StudentPortalPage'));
 const StudentExamPage = React.lazy(() => import('@/pages/student/StudentExamPage'));
 const StudentResultsPage = React.lazy(() => import('@/pages/student/StudentResultsPage'));
+const StudentRemediationPage = React.lazy(() => import('@/pages/student/StudentRemediationPage'));
+const StudentComparisonPage = React.lazy(() => import('@/pages/student/StudentComparisonPage'));
 const TeacherLoginPage = React.lazy(() => import('@/pages/teacher/TeacherLoginPage'));
 const TeacherDashboardHome = React.lazy(() => import('@/pages/teacher/TeacherDashboardHome'));
 const TopicsPage = React.lazy(() => import('@/pages/teacher/TopicsPage'));
@@ -48,6 +50,8 @@ export function App() {
             <Route path="/student/consent" element={<StudentConsentPage />} />
             <Route path="/student/exam/:modelNumber" element={<StudentExamPage />} />
             <Route path="/student/results/:attemptId" element={<StudentResultsPage />} />
+            <Route path="/student/remediation" element={<StudentRemediationPage />} />
+            <Route path="/student/comparison" element={<StudentComparisonPage />} />
             <Route path="/teacher/login" element={<TeacherLoginPage />} />
             <Route path="/teacher" element={<TeacherDashboardHome />} />
             <Route path="/teacher/topics" element={<TopicsPage />} />

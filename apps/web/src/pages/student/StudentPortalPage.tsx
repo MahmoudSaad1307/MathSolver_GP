@@ -150,9 +150,27 @@ export default function StudentPortalPage() {
               <div className="text-xs text-slate-600" dir="ltr">
                 {data.videoProgress.watchedSeconds}s / {data.videoProgress.minWatchSeconds}s
               </div>
-              {data.preTestAttempt && (
+              {(data.step === 'REMEDIATION' ||
+                data.postTestLockReason?.code === 'VIDEO_INCOMPLETE' ||
+                data.postTestLockReason?.code === 'WRONG_SEGMENTS_REQUIRED') && (
                 <Button
                   variant="primary"
+                  className="w-full"
+                  onClick={() => void navigate('/student/remediation')}
+                >
+                  <PlayCircle className="h-5 w-5" />
+                  <span>{t('student.portal.watchRemediation')}</span>
+                </Button>
+              )}
+              {data.preTestAttempt && (
+                <Button
+                  variant={
+                    data.step === 'REMEDIATION' ||
+                    data.postTestLockReason?.code === 'VIDEO_INCOMPLETE' ||
+                    data.postTestLockReason?.code === 'WRONG_SEGMENTS_REQUIRED'
+                      ? 'outline'
+                      : 'primary'
+                  }
                   className="w-full"
                   onClick={() => void navigate(`/student/results/${data.preTestAttempt?.id}`)}
                 >
@@ -182,10 +200,30 @@ export default function StudentPortalPage() {
         )}
 
         {data.step === 'COMPARISON' && (
-          <Alert tone="success" className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 shrink-0" />
-            <span>{t('student.portal.comparisonReady')}</span>
-          </Alert>
+          <Card>
+            <CardContent className="space-y-3 pt-6">
+              <Alert tone="success" className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 shrink-0" />
+                <span>{t('student.portal.comparisonReady')}</span>
+              </Alert>
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={() => void navigate('/student/comparison')}
+              >
+                {t('student.portal.viewComparison')}
+              </Button>
+              {data.postTestAttempt && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => void navigate(`/student/results/${data.postTestAttempt?.id}`)}
+                >
+                  {t('student.portal.viewModel2Results')}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </StudentShell>

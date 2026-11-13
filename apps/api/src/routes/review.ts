@@ -6,11 +6,13 @@ import {
   ReviewQueueQuerySchema,
   StudentsQuerySchema,
   TeacherOverrideSchema,
+  UnlockPostTestSchema,
   type ManualGradeInput,
   type PinImageInput,
   type ReviewQueueQuery,
   type StudentsQuery,
   type TeacherOverrideInput,
+  type UnlockPostTestInput,
 } from '@mathlens/shared';
 import type { AppEnv } from '../config/env.js';
 import { requireTeacher } from '../middleware/auth.js';
@@ -24,6 +26,7 @@ import {
 import type { GradingDispatcher } from '../services/gradingDispatcher.js';
 import { ReviewService } from '../services/reviewService.js';
 import type { StorageAdapter } from '../services/storage/index.js';
+import { VideoService } from '../services/videoService.js';
 
 export interface ReviewRouterDeps {
   prisma: PrismaClient;
@@ -41,6 +44,7 @@ export function createReviewRouter({
   const router = Router();
   const teacherOnly = requireTeacher(env);
   const service = new ReviewService(prisma, env, storage);
+  const videoService = new VideoService(prisma, env);
 
   router.get(
     '/review-queue',
@@ -137,6 +141,37 @@ export function createReviewRouter({
     asyncHandler(async (req, res) => {
       const detail = await service.getStudentDetail(getTeacherId(req), getParamId(req));
       res.json(detail);
+    }),
+  );
+
+  router.post(
+    '/cohorts/:id/open-posttest',
+    teacherOnly,
+    validateParams(UuidParamSchema),
+    asyncHandler(async (req, res) => {
+      const result = await videoService.openCohortPostTestNow(
+        getTeacherId(req),
+        getParamId(req),
+        req.ip,
+      );
+      res.json(result);
+    }),
+  );
+
+  router.post(
+    '/students/:id/unlock-posttest',
+    teacherOnly,
+    validateParams(UuidParamSchema),
+    validateBody(UnlockPostTestSchema),
+    asyncHandler(async (req, res) => {
+      const { note } = req.body as UnlockPostTestInput;
+      const result = await videoService.manualUnlockStudentPostTest(
+        getTeacherId(req),
+        getParamId(req),
+        note,
+        req.ip,
+      );
+      res.json(result);
     }),
   );
 

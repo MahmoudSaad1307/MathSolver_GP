@@ -69,3 +69,8 @@ export const VideoHeartbeatSchema = z.object({
   playerErrorCode: z.number().int().optional(),
 });
 export type VideoHeartbeatInput = z.infer<typeof VideoHeartbeatSchema>;
+
+export const VideoAlertSchema = z.object({
+  errorCode: z.number().int().min(0).max(10000),
+});
+export type VideoAlertInput = z.infer<typeof VideoAlertSchema>;

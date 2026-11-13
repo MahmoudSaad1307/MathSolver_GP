@@ -1573,6 +1573,26 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
   });
 
+  const videoEvents: Array<{
+    id: string;
+    videoSessionId: string;
+    type: string;
+    position: number;
+    playbackRate: number;
+    clientTs: Date;
+    serverTs: Date;
+    questionId: string | null;
+    metadata: unknown;
+  }> = [];
+  const videoAlerts: Array<{
+    id: string;
+    topicId: string;
+    cohortId: string | null;
+    errorCode: number;
+    reportedAt: Date;
+    resolvedAt: Date | null;
+  }> = [];
+
   const mutableMock = mock as unknown as Record<string, Record<string, unknown>>;
   const videoSessionObj = (mutableMock.videoSession ??= {});
   Object.assign(videoSessionObj, {
@@ -1586,7 +1606,131 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
           matchId(v.studentId, where?.studentId) &&
           (where?.topicId === undefined || v.topicId === where.topicId),
       ),
+    findUnique: async ({
+      where,
+    }: {
+      where: { id?: string; studentId_topicId?: { studentId: string; topicId: string } };
+    }) =>
+      videoSessions.find((v) =>
+        where.studentId_topicId
+          ? v.studentId === where.studentId_topicId.studentId &&
+            v.topicId === where.studentId_topicId.topicId
+          : v.id === where.id,
+      ) ?? null,
+    findFirst: async ({
+      where,
+    }: {
+      where?: { id?: string; studentId?: string; topicId?: string };
+    }) =>
+      videoSessions.find(
+        (v) =>
+          (where?.id === undefined || v.id === where.id) &&
+          (where?.studentId === undefined || v.studentId === where.studentId) &&
+          (where?.topicId === undefined || v.topicId === where.topicId),
+      ) ?? null,
+    create: async ({ data }: { data: Record<string, unknown> }) => {
+      const now = new Date();
+      const row = {
+        id: crypto.randomUUID(),
+        studentId: String(data.studentId),
+        topicId: String(data.topicId),
+        startedAt: (data.startedAt as Date | undefined) ?? now,
+        watchedSeconds: Number(data.watchedSeconds ?? 0),
+        watchedIntervals: data.watchedIntervals ?? [],
+        visitedQuestionIds: Array.isArray(data.visitedQuestionIds)
+          ? (data.visitedQuestionIds as string[])
+          : [],
+        lastPosition: Number(data.lastPosition ?? 0),
+        lastHeartbeatAt: (data.lastHeartbeatAt as Date | null | undefined) ?? null,
+        completedAt: (data.completedAt as Date | null | undefined) ?? null,
+        unlockedPostAt: (data.unlockedPostAt as Date | null | undefined) ?? null,
+        unlockSignature: (data.unlockSignature as string | null | undefined) ?? null,
+        manualUnlockedById: (data.manualUnlockedById as string | null | undefined) ?? null,
+        manualUnlockNote: (data.manualUnlockNote as string | null | undefined) ?? null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      videoSessions.push(row as unknown as FakeVideoSessionRow);
+      return row;
+    },
+    update: async ({
+      where,
+      data,
+    }: {
+      where: { id: string };
+      data: Record<string, unknown>;
+    }) => {
+      const row = videoSessions.find((v) => v.id === where.id);
+      if (!row) throw new Error('VideoSession not found');
+      Object.assign(row, data, { updatedAt: new Date() });
+      return row;
+    },
+    upsert: async ({
+      where,
+      create,
+      update,
+    }: {
+      where: { studentId_topicId: { studentId: string; topicId: string } };
+      create: Record<string, unknown>;
+      update: Record<string, unknown>;
+    }) => {
+      const existing = videoSessions.find(
+        (v) =>
+          v.studentId === where.studentId_topicId.studentId &&
+          v.topicId === where.studentId_topicId.topicId,
+      );
+      if (existing) {
+        Object.assign(existing, update, { updatedAt: new Date() });
+        return existing;
+      }
+      return (videoSessionObj.create as (args: { data: Record<string, unknown> }) => Promise<unknown>)({
+        data: create,
+      });
+    },
   });
+
+  mutableMock.videoEvent = {
+    create: async ({ data }: { data: Record<string, unknown> }) => {
+      const row = {
+        id: crypto.randomUUID(),
+        videoSessionId: String(data.videoSessionId),
+        type: String(data.type),
+        position: Number(data.position ?? 0),
+        playbackRate: Number(data.playbackRate ?? 1),
+        clientTs: (data.clientTs as Date | undefined) ?? new Date(),
+        serverTs: (data.serverTs as Date | undefined) ?? new Date(),
+        questionId: (data.questionId as string | null | undefined) ?? null,
+        metadata: data.metadata ?? null,
+      };
+      videoEvents.push(row);
+      return row;
+    },
+    findMany: async ({ where }: { where?: { videoSessionId?: string } } = {}) =>
+      videoEvents.filter(
+        (e) => where?.videoSessionId === undefined || e.videoSessionId === where.videoSessionId,
+      ),
+  };
+
+  mutableMock.videoAlert = {
+    create: async ({ data }: { data: Record<string, unknown> }) => {
+      const row = {
+        id: crypto.randomUUID(),
+        topicId: String(data.topicId),
+        cohortId: (data.cohortId as string | null | undefined) ?? null,
+        errorCode: Number(data.errorCode ?? 0),
+        reportedAt: new Date(),
+        resolvedAt: null,
+      };
+      videoAlerts.push(row);
+      return row;
+    },
+    findMany: async ({ where }: { where?: { topicId?: string; cohortId?: string } } = {}) =>
+      videoAlerts.filter(
+        (a) =>
+          (where?.topicId === undefined || a.topicId === where.topicId) &&
+          (where?.cohortId === undefined || a.cohortId === where.cohortId),
+      ),
+  };
 
   return mock as unknown as PrismaClient & {
     _state: {
