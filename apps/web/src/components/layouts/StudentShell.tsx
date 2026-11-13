@@ -2,7 +2,13 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
-export function StudentShell({ children }: { children: React.ReactNode }) {
+export function StudentShell({
+  studentName,
+  children,
+}: {
+  studentName?: string;
+  children: React.ReactNode;
+}) {
   const { t } = useTranslation();
 
   return (
@@ -21,12 +27,19 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
             </span>
             <span>{t('app.name')}</span>
           </Link>
-          <Link
-            to="/teacher/login"
-            className="text-xs font-semibold text-slate-600 hover:text-brand-700"
-          >
-            {t('landing.teacherLink')}
-          </Link>
+          <div className="flex items-center gap-3">
+            {studentName && (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                {studentName}
+              </span>
+            )}
+            <Link
+              to="/teacher/login"
+              className="text-xs font-semibold text-slate-600 hover:text-brand-700"
+            >
+              {t('landing.teacherLink')}
+            </Link>
+          </div>
         </div>
       </header>
       <main id="main-content" className="mx-auto max-w-3xl px-4 py-6">

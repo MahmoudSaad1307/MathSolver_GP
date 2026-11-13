@@ -11,18 +11,39 @@ import { AppError } from './lib/errors.js';
 import type { Logger } from './lib/logger.js';
 import { createErrorHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
+import { createCohortsRouter } from './routes/cohorts.js';
 import { createHealthRouter } from './routes/health.js';
+import { createStorageRouter } from './routes/storage.js';
+import { createStudentRouter } from './routes/student.js';
 import { createTeacherAuthRouter } from './routes/teacherAuth.js';
 import { createTeacherContentRouter } from './routes/topics.js';
+import { NoopGradingDispatcher, type GradingDispatcher } from './services/gradingDispatcher.js';
+import {
+  createStorageAdapter,
+  createVirusScanner,
+  type StorageAdapter,
+  type VirusScanner,
+} from './services/storage/index.js';
 
 export interface CreateAppDeps {
   env: AppEnv;
   prisma: PrismaClient;
   logger: Logger;
   redis?: Redis;
+  storage?: StorageAdapter;
+  virusScanner?: VirusScanner;
+  gradingDispatcher?: GradingDispatcher;
 }
 
-export function createApp({ env, prisma, logger, redis }: CreateAppDeps): Express {
+export function createApp({
+  env,
+  prisma,
+  logger,
+  redis,
+  storage = createStorageAdapter(env),
+  virusScanner = createVirusScanner(env),
+  gradingDispatcher = new NoopGradingDispatcher(),
+}: CreateAppDeps): Express {
   const app = express();
 
   if (env.TRUST_PROXY) {
@@ -85,6 +106,19 @@ export function createApp({ env, prisma, logger, redis }: CreateAppDeps): Expres
   // API v1 routes
   const v1 = express.Router();
   v1.use('/auth/teacher', createTeacherAuthRouter(prisma, env, redis));
+  v1.use('/cohorts', createCohortsRouter(prisma, env));
+  v1.use(
+    '/student',
+    createStudentRouter({
+      prisma,
+      env,
+      storage,
+      virusScanner,
+      gradingDispatcher,
+      redis,
+    }),
+  );
+  v1.use('/storage', createStorageRouter(storage, env));
   v1.use('/', createTeacherContentRouter(prisma, env));
 
   app.use('/api/v1', v1);

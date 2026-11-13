@@ -124,7 +124,83 @@ export interface FakeCohortRow {
   name: string;
   joinCode: string;
   group: 'TREATMENT' | 'CONTROL';
+  requireVideoBeforePost: boolean;
+  requireWrongSegmentVisits: boolean;
+  showProvisionalScore: boolean;
+  postTestOpensAt: Date | null;
+  status: 'OPEN' | 'CLOSED' | 'ARCHIVED';
+  createdAt: Date;
+  updatedAt: Date;
   deletedAt: Date | null;
+}
+
+export interface FakeStudentRow {
+  id: string;
+  cohortId: string;
+  displayName: string;
+  resumeCode: string;
+  consentAcceptedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export interface FakeAttemptRow {
+  id: string;
+  studentId: string;
+  examModelId: string;
+  status: 'IN_PROGRESS' | 'SUBMITTED' | 'GRADING' | 'GRADED' | 'NEEDS_REVIEW' | 'FINAL';
+  startedAt: Date;
+  submittedAt: Date | null;
+  deadlineAt: Date;
+  totalScore: number | null;
+  maxScore: number;
+  percentage: number | null;
+  scoreSource: 'AUTO' | 'AI' | 'TEACHER_OVERRIDE' | 'MIXED' | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FakeAnswerRow {
+  id: string;
+  attemptId: string;
+  questionId: string;
+  selectedOptionId: string | null;
+  isCorrect: boolean | null;
+  score: number | null;
+  maxScore: number;
+  misreadReportedAt: Date | null;
+  misreadNote: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FakeAnswerImageRow {
+  id: string;
+  answerId: string;
+  storageKey: string;
+  sha256: string;
+  width: number;
+  height: number;
+  bytes: number;
+  pinnedByTeacher: boolean;
+  deletedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FakeVideoSessionRow {
+  id: string;
+  studentId: string;
+  topicId: string;
+  startedAt: Date;
+  watchedSeconds: number;
+  lastPosition: number;
+  completedAt: Date | null;
+  unlockedPostAt: Date | null;
+  manualUnlockedById: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
@@ -138,6 +214,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   const modelAnswers: FakeModelAnswerRow[] = [];
   const rubricCriteria: FakeRubricCriterionRow[] = [];
   const cohorts: FakeCohortRow[] = [];
+  const students: FakeStudentRow[] = [];
+  const attempts: FakeAttemptRow[] = [];
+  const answers: FakeAnswerRow[] = [];
+  const answerImages: FakeAnswerImageRow[] = [];
+  const videoSessions: FakeVideoSessionRow[] = [];
 
   const hydrateQuestion = (q: FakeQuestionRow, include?: Record<string, unknown>) => {
     const out: Record<string, unknown> = { ...q };
@@ -204,6 +285,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       modelAnswers,
       rubricCriteria,
       cohorts,
+      students,
+      attempts,
+      answers,
+      answerImages,
+      videoSessions,
     },
     $queryRaw: async () => [{ '?column?': 1 }],
     $transaction: async <T>(
@@ -740,6 +826,442 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         return row;
       },
     },
+    cohort: {
+      findMany: async ({
+        where,
+      }: {
+        where?: { teacherId?: string; topicId?: string; deletedAt?: null };
+      }) => {
+        return cohorts
+          .filter(
+            (c) =>
+              (where?.teacherId === undefined || c.teacherId === where.teacherId) &&
+              (where?.topicId === undefined || c.topicId === where.topicId) &&
+              (where?.deletedAt === undefined || c.deletedAt === where.deletedAt),
+          )
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .map((c) => {
+            const topic = topics.find((t) => t.id === c.topicId);
+            return {
+              ...c,
+              topic: topic ? { id: topic.id, title: topic.title } : null,
+              _count: {
+                students: students.filter((s) => s.cohortId === c.id && s.deletedAt === null)
+                  .length,
+              },
+            };
+          });
+      },
+      findUnique: async ({ where }: { where: { joinCode?: string; id?: string } }) => {
+        return (
+          cohorts.find(
+            (c) =>
+              (where.joinCode === undefined || c.joinCode === where.joinCode) &&
+              (where.id === undefined || c.id === where.id),
+          ) ?? null
+        );
+      },
+      findFirst: async ({
+        where,
+      }: {
+        where: { id?: string; teacherId?: string; deletedAt?: null };
+      }) => {
+        const found = cohorts.find(
+          (c) =>
+            (where.id === undefined || c.id === where.id) &&
+            (where.teacherId === undefined || c.teacherId === where.teacherId) &&
+            (where.deletedAt === undefined || c.deletedAt === where.deletedAt),
+        );
+        if (!found) return null;
+        const topic = topics.find((t) => t.id === found.topicId);
+        return {
+          ...found,
+          topic: topic
+            ? {
+                id: topic.id,
+                title: topic.title,
+                videoId: topic.videoId,
+                minWatchSeconds: topic.minWatchSeconds,
+              }
+            : null,
+          students: students
+            .filter((s) => s.cohortId === found.id && s.deletedAt === null)
+            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+        };
+      },
+      create: async ({
+        data,
+      }: {
+        data: Partial<FakeCohortRow> & {
+          topicId: string;
+          teacherId: string;
+          name: string;
+          joinCode: string;
+          group: 'TREATMENT' | 'CONTROL';
+        };
+      }) => {
+        const now = new Date();
+        const row: FakeCohortRow = {
+          id: data.id ?? crypto.randomUUID(),
+          topicId: data.topicId,
+          teacherId: data.teacherId,
+          name: data.name,
+          joinCode: data.joinCode,
+          group: data.group,
+          requireVideoBeforePost: data.requireVideoBeforePost ?? true,
+          requireWrongSegmentVisits: data.requireWrongSegmentVisits ?? false,
+          showProvisionalScore: data.showProvisionalScore ?? false,
+          postTestOpensAt: data.postTestOpensAt ?? null,
+          status: data.status ?? 'OPEN',
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        };
+        cohorts.push(row);
+        return row;
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeCohortRow>;
+      }) => {
+        const row = cohorts.find((c) => c.id === where.id);
+        if (!row) throw new Error('Cohort not found');
+        Object.assign(row, data, { updatedAt: new Date() });
+        return row;
+      },
+    },
+    student: {
+      findUnique: async ({
+        where,
+        include,
+      }: {
+        where: { resumeCode?: string; id?: string };
+        include?: { cohort?: boolean };
+      }) => {
+        const found = students.find(
+          (s) =>
+            (where.resumeCode === undefined || s.resumeCode === where.resumeCode) &&
+            (where.id === undefined || s.id === where.id),
+        );
+        if (!found) return null;
+        if (include?.cohort) {
+          return { ...found, cohort: cohorts.find((c) => c.id === found.cohortId) ?? null };
+        }
+        return found;
+      },
+      findFirst: async ({
+        where,
+        include,
+      }: {
+        where: { id?: string; deletedAt?: null };
+        include?: Record<string, unknown>;
+      }) => {
+        const found = students.find(
+          (s) =>
+            (where.id === undefined || s.id === where.id) &&
+            (where.deletedAt === undefined || s.deletedAt === where.deletedAt),
+        );
+        if (!found) return null;
+        const out: Record<string, unknown> = { ...found };
+        if (include?.cohort) {
+          const cohort = cohorts.find((c) => c.id === found.cohortId);
+          if (cohort) {
+            const topic = topics.find((t) => t.id === cohort.topicId);
+            out.cohort = {
+              ...cohort,
+              topic: topic
+                ? hydrateTopic(topic, {
+                    examModels: {
+                      include: {
+                        questions: { where: { deletedAt: null } },
+                      },
+                    },
+                  })
+                : null,
+            };
+          } else {
+            out.cohort = null;
+          }
+        }
+        if (include?.attempts) {
+          out.attempts = attempts
+            .filter((a) => a.studentId === found.id)
+            .map((a) => ({
+              ...a,
+              examModel: examModels.find((m) => m.id === a.examModelId) ?? null,
+            }));
+        }
+        if (include?.videoSessions) {
+          out.videoSessions = videoSessions.filter((v) => v.studentId === found.id);
+        }
+        return out;
+      },
+      create: async ({
+        data,
+      }: {
+        data: { cohortId: string; displayName: string; resumeCode: string };
+      }) => {
+        const now = new Date();
+        const row: FakeStudentRow = {
+          id: crypto.randomUUID(),
+          cohortId: data.cohortId,
+          displayName: data.displayName,
+          resumeCode: data.resumeCode,
+          consentAcceptedAt: null,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        };
+        students.push(row);
+        return row;
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeStudentRow>;
+      }) => {
+        const row = students.find((s) => s.id === where.id);
+        if (!row) throw new Error('Student not found');
+        Object.assign(row, data, { updatedAt: new Date() });
+        return row;
+      },
+    },
+    attempt: {
+      findFirst: async ({
+        where,
+        include,
+      }: {
+        where: { id?: string; studentId?: string };
+        include?: Record<string, unknown>;
+      }) => {
+        const found = attempts.find(
+          (a) =>
+            (where.id === undefined || a.id === where.id) &&
+            (where.studentId === undefined || a.studentId === where.studentId),
+        );
+        if (!found) return null;
+        const out: Record<string, unknown> = { ...found };
+        if (include?.examModel) {
+          const m = examModels.find((x) => x.id === found.examModelId);
+          out.examModel = m
+            ? hydrateExamModel(m, {
+                questions: { include: { mcqOptions: true } },
+              })
+            : null;
+        }
+        if (include?.answers) {
+          out.answers = answers
+            .filter((ans) => ans.attemptId === found.id)
+            .map((ans) => {
+              const q = questions.find((x) => x.id === ans.questionId);
+              return {
+                ...ans,
+                question: q ? hydrateQuestion(q, { mcqOptions: true }) : null,
+                images: answerImages
+                  .filter((img) => img.answerId === ans.id && img.deletedAt === null)
+                  .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+              };
+            });
+        }
+        return out;
+      },
+      create: async ({
+        data,
+      }: {
+        data: {
+          studentId: string;
+          examModelId: string;
+          status: FakeAttemptRow['status'];
+          startedAt: Date;
+          deadlineAt: Date;
+          maxScore: number;
+        };
+      }) => {
+        const now = new Date();
+        const row: FakeAttemptRow = {
+          id: crypto.randomUUID(),
+          studentId: data.studentId,
+          examModelId: data.examModelId,
+          status: data.status,
+          startedAt: data.startedAt,
+          submittedAt: null,
+          deadlineAt: data.deadlineAt,
+          totalScore: null,
+          maxScore: data.maxScore,
+          percentage: null,
+          scoreSource: null,
+          createdAt: now,
+          updatedAt: now,
+        };
+        attempts.push(row);
+        return row;
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeAttemptRow>;
+      }) => {
+        const row = attempts.find((a) => a.id === where.id);
+        if (!row) throw new Error('Attempt not found');
+        Object.assign(row, data, { updatedAt: new Date() });
+        return row;
+      },
+    },
+    answer: {
+      findFirst: async ({
+        where,
+      }: {
+        where: {
+          id?: string;
+          attemptId?: string;
+          questionId?: string;
+          attempt?: { studentId?: string };
+          OR?: Array<{ id?: string; questionId?: string }>;
+        };
+      }) => {
+        const found = answers.find((ans) => {
+          const att = attempts.find((a) => a.id === ans.attemptId);
+          if (!att) return false;
+          if (where.attempt?.studentId && att.studentId !== where.attempt.studentId) return false;
+          if (where.id && ans.id !== where.id) return false;
+          if (where.attemptId && ans.attemptId !== where.attemptId) return false;
+          if (where.questionId && ans.questionId !== where.questionId) return false;
+          if (where.OR) {
+            const matchesOr = where.OR.some(
+              (cond) =>
+                (cond.id !== undefined && ans.id === cond.id) ||
+                (cond.questionId !== undefined && ans.questionId === cond.questionId),
+            );
+            if (!matchesOr) return false;
+          }
+          return true;
+        });
+        if (!found) return null;
+        const att = attempts.find((a) => a.id === found.attemptId)!;
+        const q = questions.find((x) => x.id === found.questionId)!;
+        return {
+          ...found,
+          attempt: att,
+          question: hydrateQuestion(q, { mcqOptions: true }),
+          images: answerImages.filter((img) => img.answerId === found.id && img.deletedAt === null),
+        };
+      },
+      createMany: async ({
+        data,
+      }: {
+        data: Array<{
+          attemptId: string;
+          questionId: string;
+          selectedOptionId: string | null;
+          maxScore: number;
+        }>;
+      }) => {
+        const now = new Date();
+        for (const item of data) {
+          answers.push({
+            id: crypto.randomUUID(),
+            attemptId: item.attemptId,
+            questionId: item.questionId,
+            selectedOptionId: item.selectedOptionId,
+            isCorrect: null,
+            score: null,
+            maxScore: item.maxScore,
+            misreadReportedAt: null,
+            misreadNote: null,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+        return { count: data.length };
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeAnswerRow>;
+      }) => {
+        const row = answers.find((a) => a.id === where.id);
+        if (!row) throw new Error('Answer not found');
+        Object.assign(row, data, { updatedAt: new Date() });
+        return row;
+      },
+    },
+    answerImage: {
+      findFirst: async ({
+        where,
+      }: {
+        where: {
+          id?: string;
+          deletedAt?: null;
+          answer?: { attempt?: { studentId?: string } };
+        };
+      }) => {
+        const found = answerImages.find((img) => {
+          if (where.id && img.id !== where.id) return false;
+          if (where.deletedAt !== undefined && img.deletedAt !== where.deletedAt) return false;
+          if (where.answer?.attempt?.studentId) {
+            const ans = answers.find((a) => a.id === img.answerId);
+            const att = ans ? attempts.find((x) => x.id === ans.attemptId) : undefined;
+            if (!att || att.studentId !== where.answer.attempt.studentId) return false;
+          }
+          return true;
+        });
+        if (!found) return null;
+        const ans = answers.find((a) => a.id === found.answerId)!;
+        const att = attempts.find((a) => a.id === ans.attemptId)!;
+        return {
+          ...found,
+          answer: {
+            ...ans,
+            attempt: att,
+          },
+        };
+      },
+      create: async ({
+        data,
+      }: {
+        data: {
+          answerId: string;
+          storageKey: string;
+          sha256: string;
+          width: number;
+          height: number;
+          bytes: number;
+        };
+      }) => {
+        const now = new Date();
+        const row: FakeAnswerImageRow = {
+          id: crypto.randomUUID(),
+          ...data,
+          pinnedByTeacher: false,
+          deletedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        };
+        answerImages.push(row);
+        return row;
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeAnswerImageRow>;
+      }) => {
+        const row = answerImages.find((img) => img.id === where.id);
+        if (!row) throw new Error('AnswerImage not found');
+        Object.assign(row, data, { updatedAt: new Date() });
+        return row;
+      },
+    },
   };
 
   return mock as unknown as PrismaClient & {
@@ -754,6 +1276,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       modelAnswers: FakeModelAnswerRow[];
       rubricCriteria: FakeRubricCriterionRow[];
       cohorts: FakeCohortRow[];
+      students: FakeStudentRow[];
+      attempts: FakeAttemptRow[];
+      answers: FakeAnswerRow[];
+      answerImages: FakeAnswerImageRow[];
+      videoSessions: FakeVideoSessionRow[];
     };
   };
 }

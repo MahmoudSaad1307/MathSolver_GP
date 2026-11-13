@@ -4,10 +4,14 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useUiStore, applyDocumentDirection } from '@/store/uiStore';
 
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
+const StudentConsentPage = React.lazy(() => import('@/pages/student/StudentConsentPage'));
+const StudentPortalPage = React.lazy(() => import('@/pages/student/StudentPortalPage'));
+const StudentExamPage = React.lazy(() => import('@/pages/student/StudentExamPage'));
 const TeacherLoginPage = React.lazy(() => import('@/pages/teacher/TeacherLoginPage'));
 const TeacherDashboardHome = React.lazy(() => import('@/pages/teacher/TeacherDashboardHome'));
 const TopicsPage = React.lazy(() => import('@/pages/teacher/TopicsPage'));
 const TopicBuilderPage = React.lazy(() => import('@/pages/teacher/TopicBuilderPage'));
+const CohortsPage = React.lazy(() => import('@/pages/teacher/CohortsPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,10 +41,14 @@ export function App() {
         >
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/student" element={<StudentPortalPage />} />
+            <Route path="/student/consent" element={<StudentConsentPage />} />
+            <Route path="/student/exam/:modelNumber" element={<StudentExamPage />} />
             <Route path="/teacher/login" element={<TeacherLoginPage />} />
             <Route path="/teacher" element={<TeacherDashboardHome />} />
             <Route path="/teacher/topics" element={<TopicsPage />} />
             <Route path="/teacher/topics/:topicId" element={<TopicBuilderPage />} />
+            <Route path="/teacher/cohorts" element={<CohortsPage />} />
             <Route path="/teacher/*" element={<TeacherDashboardHome />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

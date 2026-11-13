@@ -40,12 +40,14 @@ export default function TeacherDashboardHome() {
               </CardHeader>
             </Card>
           </Link>
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('teacher.nav.cohorts')}</CardTitle>
-              <CardDescription>TREATMENT / CONTROL</CardDescription>
-            </CardHeader>
-          </Card>
+          <Link to="/teacher/cohorts" className="block transition hover:shadow-md rounded-xl">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('teacher.nav.cohorts')}</CardTitle>
+                <CardDescription>TREATMENT / CONTROL</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
           <Card>
             <CardHeader>
               <CardTitle>{t('teacher.nav.review')}</CardTitle>
