@@ -24,3 +24,7 @@ export function CardDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn('text-sm text-slate-600', className)} {...props} />;
 }
+
+export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('space-y-3', className)} {...props} />;
+}

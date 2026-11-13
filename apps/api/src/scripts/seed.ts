@@ -1,7 +1,12 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { SeedTopicBundleSchema } from '@mathlens/shared';
 import { loadEnv } from '../config/env.js';
 import { createLogger } from '../lib/logger.js';
 import { getPrisma } from '../lib/prisma.js';
 import { hashPassword } from '../lib/security.js';
+import { ExamImportExportService } from '../services/examImportExportService.js';
 
 async function main() {
   const env = loadEnv();
@@ -25,6 +30,20 @@ async function main() {
   });
 
   logger.info({ teacherId: teacher.id, email: teacher.email }, 'Seeded default teacher');
+
+  const seedFile = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../../../../seed/exams.seed.json',
+  );
+  const rawSeed = await readFile(seedFile, 'utf8');
+  const bundle = SeedTopicBundleSchema.parse(JSON.parse(rawSeed) as unknown);
+  const importService = new ExamImportExportService(prisma, env);
+  const seedResult = await importService.seedTopicBundleIfMissing(teacher.id, bundle);
+
+  logger.info(
+    { teacherId: teacher.id, topicId: seedResult.topicId, seeded: seedResult.seeded },
+    seedResult.seeded ? 'Seeded default exam topic bundle' : 'Default exam topic already present',
+  );
   await prisma.$disconnect();
 }
 

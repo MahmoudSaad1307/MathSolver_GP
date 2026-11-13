@@ -6,6 +6,8 @@ import { useUiStore, applyDocumentDirection } from '@/store/uiStore';
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const TeacherLoginPage = React.lazy(() => import('@/pages/teacher/TeacherLoginPage'));
 const TeacherDashboardHome = React.lazy(() => import('@/pages/teacher/TeacherDashboardHome'));
+const TopicsPage = React.lazy(() => import('@/pages/teacher/TopicsPage'));
+const TopicBuilderPage = React.lazy(() => import('@/pages/teacher/TopicBuilderPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +39,8 @@ export function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/teacher/login" element={<TeacherLoginPage />} />
             <Route path="/teacher" element={<TeacherDashboardHome />} />
+            <Route path="/teacher/topics" element={<TopicsPage />} />
+            <Route path="/teacher/topics/:topicId" element={<TopicBuilderPage />} />
             <Route path="/teacher/*" element={<TeacherDashboardHome />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

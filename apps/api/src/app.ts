@@ -13,6 +13,7 @@ import { createErrorHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { createHealthRouter } from './routes/health.js';
 import { createTeacherAuthRouter } from './routes/teacherAuth.js';
+import { createTeacherContentRouter } from './routes/topics.js';
 
 export interface CreateAppDeps {
   env: AppEnv;
@@ -84,6 +85,7 @@ export function createApp({ env, prisma, logger, redis }: CreateAppDeps): Expres
   // API v1 routes
   const v1 = express.Router();
   v1.use('/auth/teacher', createTeacherAuthRouter(prisma, env, redis));
+  v1.use('/', createTeacherContentRouter(prisma, env));
 
   app.use('/api/v1', v1);
 

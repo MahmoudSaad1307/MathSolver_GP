@@ -1,24 +1,14 @@
-import type { TeacherProfile } from '@mathlens/shared';
-import { useQuery } from '@tanstack/react-query';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { TeacherShell } from '@/components/layouts/TeacherShell';
 import { Alert } from '@/components/ui/Alert';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { apiRequest } from '@/lib/api';
+import { useTeacherAuth } from '@/hooks/useTeacherAuth';
 
 export default function TeacherDashboardHome() {
   const { t } = useTranslation();
-
-  const meQuery = useQuery({
-    queryKey: ['teacher', 'me'],
-    queryFn: () =>
-      apiRequest<{ teacher: TeacherProfile }>('/auth/teacher/me', {
-        retryRefresh: true,
-      }),
-    retry: false,
-  });
+  const meQuery = useTeacherAuth();
 
   if (meQuery.isLoading) {
     return (
@@ -42,12 +32,14 @@ export default function TeacherDashboardHome() {
         </h1>
         <Alert tone="info">{t('teacher.readyBanner')}</Alert>
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('teacher.nav.topics')}</CardTitle>
-              <CardDescription>{teacher.email}</CardDescription>
-            </CardHeader>
-          </Card>
+          <Link to="/teacher/topics" className="block transition hover:shadow-md rounded-xl">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('teacher.nav.topics')}</CardTitle>
+                <CardDescription>{teacher.email}</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
           <Card>
             <CardHeader>
               <CardTitle>{t('teacher.nav.cohorts')}</CardTitle>

@@ -1,0 +1,832 @@
+{
+  "topic": {
+    "title": "Derivatives of Exponential and Logarithmic Functions",
+    "description": "Pre-test and post-test assessment covering logarithmic differentiation, exponential derivatives with arbitrary constants/bases, domain analysis, tangent geometry, and exponential vs. linear growth.",
+    "videoUrl": "https://www.youtube.com/watch?v=REPLACE_ME",
+    "minWatchSeconds": 300,
+    "correctnessThreshold": 0.6
+  },
+  "models": [
+    {
+      "modelNumber": 1,
+      "title": "Model 1 — Pre-Test: Derivatives of Exponential & Logarithmic Functions",
+      "durationMinutes": 60,
+      "status": "DRAFT",
+      "questions": [
+        {
+          "orderIndex": 1,
+          "conceptKey": "log-differentiation-mcq",
+          "type": "MCQ",
+          "promptLatex": "If $y = x^{\\sin x}$, then $\\frac{dy}{dx}$ equals:",
+          "points": 5,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "mcqOptions": [
+            { "label": "A", "textLatex": "$x^{\\sin x}\\cos x$", "isCorrect": false },
+            {
+              "label": "B",
+              "textLatex": "$x^{\\sin x}\\left(\\cos x\\ln x+\\frac{\\sin x}{x}\\right)$",
+              "isCorrect": true
+            },
+            { "label": "C", "textLatex": "$\\sin x\\,x^{\\sin x-1}$", "isCorrect": false },
+            { "label": "D", "textLatex": "$\\frac{x^{\\sin x}\\cos x}{x}$", "isCorrect": false }
+          ]
+        },
+        {
+          "orderIndex": 2,
+          "conceptKey": "exp-constant-base",
+          "type": "MCQ",
+          "promptLatex": "If $y = e^{3}+\\pi^{\\sec x}$, then $\\frac{dy}{dx}$ equals:",
+          "points": 5,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "mcqOptions": [
+            { "label": "A", "textLatex": "$3e^{2}+\\pi^{\\sec x}$", "isCorrect": false },
+            {
+              "label": "B",
+              "textLatex": "$\\pi^{\\sec x}\\ln\\pi\\,\\sec x\\tan x$",
+              "isCorrect": true
+            },
+            { "label": "C", "textLatex": "$\\pi^{\\sec x}\\sec x\\tan x$", "isCorrect": false },
+            { "label": "D", "textLatex": "$e^{3}+\\pi^{\\sec x}\\tan x$", "isCorrect": false }
+          ]
+        },
+        {
+          "orderIndex": 3,
+          "conceptKey": "ln-domain-misconception",
+          "type": "MCQ",
+          "promptLatex": "A student claims the domain of $f(x)=\\ln(x^{2}-5x+6)$ is all real numbers except $x=2$ and $x=3$. Which statement correctly identifies the student's mistake?",
+          "points": 5,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": true,
+          "mcqOptions": [
+            {
+              "label": "A",
+              "textLatex": "The logarithmic argument can be negative.",
+              "isCorrect": false
+            },
+            { "label": "B", "textLatex": "The domain is $x<2$ or $x>3$.", "isCorrect": true },
+            {
+              "label": "C",
+              "textLatex": "The domain includes $x=2$ and $x=3$.",
+              "isCorrect": false
+            },
+            { "label": "D", "textLatex": "The domain is all real numbers.", "isCorrect": false }
+          ]
+        },
+        {
+          "orderIndex": 4,
+          "conceptKey": "exp-growth-model",
+          "type": "MCQ",
+          "promptLatex": "If the rate of change of a population $P(t)$ is proportional to its current size, which differential equation represents this?",
+          "points": 5,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "mcqOptions": [
+            { "label": "A", "textLatex": "$\\frac{dP}{dt}=k$", "isCorrect": false },
+            { "label": "B", "textLatex": "$\\frac{dP}{dt}=kP$", "isCorrect": true },
+            { "label": "C", "textLatex": "$\\frac{dP}{dt}=P+k$", "isCorrect": false },
+            { "label": "D", "textLatex": "$\\frac{dP}{dt}=kt$", "isCorrect": false }
+          ]
+        },
+        {
+          "orderIndex": 5,
+          "conceptKey": "log-differentiation",
+          "type": "ESSAY",
+          "promptLatex": "Using logarithmic differentiation, find the derivative of $y=(\\sec x)^{x}$.",
+          "points": 10,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "\\ln y = \\ln\\left((\\sec x)^{x}\\right) = x\\ln(\\sec x)",
+              "\\frac{y'}{y} = \\ln(\\sec x) + x\\cdot\\frac{\\sec x\\tan x}{\\sec x}",
+              "\\frac{y'}{y} = \\ln(\\sec x) + x\\tan x",
+              "y' = (\\sec x)^{x}\\left[\\ln(\\sec x) + x\\tan x\\right]"
+            ],
+            "finalAnswerLatex": "(\\sec x)^{x}(\\ln(\\sec x) + x\\tan x)",
+            "finalAnswerSympy": "sec(x)**x * (log(sec(x)) + x*tan(x))",
+            "commonMistakes": "Treating x as a constant exponent (power rule x*(sec x)^(x-1)), forgetting to differentiate LHS as y'/y, or forgetting to multiply back by y."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "take-ln-bring-down",
+              "descriptionEn": "Takes natural log of both sides and brings down exponent x",
+              "descriptionAr": "أخذ اللوغاريتم الطبيعي للطرفين وإنزال الأس x",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 2,
+              "key": "differentiate-lhs-y'/y",
+              "descriptionEn": "Implicitly differentiates ln(y) to y'/y",
+              "descriptionAr": "اشتقاق ln(y) ضمنياً إلى y'/y",
+              "maxPoints": 1
+            },
+            {
+              "orderIndex": 3,
+              "key": "product-rule-rhs",
+              "descriptionEn": "Applies product rule to x ln(sec x)",
+              "descriptionAr": "تطبيق قاعدة حاصل الضرب على x ln(sec x)",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 4,
+              "key": "simplify-derivative-of-ln-sec",
+              "descriptionEn": "Simplifies d/dx ln(sec x) to tan x",
+              "descriptionAr": "تبسيط مشتقة ln(sec x) إلى tan x",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 5,
+              "key": "final-answer-times-y",
+              "descriptionEn": "Multiplies through by y = (sec x)^x for final answer",
+              "descriptionAr": "الضرب في y = (sec x)^x للحصول على الناتج النهائي",
+              "maxPoints": 2
+            }
+          ]
+        },
+        {
+          "orderIndex": 6,
+          "conceptKey": "product-rule-at-point",
+          "type": "ESSAY",
+          "promptLatex": "Find $\\frac{dy}{dx}$ and its value at $x=0$ if $y=e^{2x}\\cos x$.",
+          "points": 10,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "\\frac{dy}{dx} = \\frac{d}{dx}(e^{2x})\\cos x + e^{2x}\\frac{d}{dx}(\\cos x)",
+              "\\frac{dy}{dx} = 2e^{2x}\\cos x - e^{2x}\\sin x = e^{2x}(2\\cos x - \\sin x)",
+              "\\left.\\frac{dy}{dx}\\right|_{x=0} = e^{0}(2\\cos 0 - \\sin 0) = 1(2 - 0) = 2"
+            ],
+            "finalAnswerLatex": "2",
+            "finalAnswerSympy": "2",
+            "commonMistakes": "Missing factor of 2 from chain rule on e^(2x), or writing +sin x instead of -sin x for derivative of cos x."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "product-rule-setup",
+              "descriptionEn": "Sets up product rule with both terms correctly",
+              "descriptionAr": "كتابة قاعدة مشتقة حاصل الضرب بحديها بشكل صحيح",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 2,
+              "key": "chain-rule-on-e^{2x}",
+              "descriptionEn": "Applies chain rule to differentiate e^(2x) as 2e^(2x)",
+              "descriptionAr": "تطبيق قاعدة السلسلة لاشتقاق e^(2x) إلى 2e^(2x)",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 3,
+              "key": "correct-simplified-derivative",
+              "descriptionEn": "Correctly obtains e^(2x)(2cos x - sin x)",
+              "descriptionAr": "الوصول للصيغة الصحيحة للمشتقة e^(2x)(2cos x - sin x)",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 4,
+              "key": "substitute-x=0",
+              "descriptionEn": "Substitutes x = 0 into the derivative expression",
+              "descriptionAr": "التعويض عن x = 0 في تعبير المشتقة",
+              "maxPoints": 1
+            },
+            {
+              "orderIndex": 5,
+              "key": "final-value-2",
+              "descriptionEn": "Computes final numeric value 2",
+              "descriptionAr": "حساب القيمة العددية النهائية 2",
+              "maxPoints": 2
+            }
+          ]
+        },
+        {
+          "orderIndex": 7,
+          "conceptKey": "tangent-intercepts-distance",
+          "type": "ESSAY",
+          "promptLatex": "Find the equation of the tangent to $y=\\ln(x^{3})$ at $x=1$. Then find the points where the tangent meets the coordinate axes and the distance between them.",
+          "points": 20,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "y = 3\\ln x \\implies y' = \\frac{3}{x}",
+              "m = y'(1) = 3, \\quad y(1) = \\ln(1) = 0 \\implies (1, 0)",
+              "y - 0 = 3(x - 1) \\implies y = 3x - 3",
+              "\\text{x-intercept } (y=0): (1, 0); \\quad \\text{y-intercept } (x=0): (0, -3)",
+              "d = \\sqrt{(1 - 0)^{2} + (0 - (-3))^{2}} = \\sqrt{1 + 9} = \\sqrt{10}"
+            ],
+            "finalAnswerLatex": "\\sqrt{10}",
+            "finalAnswerSympy": "sqrt(10)",
+            "commonMistakes": "Computing y' = 1/x^3 without chain rule, getting slope 1 instead of 3, or dropping the negative sign when computing distance."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "derivative-and-slope-3",
+              "descriptionEn": "Finds y' = 3/x and evaluates slope m = 3 at x = 1",
+              "descriptionAr": "إيجاد المشتقة y' = 3/x وحساب الميل m = 3 عند x = 1",
+              "maxPoints": 4
+            },
+            {
+              "orderIndex": 2,
+              "key": "point-of-tangency-(1,0)",
+              "descriptionEn": "Finds point of tangency (1, 0)",
+              "descriptionAr": "إيجاد نقطة التماس (1, 0)",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 3,
+              "key": "tangent-equation",
+              "descriptionEn": "Writes tangent line equation y = 3x - 3",
+              "descriptionAr": "كتابة معادلة المماس y = 3x - 3",
+              "maxPoints": 4
+            },
+            {
+              "orderIndex": 4,
+              "key": "both-axis-intercepts",
+              "descriptionEn": "Finds both intercepts (1, 0) and (0, -3)",
+              "descriptionAr": "إيجاد نقطتي التقاطع مع المحورين (1, 0) و (0, -3)",
+              "maxPoints": 5
+            },
+            {
+              "orderIndex": 5,
+              "key": "distance-formula-and-value",
+              "descriptionEn": "Applies distance formula to get sqrt(10)",
+              "descriptionAr": "تطبيق قانون البعد بين نقطتين للحصول على sqrt(10)",
+              "maxPoints": 4
+            }
+          ]
+        },
+        {
+          "orderIndex": 8,
+          "conceptKey": "find-error-derivative",
+          "type": "ESSAY",
+          "promptLatex": "A student differentiates $y=e^{4}+2^{x}$ as $\\frac{dy}{dx}=4e^{3}+2^{x}$. Identify the two errors and find the correct derivative.",
+          "points": 10,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "\\text{Error 1: } e^{4} \\text{ is a constant, so } \\frac{d}{dx}(e^{4}) = 0 \\neq 4e^{3}",
+              "\\text{Error 2: } \\frac{d}{dx}(2^{x}) = 2^{x}\\ln 2 \\text{ (missing } \\ln 2 \\text{)}",
+              "\\frac{dy}{dx} = 2^{x}\\ln 2"
+            ],
+            "finalAnswerLatex": "2^{x}\\ln 2",
+            "finalAnswerSympy": "2**x * log(2)",
+            "commonMistakes": "Treating e^4 using power rule as 4e^3, or forgetting ln(a) in d/dx(a^x)."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "error-constant-term",
+              "descriptionEn": "Identifies that e^4 is constant so its derivative is 0",
+              "descriptionAr": "تحديد أن e^4 ثابت ومشتقته تساوي صفر",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 2,
+              "key": "error-exponential-rule",
+              "descriptionEn": "Identifies missing ln(2) factor when differentiating 2^x",
+              "descriptionAr": "تحديد نقص معامل ln(2) عند اشتقاق 2^x",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 3,
+              "key": "correct-derivative",
+              "descriptionEn": "Writes the correct derivative y' = 2^x ln 2",
+              "descriptionAr": "كتابة المشتقة الصحيحة y' = 2^x ln 2",
+              "maxPoints": 4
+            }
+          ]
+        },
+        {
+          "orderIndex": 9,
+          "conceptKey": "exp-vs-linear-growth",
+          "type": "ESSAY",
+          "promptLatex": "Two populations are modeled by $P(t)=200e^{0.04t}$ and $Q(t)=200+8t$. Find the derivative of each and explain the difference between their growth rates.",
+          "points": 15,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "P'(t) = 200(0.04)e^{0.04t} = 8e^{0.04t} = 0.04P(t)",
+              "Q'(t) = 8",
+              "P(t) \\text{ grows exponentially (rate proportional to current size)}; \\quad Q(t) \\text{ grows linearly (constant rate } 8 \\text{)}"
+            ],
+            "finalAnswerLatex": "P'(t)=8e^{0.04t}=0.04P,\\; Q'(t)=8",
+            "finalAnswerSympy": null,
+            "commonMistakes": "Omitting chain rule factor 0.04 in P'(t), or failing to relate P'(t) to P(t)."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "P-derivative",
+              "descriptionEn": "Correctly finds P'(t) = 8e^(0.04t)",
+              "descriptionAr": "إيجاد المشتقة P'(t) = 8e^(0.04t) بشكل صحيح",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 2,
+              "key": "P'-in-terms-of-P",
+              "descriptionEn": "Expresses P'(t) = 0.04P(t)",
+              "descriptionAr": "كتابة P'(t) بدلالة P أي 0.04P",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 3,
+              "key": "Q-derivative",
+              "descriptionEn": "Correctly finds Q'(t) = 8",
+              "descriptionAr": "إيجاد المشتقة Q'(t) = 8 بشكل صحيح",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 4,
+              "key": "classify-both",
+              "descriptionEn": "Classifies P as exponential growth and Q as linear growth",
+              "descriptionAr": "تصنيف P كنمو أسي و Q كنمو خطي",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 5,
+              "key": "explain-difference",
+              "descriptionEn": "Explains proportional vs constant rate of change",
+              "descriptionAr": "توضيح الفرق بين معدل النمو المتناسب مع الحجم والمعدل الثابت",
+              "maxPoints": 4
+            }
+          ]
+        },
+        {
+          "orderIndex": 10,
+          "conceptKey": "domain-vs-critical-point",
+          "type": "ESSAY",
+          "promptLatex": "Given $f(x)=\\ln(x^{2}-4x+3)$, a student found $f'(x)=\\frac{2x-4}{x^{2}-4x+3}$, set the numerator to zero and concluded $x=2$ is a critical point. Find the domain and decide whether $x=2$ is valid.",
+          "points": 15,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "x^{2}-4x+3 > 0 \\implies (x-1)(x-3) > 0",
+              "\\text{Domain: } (-\\infty, 1) \\cup (3, \\infty)",
+              "x = 2 \\text{ gives } 2^{2}-4(2)+3 = -1 < 0 \\implies x=2 \\notin \\text{Domain}",
+              "\\text{Since } x=2 \\text{ is not in the domain of } f, \\text{ it is not a critical point; } f \\text{ has no critical points.}"
+            ],
+            "finalAnswerLatex": "\\text{Domain } (-\\infty,1)\\cup(3,\\infty);\\; x=2 \\text{ is invalid (no critical points)}",
+            "finalAnswerSympy": null,
+            "commonMistakes": "Solving x^2-4x+3 != 0 instead of > 0, or accepting x=2 because f'(2)=0 formally without checking domain."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "domain-inequality-setup",
+              "descriptionEn": "Sets strict positivity condition x^2 - 4x + 3 > 0",
+              "descriptionAr": "كتابة شرط المجال x^2 - 4x + 3 > 0",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 2,
+              "key": "domain-solution",
+              "descriptionEn": "Solves inequality to obtain (-inf, 1) U (3, inf)",
+              "descriptionAr": "حل المتباينة للحصول على المجال (-∞, 1) ∪ (3, ∞)",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 3,
+              "key": "x=2-not-in-domain",
+              "descriptionEn": "Shows x = 2 lies outside the domain (argument equals -1)",
+              "descriptionAr": "إثبات أن x = 2 لا ينتمي للمجال لأن ما داخل اللوغاريتم سالب",
+              "maxPoints": 4
+            },
+            {
+              "orderIndex": 4,
+              "key": "critical-point-definition",
+              "descriptionEn": "States a critical point must belong to the domain of f",
+              "descriptionAr": "توضيح أن النقطة الحرجة يجب أن تنتمي إلى مجال الدالة",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 5,
+              "key": "final-conclusion",
+              "descriptionEn": "Concludes x = 2 is not valid and f has no critical points",
+              "descriptionAr": "الاستنتاج النهائي بأن x = 2 مرفوضة ولا توجد نقاط حرجة",
+              "maxPoints": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "modelNumber": 2,
+      "title": "Model 2 — Post-Test: Derivatives of Exponential & Logarithmic Functions",
+      "durationMinutes": 60,
+      "status": "DRAFT",
+      "questions": [
+        {
+          "orderIndex": 1,
+          "conceptKey": "log-differentiation-mcq",
+          "type": "MCQ",
+          "promptLatex": "If $y = x^{\\cos x}$, then $\\frac{dy}{dx}$ equals:",
+          "points": 5,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "mcqOptions": [
+            {
+              "label": "A",
+              "textLatex": "$x^{\\cos x}\\left(-\\sin x\\ln x+\\frac{\\cos x}{x}\\right)$",
+              "isCorrect": true
+            },
+            { "label": "B", "textLatex": "$\\cos x\\,x^{\\cos x-1}$", "isCorrect": false },
+            { "label": "C", "textLatex": "$-x^{\\cos x}\\sin x$", "isCorrect": false },
+            {
+              "label": "D",
+              "textLatex": "$x^{\\cos x}\\left(-\\frac{\\sin x}{x}\\right)$",
+              "isCorrect": false
+            }
+          ]
+        },
+        {
+          "orderIndex": 2,
+          "conceptKey": "exp-constant-base",
+          "type": "MCQ",
+          "promptLatex": "If $y = 5^{2}+3^{\\tan x}$, then $\\frac{dy}{dx}$ equals:",
+          "points": 5,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "mcqOptions": [
+            { "label": "A", "textLatex": "$10+3^{\\tan x}\\ln 3$", "isCorrect": false },
+            {
+              "label": "B",
+              "textLatex": "$3^{\\tan x}\\ln 3\\,\\sec^{2}x$",
+              "isCorrect": true
+            },
+            { "label": "C", "textLatex": "$3^{\\tan x}\\sec^{2}x$", "isCorrect": false },
+            { "label": "D", "textLatex": "$5^{2}+3^{\\tan x}\\sec^{2}x$", "isCorrect": false }
+          ]
+        },
+        {
+          "orderIndex": 3,
+          "conceptKey": "ln-domain-misconception",
+          "type": "MCQ",
+          "promptLatex": "A student claims the domain of $f(x)=\\ln(x^{2}-4x+3)$ is all real numbers except $x=1$ and $x=3$. Which statement correctly identifies the student's mistake?",
+          "points": 5,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": true,
+          "mcqOptions": [
+            {
+              "label": "A",
+              "textLatex": "The logarithmic argument can be zero.",
+              "isCorrect": false
+            },
+            { "label": "B", "textLatex": "The domain is $x<1$ or $x>3$.", "isCorrect": true },
+            {
+              "label": "C",
+              "textLatex": "The domain includes $x=1$ and $x=3$.",
+              "isCorrect": false
+            },
+            { "label": "D", "textLatex": "The domain is all real numbers.", "isCorrect": false }
+          ]
+        },
+        {
+          "orderIndex": 4,
+          "conceptKey": "exp-growth-model",
+          "type": "MCQ",
+          "promptLatex": "A quantity is given by $N(t)=150e^{0.05t}$. Which equation relates its growth rate $N'$ to its current size $N$?",
+          "points": 5,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "mcqOptions": [
+            { "label": "A", "textLatex": "$N'=150$", "isCorrect": false },
+            { "label": "B", "textLatex": "$N'=0.05N$", "isCorrect": true },
+            { "label": "C", "textLatex": "$N'=0.05t$", "isCorrect": false },
+            { "label": "D", "textLatex": "$N'=N+0.05$", "isCorrect": false }
+          ]
+        },
+        {
+          "orderIndex": 5,
+          "conceptKey": "log-differentiation",
+          "type": "ESSAY",
+          "promptLatex": "Using logarithmic differentiation, find the derivative of $y=(\\tan x)^{x}$.",
+          "points": 10,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "\\ln y = x\\ln(\\tan x)",
+              "\\frac{y'}{y} = \\ln(\\tan x) + x\\cdot\\frac{\\sec^{2}x}{\\tan x}",
+              "y' = (\\tan x)^{x}\\left[\\ln(\\tan x) + \\frac{x\\sec^{2}x}{\\tan x}\\right]"
+            ],
+            "finalAnswerLatex": "(\\tan x)^{x}\\left(\\ln(\\tan x)+\\frac{x\\sec^{2}x}{\\tan x}\\right)",
+            "finalAnswerSympy": "tan(x)**x * (log(tan(x)) + x*sec(x)**2/tan(x))",
+            "commonMistakes": "Treating exponent x as constant, forgetting y'/y on LHS, or omitting sec^2(x) in d/dx ln(tan x)."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "take-ln-bring-down",
+              "descriptionEn": "Takes natural log of both sides and brings down exponent x",
+              "descriptionAr": "أخذ اللوغاريتم الطبيعي للطرفين وإنزال الأس x",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 2,
+              "key": "differentiate-lhs-y'/y",
+              "descriptionEn": "Implicitly differentiates ln(y) to y'/y",
+              "descriptionAr": "اشتقاق ln(y) ضمنياً إلى y'/y",
+              "maxPoints": 1
+            },
+            {
+              "orderIndex": 3,
+              "key": "product-rule-rhs",
+              "descriptionEn": "Applies product rule to x ln(tan x)",
+              "descriptionAr": "تطبيق قاعدة حاصل الضرب على x ln(tan x)",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 4,
+              "key": "simplify-derivative-of-ln-tan",
+              "descriptionEn": "Correctly evaluates d/dx ln(tan x) = sec^2(x) / tan x",
+              "descriptionAr": "حساب مشتقة ln(tan x) = sec^2(x)/tan x",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 5,
+              "key": "final-answer-times-y",
+              "descriptionEn": "Multiplies through by y = (tan x)^x for final answer",
+              "descriptionAr": "الضرب في y = (tan x)^x للحصول على الناتج النهائي",
+              "maxPoints": 2
+            }
+          ]
+        },
+        {
+          "orderIndex": 6,
+          "conceptKey": "product-rule-at-point",
+          "type": "ESSAY",
+          "promptLatex": "Find $\\frac{dy}{dx}$ and its value at $x=0$ if $y=e^{3x}\\sin x$.",
+          "points": 10,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "\\frac{dy}{dx} = 3e^{3x}\\sin x + e^{3x}\\cos x = e^{3x}(3\\sin x + \\cos x)",
+              "\\left.\\frac{dy}{dx}\\right|_{x=0} = e^{0}(3\\sin 0 + \\cos 0) = 1(0 + 1) = 1"
+            ],
+            "finalAnswerLatex": "1",
+            "finalAnswerSympy": "1",
+            "commonMistakes": "Missing factor 3 from chain rule on e^(3x), or evaluating cos(0) as 0."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "product-rule-setup",
+              "descriptionEn": "Sets up product rule with both terms correctly",
+              "descriptionAr": "كتابة قاعدة مشتقة حاصل الضرب بحديها بشكل صحيح",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 2,
+              "key": "chain-rule-on-e^{3x}",
+              "descriptionEn": "Applies chain rule to differentiate e^(3x) as 3e^(3x)",
+              "descriptionAr": "تطبيق قاعدة السلسلة لاشتقاق e^(3x) إلى 3e^(3x)",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 3,
+              "key": "correct-simplified-derivative",
+              "descriptionEn": "Correctly obtains e^(3x)(3sin x + cos x)",
+              "descriptionAr": "الوصول للصيغة الصحيحة للمشتقة e^(3x)(3sin x + cos x)",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 4,
+              "key": "substitute-x=0",
+              "descriptionEn": "Substitutes x = 0 into the derivative expression",
+              "descriptionAr": "التعويض عن x = 0 في تعبير المشتقة",
+              "maxPoints": 1
+            },
+            {
+              "orderIndex": 5,
+              "key": "final-value-1",
+              "descriptionEn": "Computes final numeric value 1",
+              "descriptionAr": "حساب القيمة العددية النهائية 1",
+              "maxPoints": 2
+            }
+          ]
+        },
+        {
+          "orderIndex": 7,
+          "conceptKey": "tangent-intercepts-distance",
+          "type": "ESSAY",
+          "promptLatex": "Find the equation of the tangent to $y=\\ln(x^{5})$ at $x=1$. Then find the points where the tangent meets the coordinate axes and the distance between them.",
+          "points": 20,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "y = 5\\ln x \\implies y' = \\frac{5}{x}",
+              "m = y'(1) = 5, \\quad y(1) = \\ln(1) = 0 \\implies (1, 0)",
+              "y - 0 = 5(x - 1) \\implies y = 5x - 5",
+              "\\text{x-intercept}: (1, 0); \\quad \\text{y-intercept}: (0, -5)",
+              "d = \\sqrt{(1 - 0)^{2} + (0 - (-5))^{2}} = \\sqrt{1 + 25} = \\sqrt{26}"
+            ],
+            "finalAnswerLatex": "\\sqrt{26}",
+            "finalAnswerSympy": "sqrt(26)",
+            "commonMistakes": "Computing y' = 1/x^5 without chain rule, or arithmetic error in 1^2 + 5^2."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "derivative-and-slope-5",
+              "descriptionEn": "Finds y' = 5/x and evaluates slope m = 5 at x = 1",
+              "descriptionAr": "إيجاد المشتقة y' = 5/x وحساب الميل m = 5 عند x = 1",
+              "maxPoints": 4
+            },
+            {
+              "orderIndex": 2,
+              "key": "point-of-tangency-(1,0)",
+              "descriptionEn": "Finds point of tangency (1, 0)",
+              "descriptionAr": "إيجاد نقطة التماس (1, 0)",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 3,
+              "key": "tangent-equation",
+              "descriptionEn": "Writes tangent line equation y = 5x - 5",
+              "descriptionAr": "كتابة معادلة المماس y = 5x - 5",
+              "maxPoints": 4
+            },
+            {
+              "orderIndex": 4,
+              "key": "both-axis-intercepts",
+              "descriptionEn": "Finds both intercepts (1, 0) and (0, -5)",
+              "descriptionAr": "إيجاد نقطتي التقاطع مع المحورين (1, 0) و (0, -5)",
+              "maxPoints": 5
+            },
+            {
+              "orderIndex": 5,
+              "key": "distance-formula-and-value",
+              "descriptionEn": "Applies distance formula to get sqrt(26)",
+              "descriptionAr": "تطبيق قانون البعد بين نقطتين للحصول على sqrt(26)",
+              "maxPoints": 4
+            }
+          ]
+        },
+        {
+          "orderIndex": 8,
+          "conceptKey": "find-error-derivative",
+          "type": "ESSAY",
+          "promptLatex": "A student differentiates $y=7^{3}+e^{2x}$ as $\\frac{dy}{dx}=3(7)^{2}+2e^{2x}$. Identify the error and find the correct derivative.",
+          "points": 10,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "\\text{Error: } 7^{3} \\text{ is a constant, so } \\frac{d}{dx}(7^{3}) = 0 \\neq 3(7)^{2}",
+              "\\frac{dy}{dx} = 2e^{2x}"
+            ],
+            "finalAnswerLatex": "2e^{2x}",
+            "finalAnswerSympy": "2*exp(2*x)",
+            "commonMistakes": "Applying the power rule to a numeric constant 7^3."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "error-constant-term",
+              "descriptionEn": "Identifies that 7^3 is a constant whose derivative is 0",
+              "descriptionAr": "تحديد أن 7^3 ثابت ومشتقته تساوي صفر",
+              "maxPoints": 5
+            },
+            {
+              "orderIndex": 2,
+              "key": "explain-why",
+              "descriptionEn": "Explains power rule only applies to variable bases",
+              "descriptionAr": "توضيح أن قاعدة القوة لا تُطبق على الأساسات الثابتة",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 3,
+              "key": "correct-derivative",
+              "descriptionEn": "Writes the correct derivative y' = 2e^(2x)",
+              "descriptionAr": "كتابة المشتقة الصحيحة y' = 2e^(2x)",
+              "maxPoints": 3
+            }
+          ]
+        },
+        {
+          "orderIndex": 9,
+          "conceptKey": "exp-vs-linear-growth",
+          "type": "ESSAY",
+          "promptLatex": "Two quantities are modeled by $A(t)=300e^{0.02t}$ and $B(t)=300+6t$. Find the derivative of each and explain the difference between their growth rates.",
+          "points": 15,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "A'(t) = 300(0.02)e^{0.02t} = 6e^{0.02t} = 0.02A(t)",
+              "B'(t) = 6",
+              "A(t) \\text{ grows exponentially (rate proportional to size)}; \\quad B(t) \\text{ grows linearly (constant rate } 6 \\text{)}"
+            ],
+            "finalAnswerLatex": "A'(t)=6e^{0.02t}=0.02A,\\; B'(t)=6",
+            "finalAnswerSympy": null,
+            "commonMistakes": "Missing chain rule factor 0.02, or failing to state proportional vs constant growth."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "A-derivative",
+              "descriptionEn": "Correctly finds A'(t) = 6e^(0.02t)",
+              "descriptionAr": "إيجاد المشتقة A'(t) = 6e^(0.02t) بشكل صحيح",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 2,
+              "key": "A'-in-terms-of-A",
+              "descriptionEn": "Expresses A'(t) = 0.02A(t)",
+              "descriptionAr": "كتابة A'(t) بدلالة A أي 0.02A",
+              "maxPoints": 2
+            },
+            {
+              "orderIndex": 3,
+              "key": "B-derivative",
+              "descriptionEn": "Correctly finds B'(t) = 6",
+              "descriptionAr": "إيجاد المشتقة B'(t) = 6 بشكل صحيح",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 4,
+              "key": "classify-both",
+              "descriptionEn": "Classifies A as exponential growth and B as linear growth",
+              "descriptionAr": "تصنيف A كنمو أسي و B كنمو خطي",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 5,
+              "key": "explain-difference",
+              "descriptionEn": "Explains proportional vs constant rate of change",
+              "descriptionAr": "توضيح الفرق بين معدل النمو المتناسب مع الحجم والمعدل الثابت",
+              "maxPoints": 4
+            }
+          ]
+        },
+        {
+          "orderIndex": 10,
+          "conceptKey": "domain-vs-critical-point",
+          "type": "ESSAY",
+          "promptLatex": "Given $f(x)=\\ln(x^{2}-6x+8)$, a student concluded $x=3$ is a critical point by setting the numerator of $f'(x)$ to zero. Find the domain and decide whether $x=3$ is valid.",
+          "points": 15,
+          "videoTimestampSeconds": 0,
+          "needsTeacherConfirmation": false,
+          "modelAnswer": {
+            "solutionStepsLatex": [
+              "x^{2}-6x+8 > 0 \\implies (x-2)(x-4) > 0",
+              "\\text{Domain: } (-\\infty, 2) \\cup (4, \\infty)",
+              "x = 3 \\text{ gives } 3^{2}-6(3)+8 = -1 < 0 \\implies x=3 \\notin \\text{Domain}",
+              "\\text{Since } x=3 \\text{ is outside the domain, } f \\text{ has no critical points.}"
+            ],
+            "finalAnswerLatex": "\\text{Domain } (-\\infty,2)\\cup(4,\\infty);\\; x=3 \\text{ is invalid (no critical points)}",
+            "finalAnswerSympy": null,
+            "commonMistakes": "Accepting x=3 without verifying domain positivity."
+          },
+          "rubricCriteria": [
+            {
+              "orderIndex": 1,
+              "key": "domain-inequality-setup",
+              "descriptionEn": "Sets strict positivity condition x^2 - 6x + 8 > 0",
+              "descriptionAr": "كتابة شرط المجال x^2 - 6x + 8 > 0",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 2,
+              "key": "domain-solution",
+              "descriptionEn": "Solves inequality to obtain (-inf, 2) U (4, inf)",
+              "descriptionAr": "حل المتباينة للحصول على المجال (-∞, 2) ∪ (4, ∞)",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 3,
+              "key": "x=3-not-in-domain",
+              "descriptionEn": "Shows x = 3 lies outside the domain (argument equals -1)",
+              "descriptionAr": "إثبات أن x = 3 لا ينتمي للمجال لأن ما داخل اللوغاريتم سالب",
+              "maxPoints": 4
+            },
+            {
+              "orderIndex": 4,
+              "key": "critical-point-definition",
+              "descriptionEn": "States a critical point must belong to the domain of f",
+              "descriptionAr": "توضيح أن النقطة الحرجة يجب أن تنتمي إلى مجال الدالة",
+              "maxPoints": 3
+            },
+            {
+              "orderIndex": 5,
+              "key": "final-conclusion",
+              "descriptionEn": "Concludes x = 3 is not valid and f has no critical points",
+              "descriptionAr": "الاستنتاج النهائي بأن x = 3 مرفوضة ولا توجد نقاط حرجة",
+              "maxPoints": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

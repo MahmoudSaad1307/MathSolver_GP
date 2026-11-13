@@ -1,9 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   CODE_ALPHABET,
   evaluatePublishChecklist,
   extractYoutubeVideoId,
   isRubricSumValid,
+  SeedTopicBundleSchema,
   StudentJoinSchema,
 } from '../src/index.js';
 
@@ -99,5 +101,43 @@ describe('code alphabet and join validation', () => {
     expect(
       StudentJoinSchema.safeParse({ joinCode: 'AB01CD', displayName: 'علي محمد' }).success,
     ).toBe(false);
+  });
+});
+
+describe('seed exam bundle', () => {
+  it('validates seed/exams.seed.json with matching rubric sums, twin concepts, and Q3 review flag', () => {
+    const raw = readFileSync(new URL('../../../seed/exams.seed.json', import.meta.url), 'utf8');
+    const parsed = SeedTopicBundleSchema.parse(JSON.parse(raw));
+
+    expect(parsed.models).toHaveLength(2);
+    const [m1, m2] = parsed.models;
+    expect(m1.modelNumber).toBe(1);
+    expect(m2.modelNumber).toBe(2);
+    expect(m1.questions).toHaveLength(10);
+    expect(m2.questions).toHaveLength(10);
+
+    for (const model of parsed.models) {
+      const total = model.questions.reduce((acc, q) => acc + q.points, 0);
+      expect(total).toBe(100);
+      for (const q of model.questions) {
+        if (q.type === 'ESSAY') {
+          expect(q.modelAnswer?.solutionStepsLatex.length).toBeGreaterThan(0);
+          expect(isRubricSumValid(q.points, q.rubricCriteria ?? [])).toBe(true);
+        } else {
+          expect(q.mcqOptions).toHaveLength(4);
+          expect(q.mcqOptions?.filter((o) => o.isCorrect)).toHaveLength(1);
+        }
+      }
+    }
+
+    expect(m1.questions.map((q) => q.conceptKey)).toEqual(m2.questions.map((q) => q.conceptKey));
+    expect(m1.questions[2]?.needsTeacherConfirmation).toBe(true);
+    expect(m2.questions[2]?.needsTeacherConfirmation).toBe(true);
+
+    // Unfilled seed has placeholder video and 0 timestamps so checklist blocks publishing
+    const checklist = evaluatePublishChecklist(parsed.topic, m1, m2);
+    expect(checklist.ready).toBe(false);
+    expect(checklist.issues.some((i) => i.code === 'INVALID_VIDEO_URL')).toBe(true);
+    expect(checklist.issues.some((i) => i.code === 'NEEDS_TEACHER_CONFIRMATION')).toBe(true);
   });
 });

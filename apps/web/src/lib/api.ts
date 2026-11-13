@@ -73,3 +73,10 @@ export async function apiRequest<T>(
 
   return (await res.json()) as T;
 }
+
+export function getApiErrorMessage(err: unknown, locale: 'ar' | 'en', fallback: string): string {
+  if (err instanceof ApiClientError) {
+    return locale === 'ar' ? err.messageAr : err.messageEn;
+  }
+  return fallback;
+}
