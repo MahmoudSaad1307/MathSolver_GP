@@ -13,8 +13,10 @@ import { createErrorHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { createCohortsRouter } from './routes/cohorts.js';
 import { createHealthRouter } from './routes/health.js';
+import { createReviewRouter } from './routes/review.js';
 import { createStorageRouter } from './routes/storage.js';
 import { createStudentRouter } from './routes/student.js';
+import { createStudentResultsRouter } from './routes/studentResults.js';
 import { createTeacherAuthRouter } from './routes/teacherAuth.js';
 import { createTeacherContentRouter } from './routes/topics.js';
 import { NoopGradingDispatcher, type GradingDispatcher } from './services/gradingDispatcher.js';
@@ -118,8 +120,10 @@ export function createApp({
       redis,
     }),
   );
+  v1.use('/student', createStudentResultsRouter({ prisma, env, storage }));
   v1.use('/storage', createStorageRouter(storage, env));
   v1.use('/', createTeacherContentRouter(prisma, env));
+  v1.use('/', createReviewRouter({ prisma, env, storage, gradingDispatcher }));
 
   app.use('/api/v1', v1);
 

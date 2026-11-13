@@ -7,11 +7,14 @@ const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const StudentConsentPage = React.lazy(() => import('@/pages/student/StudentConsentPage'));
 const StudentPortalPage = React.lazy(() => import('@/pages/student/StudentPortalPage'));
 const StudentExamPage = React.lazy(() => import('@/pages/student/StudentExamPage'));
+const StudentResultsPage = React.lazy(() => import('@/pages/student/StudentResultsPage'));
 const TeacherLoginPage = React.lazy(() => import('@/pages/teacher/TeacherLoginPage'));
 const TeacherDashboardHome = React.lazy(() => import('@/pages/teacher/TeacherDashboardHome'));
 const TopicsPage = React.lazy(() => import('@/pages/teacher/TopicsPage'));
 const TopicBuilderPage = React.lazy(() => import('@/pages/teacher/TopicBuilderPage'));
 const CohortsPage = React.lazy(() => import('@/pages/teacher/CohortsPage'));
+const ReviewQueuePage = React.lazy(() => import('@/pages/teacher/ReviewQueuePage'));
+const StudentsPage = React.lazy(() => import('@/pages/teacher/StudentsPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,11 +47,14 @@ export function App() {
             <Route path="/student" element={<StudentPortalPage />} />
             <Route path="/student/consent" element={<StudentConsentPage />} />
             <Route path="/student/exam/:modelNumber" element={<StudentExamPage />} />
+            <Route path="/student/results/:attemptId" element={<StudentResultsPage />} />
             <Route path="/teacher/login" element={<TeacherLoginPage />} />
             <Route path="/teacher" element={<TeacherDashboardHome />} />
             <Route path="/teacher/topics" element={<TopicsPage />} />
             <Route path="/teacher/topics/:topicId" element={<TopicBuilderPage />} />
             <Route path="/teacher/cohorts" element={<CohortsPage />} />
+            <Route path="/teacher/review" element={<ReviewQueuePage />} />
+            <Route path="/teacher/students" element={<StudentsPage />} />
             <Route path="/teacher/*" element={<TeacherDashboardHome />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

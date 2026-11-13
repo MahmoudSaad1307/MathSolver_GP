@@ -41,3 +41,18 @@ export function validateParams<T extends Record<string, string>>(
     return next();
   };
 }
+
+export function validateQuery<T>(schema: ZodType<T>): RequestHandler {
+  return (req, res, next) => {
+    const parsed = schema.safeParse(req.query);
+    if (!parsed.success) {
+      return next(
+        new AppError('VALIDATION_ERROR', {
+          details: parsed.error.flatten(),
+        }),
+      );
+    }
+    res.locals.validatedQuery = parsed.data;
+    return next();
+  };
+}

@@ -104,10 +104,26 @@ export default function StudentPortalPage() {
               </div>
               <CardDescription>{t('student.portal.pretestGradingDesc')}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => void stateQuery.refetch()}>
                 {t('student.portal.refreshStatus')}
               </Button>
+              {(data.step === 'POSTTEST_GRADING' ? data.postTestAttempt?.id : data.preTestAttempt?.id) && (
+                <Button
+                  variant="primary"
+                  onClick={() =>
+                    void navigate(
+                      `/student/results/${
+                        data.step === 'POSTTEST_GRADING'
+                          ? data.postTestAttempt?.id
+                          : data.preTestAttempt?.id
+                      }`,
+                    )
+                  }
+                >
+                  {t('results.viewDetails')}
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -123,7 +139,7 @@ export default function StudentPortalPage() {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               {data.postTestLockReason && (
                 <Alert tone="warning">
                   {locale === 'ar'
@@ -134,6 +150,15 @@ export default function StudentPortalPage() {
               <div className="text-xs text-slate-600" dir="ltr">
                 {data.videoProgress.watchedSeconds}s / {data.videoProgress.minWatchSeconds}s
               </div>
+              {data.preTestAttempt && (
+                <Button
+                  variant="primary"
+                  className="w-full"
+                  onClick={() => void navigate(`/student/results/${data.preTestAttempt?.id}`)}
+                >
+                  {t('results.viewDetails')}
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}

@@ -512,17 +512,22 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         include,
         select,
       }: {
-        where?: { topicId?: string; deletedAt?: null };
+        where?: { topicId?: string | { in: string[] }; deletedAt?: null };
         include?: Record<string, unknown>;
         select?: Record<string, unknown>;
       }) => {
         const hydration = include ?? (select?.questions ? { questions: select.questions } : undefined);
         return examModels
-          .filter(
-            (m) =>
-              (where?.topicId === undefined || m.topicId === where.topicId) &&
-              (where?.deletedAt === undefined || m.deletedAt === where.deletedAt),
-          )
+          .filter((m) => {
+            const matchesTopic =
+              where?.topicId === undefined ||
+              (typeof where.topicId === 'string'
+                ? m.topicId === where.topicId
+                : where.topicId.in.includes(m.topicId));
+            const matchesDeleted =
+              where?.deletedAt === undefined || m.deletedAt === where.deletedAt;
+            return matchesTopic && matchesDeleted;
+          })
           .sort((a, b) => a.modelNumber - b.modelNumber)
           .map((m) => hydrateExamModel(m, hydration));
       },
@@ -604,14 +609,19 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       findMany: async ({
         where,
       }: {
-        where?: { examModelId?: string; deletedAt?: null };
+        where?: { examModelId?: string | { in: string[] }; deletedAt?: null };
       }) => {
         return questions
-          .filter(
-            (q) =>
-              (where?.examModelId === undefined || q.examModelId === where.examModelId) &&
-              (where?.deletedAt === undefined || q.deletedAt === where.deletedAt),
-          )
+          .filter((q) => {
+            const matchesModel =
+              where?.examModelId === undefined ||
+              (typeof where.examModelId === 'string'
+                ? q.examModelId === where.examModelId
+                : where.examModelId.in.includes(q.examModelId));
+            const matchesDeleted =
+              where?.deletedAt === undefined || q.deletedAt === where.deletedAt;
+            return matchesModel && matchesDeleted;
+          })
           .sort((a, b) => a.orderIndex - b.orderIndex);
       },
       findFirst: async ({
@@ -1382,23 +1392,48 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         gradingResults.push(row);
         return row;
       },
-      findFirst: async ({ where }: { where: { id?: string; answerId?: string } }) => {
-        const found = gradingResults.find(
+      findFirst: async ({
+        where,
+        orderBy,
+      }: {
+        where?: { id?: string; answerId?: string };
+        orderBy?: { version?: 'asc' | 'desc' };
+      }) => {
+        let matched = gradingResults.filter(
           (g) =>
-            (where.id === undefined || g.id === where.id) &&
-            (where.answerId === undefined || g.answerId === where.answerId),
+            (where?.id === undefined || g.id === where.id) &&
+            (where?.answerId === undefined || g.answerId === where.answerId),
         );
-        return found ?? null;
+        if (orderBy?.version === 'desc') {
+          matched = [...matched].sort((a, b) => b.version - a.version);
+        }
+        return matched[0] ?? null;
       },
       findMany: async ({
         where,
+        orderBy,
       }: {
-        where?: { needsReview?: boolean; answer?: { question?: { examModel?: { topic?: { ownerId?: string } } } } };
+        where?: {
+          answerId?: string | { in: string[] };
+          needsReview?: boolean;
+        };
+        orderBy?: { version?: 'asc' | 'desc' };
       }) => {
-        return gradingResults.filter((g) => {
+        let matched = gradingResults.filter((g) => {
           if (where?.needsReview !== undefined && g.needsReview !== where.needsReview) return false;
+          if (where?.answerId !== undefined) {
+            const ok =
+              typeof where.answerId === 'string'
+                ? g.answerId === where.answerId
+                : where.answerId.in.includes(g.answerId);
+            if (!ok) return false;
+          }
           return true;
         });
+        if (orderBy?.version === 'desc') {
+          matched = [...matched].sort((a, b) => b.version - a.version);
+        }
+        return matched;
       },
       update: async ({
         where,
@@ -1425,6 +1460,24 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         teacherOverrides.push(row);
         return row;
       },
+      findMany: async ({
+        where,
+        orderBy,
+      }: {
+        where?: { gradingResultId?: string | { in: string[] } };
+        orderBy?: { createdAt?: 'asc' | 'desc' };
+      }) => {
+        let matched = teacherOverrides.filter((o) => {
+          if (where?.gradingResultId === undefined) return true;
+          return typeof where.gradingResultId === 'string'
+            ? o.gradingResultId === where.gradingResultId
+            : where.gradingResultId.in.includes(o.gradingResultId);
+        });
+        if (orderBy?.createdAt === 'desc') {
+          matched = [...matched].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        }
+        return matched;
+      },
     },
     aiUsage: {
       create: async ({ data }: { data: Omit<FakeAiUsageRow, 'id' | 'createdAt'> }) => {
@@ -1445,6 +1498,95 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       },
     },
   };
+
+  const matchId = (val: string, filter?: string | { in: string[] }) =>
+    filter === undefined ? true : typeof filter === 'string' ? val === filter : filter.in.includes(val);
+
+  Object.assign(mock.mcqOption, {
+    findMany: async ({ where }: { where?: { questionId?: string | { in: string[] }; deletedAt?: null } }) =>
+      mcqOptions.filter(
+        (o) =>
+          matchId(o.questionId, where?.questionId) &&
+          (where?.deletedAt === undefined || o.deletedAt === where.deletedAt),
+      ),
+  });
+
+  Object.assign(mock.modelAnswer, {
+    findFirst: async ({ where }: { where?: { questionId?: string; deletedAt?: null } }) =>
+      modelAnswers.find(
+        (m) =>
+          (where?.questionId === undefined || m.questionId === where.questionId) &&
+          (where?.deletedAt === undefined || m.deletedAt === where.deletedAt),
+      ) ?? null,
+    findMany: async ({ where }: { where?: { questionId?: string | { in: string[] }; deletedAt?: null } }) =>
+      modelAnswers.filter(
+        (m) =>
+          matchId(m.questionId, where?.questionId) &&
+          (where?.deletedAt === undefined || m.deletedAt === where.deletedAt),
+      ),
+  });
+
+  Object.assign(mock.rubricCriterion, {
+    findMany: async ({ where }: { where?: { questionId?: string | { in: string[] }; deletedAt?: null } }) =>
+      rubricCriteria
+        .filter(
+          (c) =>
+            matchId(c.questionId, where?.questionId) &&
+            (where?.deletedAt === undefined || c.deletedAt === where.deletedAt),
+        )
+        .sort((a, b) => a.orderIndex - b.orderIndex),
+  });
+
+  Object.assign(mock.student, {
+    findMany: async ({ where }: { where?: { cohortId?: string | { in: string[] }; deletedAt?: null } }) =>
+      students
+        .filter(
+          (s) =>
+            matchId(s.cohortId, where?.cohortId) &&
+            (where?.deletedAt === undefined || s.deletedAt === where.deletedAt),
+        )
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+  });
+
+  Object.assign(mock.attempt, {
+    findMany: async ({ where }: { where?: { studentId?: string | { in: string[] } } }) =>
+      attempts.filter((a) => matchId(a.studentId, where?.studentId)),
+  });
+
+  Object.assign(mock.answer, {
+    findMany: async ({ where }: { where?: { attemptId?: string | { in: string[] } } }) =>
+      answers.filter((a) => matchId(a.attemptId, where?.attemptId)),
+  });
+
+  Object.assign(mock.answerImage, {
+    findMany: async ({
+      where,
+    }: {
+      where?: { answerId?: string | { in: string[] }; deletedAt?: null };
+    }) =>
+      answerImages
+        .filter(
+          (img) =>
+            matchId(img.answerId, where?.answerId) &&
+            (where?.deletedAt === undefined || img.deletedAt === where.deletedAt),
+        )
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+  });
+
+  const mutableMock = mock as unknown as Record<string, Record<string, unknown>>;
+  const videoSessionObj = (mutableMock.videoSession ??= {});
+  Object.assign(videoSessionObj, {
+    findMany: async ({
+      where,
+    }: {
+      where?: { studentId?: string | { in: string[] }; topicId?: string };
+    }) =>
+      videoSessions.filter(
+        (v) =>
+          matchId(v.studentId, where?.studentId) &&
+          (where?.topicId === undefined || v.topicId === where.topicId),
+      ),
+  });
 
   return mock as unknown as PrismaClient & {
     _state: {

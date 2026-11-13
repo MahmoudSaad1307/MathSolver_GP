@@ -5,6 +5,7 @@ import {
   ExamStatusSchema,
   GradingErrorTypeSchema,
   QuestionTypeSchema,
+  ReviewReasonSchema,
 } from '../enums.js';
 
 export const CreateTopicSchema = z.object({
@@ -139,11 +140,35 @@ export const TeacherOverrideSchema = z.object({
       }),
     )
     .min(1),
+  finalAnswerCorrect: z.boolean().optional(),
   errorType: GradingErrorTypeSchema.optional(),
   errorExplanationAr: z.string().trim().min(1).max(2000).optional(),
   note: z.string().trim().max(2000).optional(),
 });
 export type TeacherOverrideInput = z.infer<typeof TeacherOverrideSchema>;
+
+export const ManualGradeSchema = TeacherOverrideSchema;
+export type ManualGradeInput = z.infer<typeof ManualGradeSchema>;
+
+export const PinImageSchema = z.object({
+  pinned: z.boolean(),
+});
+export type PinImageInput = z.infer<typeof PinImageSchema>;
+
+export const ReviewQueueQuerySchema = z.object({
+  topicId: z.string().uuid().optional(),
+  cohortId: z.string().uuid().optional(),
+  reason: ReviewReasonSchema.optional(),
+  includeResolved: z.enum(['true', 'false']).optional(),
+});
+export type ReviewQueueQuery = z.infer<typeof ReviewQueueQuerySchema>;
+
+export const StudentsQuerySchema = z.object({
+  cohortId: z.string().uuid().optional(),
+  topicId: z.string().uuid().optional(),
+  search: z.string().trim().max(100).optional(),
+});
+export type StudentsQuery = z.infer<typeof StudentsQuerySchema>;
 
 export const RandomizeRosterSplitSchema = z.object({
   studentNames: z.array(z.string().trim().min(2).max(60)).min(2).max(500),
