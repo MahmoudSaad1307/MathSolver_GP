@@ -349,7 +349,9 @@ export default function CohortsPage() {
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                       <div>
-                        <div className="text-xs text-slate-500">{t('teacher.cohorts.joinCode')}</div>
+                        <div className="text-xs text-slate-500">
+                          {t('teacher.cohorts.joinCode')}
+                        </div>
                         <div
                           dir="ltr"
                           className="font-mono text-lg font-bold tracking-widest text-slate-900"
@@ -370,9 +372,7 @@ export default function CohortsPage() {
                           <Copy className="h-4 w-4" />
                         )}
                         <span>
-                          {copiedId === cohort.id
-                            ? t('student.copied')
-                            : t('student.copyCode')}
+                          {copiedId === cohort.id ? t('student.copied') : t('student.copyCode')}
                         </span>
                       </Button>
                     </div>
@@ -485,7 +485,10 @@ export default function CohortsPage() {
             {splitResult && (
               <div className="space-y-3 border-t border-slate-200 pt-4">
                 <div className="text-xs text-slate-500">
-                  Seed: <span dir="ltr" className="font-mono font-bold">{splitResult.seedUsed}</span>
+                  Seed:{' '}
+                  <span dir="ltr" className="font-mono font-bold">
+                    {splitResult.seedUsed}
+                  </span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3">

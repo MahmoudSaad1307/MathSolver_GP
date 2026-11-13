@@ -6,11 +6,7 @@ function toJson(value: unknown): Prisma.InputJsonValue {
 import type { ReviewReason, ScoreSource } from '@mathlens/shared';
 import type { AppEnv } from '../config/env.js';
 import type { Logger } from '../lib/logger.js';
-import {
-  aiCostCounter,
-  gradingErrorCounter,
-  gradingLatencyHistogram,
-} from '../lib/metrics.js';
+import { aiCostCounter, gradingErrorCounter, gradingLatencyHistogram } from '../lib/metrics.js';
 import type { AiCriterionScore, AiServiceClient } from './aiClient.js';
 import type { EssayGradingJobPayload } from './gradingDispatcher.js';
 import type { StorageAdapter } from './storage/index.js';
@@ -50,7 +46,9 @@ export function boundAndRecomputeCriteriaScores(
     if (!Number.isFinite(rawPts) || rawPts < 0 || rawPts > crit.maxPoints) {
       cappedMismatch = true;
     }
-    const clamped = roundTwo(Math.min(Math.max(0, Number.isFinite(rawPts) ? rawPts : 0), crit.maxPoints));
+    const clamped = roundTwo(
+      Math.min(Math.max(0, Number.isFinite(rawPts) ? rawPts : 0), crit.maxPoints),
+    );
     running += clamped;
     return {
       criterionKey: crit.key,
@@ -141,8 +139,7 @@ export function computeAttemptRollup(attempt: AttemptRollupCandidate): {
   }
 
   const totalScore = roundTwo(runningTotal);
-  const percentage =
-    attempt.maxScore > 0 ? roundTwo((totalScore / attempt.maxScore) * 100) : 0;
+  const percentage = attempt.maxScore > 0 ? roundTwo((totalScore / attempt.maxScore) * 100) : 0;
 
   let scoreSource: ScoreSource = 'AUTO';
   if (hasOverride && !hasAi && !hasAuto) {
@@ -259,7 +256,10 @@ export class GradingOrchestrator {
 
     const capError = await this.checkBudgetCaps(studentId);
     if (capError) {
-      this.logger.warn({ studentId, answerId, capError }, 'AI budget cap reached; routing to human review');
+      this.logger.warn(
+        { studentId, answerId, capError },
+        'AI budget cap reached; routing to human review',
+      );
       gradingErrorCounter.inc({ code: capError });
       return this.persistFallbackResult({
         answerId,
@@ -307,11 +307,16 @@ export class GradingOrchestrator {
         forceRefresh,
       });
 
-      const { boundedScores, recomputedTotal, cappedMismatch } =
-        boundAndRecomputeCriteriaScores(aiRes.criteriaScores, answer.question.rubricCriteria);
+      const { boundedScores, recomputedTotal, cappedMismatch } = boundAndRecomputeCriteriaScores(
+        aiRes.criteriaScores,
+        answer.question.rubricCriteria,
+      );
 
       const mergedReasons = [...aiRes.reviewReasons];
-      if ((cappedMismatch || Math.abs(aiRes.aiTotal - recomputedTotal) > 0.05) && !mergedReasons.includes('TOTAL_MISMATCH')) {
+      if (
+        (cappedMismatch || Math.abs(aiRes.aiTotal - recomputedTotal) > 0.05) &&
+        !mergedReasons.includes('TOTAL_MISMATCH')
+      ) {
         mergedReasons.push('TOTAL_MISMATCH');
       }
       const needsReview = aiRes.needsReview || mergedReasons.length > 0;

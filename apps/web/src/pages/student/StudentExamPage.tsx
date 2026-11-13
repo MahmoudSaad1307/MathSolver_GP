@@ -114,7 +114,9 @@ export default function StudentExamPage() {
             return;
           }
           if (err.code === 'POSTTEST_LOCKED') {
-            setLockedMessage(getApiErrorMessage(err, locale, t('student.portal.posttestLockedTitle')));
+            setLockedMessage(
+              getApiErrorMessage(err, locale, t('student.portal.posttestLockedTitle')),
+            );
             return;
           }
         }
@@ -243,7 +245,9 @@ export default function StudentExamPage() {
       if (!prev) return prev;
       return {
         ...prev,
-        questions: prev.questions.map((q) => (q.id === questionId ? { ...q, images: nextImages } : q)),
+        questions: prev.questions.map((q) =>
+          q.id === questionId ? { ...q, images: nextImages } : q,
+        ),
       };
     });
   };
@@ -321,7 +325,9 @@ export default function StudentExamPage() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
-                <Badge tone="info">{t('student.exam.modelLabel', { num: attempt.modelNumber })}</Badge>
+                <Badge tone="info">
+                  {t('student.exam.modelLabel', { num: attempt.modelNumber })}
+                </Badge>
                 <span className="text-sm font-bold text-slate-900">{attempt.title}</span>
               </div>
               <div className="mt-1 text-xs text-slate-500">
@@ -350,11 +356,7 @@ export default function StudentExamPage() {
                   {formatCountdown(secLeft)}
                 </span>
               </div>
-              <Button
-                size="sm"
-                onClick={() => setConfirmOpen(true)}
-                disabled={submitting}
-              >
+              <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={submitting}>
                 <Send className="h-4 w-4" />
                 <span>{t('student.exam.submitExam')}</span>
               </Button>
@@ -447,7 +449,11 @@ export default function StudentExamPage() {
               </div>
 
               {activeQuestion.type === 'MCQ' ? (
-                <div className="space-y-3" role="radiogroup" aria-label={`Question ${currentIndex + 1}`}>
+                <div
+                  className="space-y-3"
+                  role="radiogroup"
+                  aria-label={`Question ${currentIndex + 1}`}
+                >
                   {activeQuestion.mcqOptions.map((opt) => {
                     const selected = activeQuestion.selectedOptionId === opt.id;
                     return (
@@ -470,9 +476,7 @@ export default function StudentExamPage() {
                           dir="ltr"
                           className={cn(
                             'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-                            selected
-                              ? 'bg-brand-600 text-white'
-                              : 'bg-slate-100 text-slate-700',
+                            selected ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700',
                           )}
                         >
                           {opt.label}
@@ -490,7 +494,9 @@ export default function StudentExamPage() {
                   answerId={activeQuestion.answerId ?? activeQuestion.id}
                   images={activeQuestion.images}
                   disabled={submitting}
-                  onChanged={(nextImages) => handleEssayImagesChanged(activeQuestion.id, nextImages)}
+                  onChanged={(nextImages) =>
+                    handleEssayImagesChanged(activeQuestion.id, nextImages)
+                  }
                 />
               )}
 
@@ -506,7 +512,9 @@ export default function StudentExamPage() {
 
                 {currentIndex < questions.length - 1 ? (
                   <Button
-                    onClick={() => setCurrentIndex((idx) => Math.min(questions.length - 1, idx + 1))}
+                    onClick={() =>
+                      setCurrentIndex((idx) => Math.min(questions.length - 1, idx + 1))
+                    }
                   >
                     <span>{t('student.exam.next')}</span>
                     <NextIcon className="h-4 w-4" />
@@ -533,7 +541,9 @@ export default function StudentExamPage() {
         >
           <Card className="w-full max-w-md shadow-xl">
             <CardHeader>
-              <CardTitle id="submit-confirm-title">{t('student.exam.confirmSubmitTitle')}</CardTitle>
+              <CardTitle id="submit-confirm-title">
+                {t('student.exam.confirmSubmitTitle')}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-slate-600">{t('student.exam.confirmSubmitWarning')}</p>

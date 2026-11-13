@@ -60,9 +60,16 @@ export function extractAiCriteriaList(
 ): Array<{ key: string; awardedPoints: number; maxPoints: number; commentAr: string }> {
   if (!Array.isArray(rawCriteriaScores)) return [];
   return rawCriteriaScores
-    .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object')
+    .filter(
+      (entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object',
+    )
     .map((rec) => ({
-      key: typeof rec.criterionKey === 'string' ? rec.criterionKey : typeof rec.key === 'string' ? rec.key : '',
+      key:
+        typeof rec.criterionKey === 'string'
+          ? rec.criterionKey
+          : typeof rec.key === 'string'
+            ? rec.key
+            : '',
       awardedPoints: typeof rec.awardedPoints === 'number' ? rec.awardedPoints : 0,
       maxPoints: typeof rec.maxPoints === 'number' ? rec.maxPoints : 0,
       commentAr: typeof rec.commentAr === 'string' ? rec.commentAr : '',
@@ -75,7 +82,9 @@ export function extractOverrideCriteriaList(
 ): Array<{ criterionId: string; key: string; awarded: number; commentAr: string }> {
   if (!Array.isArray(rawNewCriteriaScores)) return [];
   return rawNewCriteriaScores
-    .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object')
+    .filter(
+      (entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object',
+    )
     .map((rec) => ({
       criterionId: typeof rec.criterionId === 'string' ? rec.criterionId : '',
       key: typeof rec.key === 'string' ? rec.key : '',
@@ -109,7 +118,12 @@ export class StudentResultsService {
       where: { id: studentId },
       include: { cohort: true },
     });
-    if (!student || student.deletedAt !== null || !student.cohort || student.cohort.deletedAt !== null) {
+    if (
+      !student ||
+      student.deletedAt !== null ||
+      !student.cohort ||
+      student.cohort.deletedAt !== null
+    ) {
       throw new AppError('NOT_FOUND');
     }
 
@@ -229,9 +243,9 @@ export class StudentResultsService {
     const questionViews = await Promise.all(
       rawQuestions.map(async (q) => {
         const answer = answerByQuestion.get(q.id) ?? null;
-        const answerImages = answer ? imagesByAnswer.get(answer.id) ?? [] : [];
-        const latestResult = answer ? latestResultByAnswer.get(answer.id) ?? null : null;
-        const resultOverrides = latestResult ? overridesByResult.get(latestResult.id) ?? [] : [];
+        const answerImages = answer ? (imagesByAnswer.get(answer.id) ?? []) : [];
+        const latestResult = answer ? (latestResultByAnswer.get(answer.id) ?? null) : null;
+        const resultOverrides = latestResult ? (overridesByResult.get(latestResult.id) ?? []) : [];
         const latestOverride = resultOverrides[0] ?? null;
 
         let statusChip: StudentQuestionStatusChip = 'GRADED';
@@ -276,7 +290,7 @@ export class StudentResultsService {
               ? ov.awarded
               : statusChip === 'GRADING' || (statusChip === 'NEEDS_REVIEW' && !showProvisional)
                 ? 0
-                : ai?.awardedPoints ?? 0;
+                : (ai?.awardedPoints ?? 0);
           return {
             criterionId: crit.id,
             key: crit.key,
@@ -344,12 +358,12 @@ export class StudentResultsService {
           selectedOptionId: answer?.selectedOptionId ?? null,
           images: signedImages,
           transcribedLines,
-          firstErrorStep: showDetailedFeedback ? latestResult?.firstErrorStep ?? null : null,
-          errorType: showDetailedFeedback ? latestResult?.errorType ?? null : null,
+          firstErrorStep: showDetailedFeedback ? (latestResult?.firstErrorStep ?? null) : null,
+          errorType: showDetailedFeedback ? (latestResult?.errorType ?? null) : null,
           errorExplanationAr:
             latestOverride?.newExplanationAr ??
-            (showDetailedFeedback ? latestResult?.errorExplanationAr ?? null : null),
-          hintAr: showDetailedFeedback ? latestResult?.hintAr ?? null : null,
+            (showDetailedFeedback ? (latestResult?.errorExplanationAr ?? null) : null),
+          hintAr: showDetailedFeedback ? (latestResult?.hintAr ?? null) : null,
           teacherNote: latestOverride?.note ?? null,
           criteriaBreakdown: showDetailedFeedback ? criteriaBreakdown : [],
           misreadReportedAt: answer?.misreadReportedAt
@@ -403,12 +417,7 @@ export class StudentResultsService {
     };
   }
 
-  async reportMisread(
-    studentId: string,
-    answerId: string,
-    input: ReportMisreadInput,
-    ip?: string,
-  ) {
+  async reportMisread(studentId: string, answerId: string, input: ReportMisreadInput, ip?: string) {
     const answer = await this.prisma.answer.findFirst({
       where: { id: answerId },
     });
@@ -515,7 +524,10 @@ export class StudentResultsService {
         list.push(ov);
         ovMap.set(ov.gradingResultId, list);
       }
-      const grMap = new Map<string, Array<(typeof allResults)[number] & { overrides: typeof allOverrides }>>();
+      const grMap = new Map<
+        string,
+        Array<(typeof allResults)[number] & { overrides: typeof allOverrides }>
+      >();
       for (const gr of allResults) {
         const list = grMap.get(gr.answerId) ?? [];
         list.push({ ...gr, overrides: ovMap.get(gr.id) ?? [] });

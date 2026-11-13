@@ -385,13 +385,10 @@ describe('Phase 6: Student Remediation & Comparison', () => {
   it('calls POST /students/:id/unlock-posttest when UnlockPostTestButton is clicked', async () => {
     localStorage.setItem('mathlens_teacher_token', 'teacher-tok');
     fetchMock.mockResolvedValue(
-      new Response(
-        JSON.stringify({ studentId: 'stu-9', unlockedPostAt: '2026-11-13T12:00:00Z' }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        },
-      ),
+      new Response(JSON.stringify({ studentId: 'stu-9', unlockedPostAt: '2026-11-13T12:00:00Z' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
     );
 
     renderWithProviders(<UnlockPostTestButton studentId="stu-9" />, ['/teacher/students']);

@@ -185,10 +185,7 @@ function buildImportDiff(
   return {
     mode: existingTopic ? 'UPDATE_TOPIC' : 'CREATE_TOPIC',
     topicChanges,
-    models: [
-      diffModel(existingM1, model1, questions1),
-      diffModel(existingM2, model2, questions2),
-    ],
+    models: [diffModel(existingM1, model1, questions1), diffModel(existingM2, model2, questions2)],
   };
 }
 

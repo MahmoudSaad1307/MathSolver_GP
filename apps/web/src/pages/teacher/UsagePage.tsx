@@ -3,15 +3,7 @@ import { Coins } from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { TeacherShell } from '@/components/layouts/TeacherShell';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -155,7 +147,12 @@ export default function UsagePage() {
                           <XAxis dataKey="date" />
                           <YAxis />
                           <Tooltip />
-                          <Bar dataKey="costUsd" name="Cost ($)" fill="#0f766e" radius={[4, 4, 0, 0]} />
+                          <Bar
+                            dataKey="costUsd"
+                            name="Cost ($)"
+                            fill="#0f766e"
+                            radius={[4, 4, 0, 0]}
+                          />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

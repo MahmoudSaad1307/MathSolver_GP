@@ -50,9 +50,9 @@ describe('LocalDiskStorageAdapter & signed storage endpoint', () => {
     expect(verifyLocalStorageSignature(key, exp - 99999, sig, env.VIDEO_UNLOCK_HMAC_SECRET)).toBe(
       false,
     );
-    expect(verifyLocalStorageSignature(key, exp, '0'.repeat(64), env.VIDEO_UNLOCK_HMAC_SECRET)).toBe(
-      false,
-    );
+    expect(
+      verifyLocalStorageSignature(key, exp, '0'.repeat(64), env.VIDEO_UNLOCK_HMAC_SECRET),
+    ).toBe(false);
 
     const app = createApp({
       env: { ...env, STORAGE_DRIVER: 'local', LOCAL_STORAGE_DIR: tmpDir },

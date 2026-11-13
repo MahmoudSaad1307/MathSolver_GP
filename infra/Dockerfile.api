@@ -11,6 +11,7 @@ FROM deps AS build
 COPY tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
+COPY seed ./seed
 RUN npm --workspace=@mathlens/shared run build \
  && npm --workspace=@mathlens/api run prisma:generate \
  && npm --workspace=@mathlens/api run build

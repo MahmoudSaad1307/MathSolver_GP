@@ -49,7 +49,10 @@ export function normalizeIntervals(intervals: WatchInterval[]): WatchInterval[] 
       merged.push([start, end]);
     }
   }
-  return merged.map(([a, b]): WatchInterval => [Math.round(a * 100) / 100, Math.round(b * 100) / 100]);
+  return merged.map(([a, b]): WatchInterval => [
+    Math.round(a * 100) / 100,
+    Math.round(b * 100) / 100,
+  ]);
 }
 
 export function mergeWatchSegment(
@@ -93,7 +96,12 @@ export class VideoService {
       where: { id: studentId },
       include: { cohort: true },
     });
-    if (!student || student.deletedAt !== null || !student.cohort || student.cohort.deletedAt !== null) {
+    if (
+      !student ||
+      student.deletedAt !== null ||
+      !student.cohort ||
+      student.cohort.deletedAt !== null
+    ) {
       throw new AppError('NOT_FOUND');
     }
 
@@ -112,8 +120,12 @@ export class VideoService {
 
     const model1 = examModels.find((m) => m.modelNumber === 1) ?? null;
     const model2 = examModels.find((m) => m.modelNumber === 2) ?? null;
-    const preTestAttempt = model1 ? attempts.find((a) => a.examModelId === model1.id) ?? null : null;
-    const postTestAttempt = model2 ? attempts.find((a) => a.examModelId === model2.id) ?? null : null;
+    const preTestAttempt = model1
+      ? (attempts.find((a) => a.examModelId === model1.id) ?? null)
+      : null;
+    const postTestAttempt = model2
+      ? (attempts.find((a) => a.examModelId === model2.id) ?? null)
+      : null;
 
     const model1Questions = model1
       ? await this.prisma.question.findMany({
@@ -193,8 +205,7 @@ export class VideoService {
     );
 
     const wrongSegmentsIncomplete =
-      ctx.cohort.requireWrongSegmentVisits &&
-      wrongQuestionSegments.some((s) => !s.visited);
+      ctx.cohort.requireWrongSegmentVisits && wrongQuestionSegments.some((s) => !s.visited);
 
     const flow = deriveStudentFlowStep({
       cohort: {
@@ -339,8 +350,7 @@ export class VideoService {
       intervals,
     );
     const wrongSegmentsIncomplete =
-      ctx.cohort.requireWrongSegmentVisits &&
-      wrongQuestionSegments.some((s) => !s.visited);
+      ctx.cohort.requireWrongSegmentVisits && wrongQuestionSegments.some((s) => !s.visited);
 
     const preTestReady =
       ctx.preTestAttempt !== null &&

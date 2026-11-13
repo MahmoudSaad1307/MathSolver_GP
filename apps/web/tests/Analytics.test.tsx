@@ -200,7 +200,12 @@ describe('Phase 7: Teacher Analytics & AI Cost Usage UI', () => {
       if (url.includes('/auth/teacher/me')) {
         return new Response(
           JSON.stringify({
-            teacher: { id: 't1', email: 't@mathlens.test', displayName: 'Mr. Tarek', role: 'TEACHER' },
+            teacher: {
+              id: 't1',
+              email: 't@mathlens.test',
+              displayName: 'Mr. Tarek',
+              role: 'TEACHER',
+            },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         );
@@ -230,7 +235,9 @@ describe('Phase 7: Teacher Analytics & AI Cost Usage UI', () => {
     });
 
     expect(screen.getByText('Statistically significant paired improvement.')).toBeInTheDocument();
-    expect(screen.getByText('Significant DiD gain attributable to remediation video.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Significant DiD gain attributable to remediation video.'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Significant (Holm)')).toBeInTheDocument();
     expect(screen.getByText('0.910')).toBeInTheDocument();
 
@@ -294,7 +301,12 @@ describe('Phase 7: Teacher Analytics & AI Cost Usage UI', () => {
       if (url.includes('/auth/teacher/me')) {
         return new Response(
           JSON.stringify({
-            teacher: { id: 't1', email: 't@mathlens.test', displayName: 'Mr. Tarek', role: 'TEACHER' },
+            teacher: {
+              id: 't1',
+              email: 't@mathlens.test',
+              displayName: 'Mr. Tarek',
+              role: 'TEACHER',
+            },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         );

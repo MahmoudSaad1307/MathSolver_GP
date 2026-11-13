@@ -504,7 +504,10 @@ export default function ReviewQueuePage() {
                               {t('results.aiTranscription')}
                             </div>
                             {currentItem.latestResult.transcribedLines.map((line) => (
-                              <div key={line.lineNumber} className="flex items-center gap-2 text-sm">
+                              <div
+                                key={line.lineNumber}
+                                className="flex items-center gap-2 text-sm"
+                              >
                                 <span className="font-mono text-xs text-slate-400" dir="ltr">
                                   L{line.lineNumber}
                                 </span>
@@ -565,7 +568,8 @@ export default function ReviewQueuePage() {
                       >
                         <div className="space-y-3">
                           {currentItem.effectiveCriteria.map((crit, cIdx) => {
-                            const scoreVal = criteriaDraft[crit.criterionId] ?? crit.effectiveAwarded;
+                            const scoreVal =
+                              criteriaDraft[crit.criterionId] ?? crit.effectiveAwarded;
                             return (
                               <div
                                 key={crit.criterionId}

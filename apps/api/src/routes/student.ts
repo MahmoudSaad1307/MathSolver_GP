@@ -20,6 +20,7 @@ import { getParamId, getStudentSession, UuidParamSchema } from '../middleware/re
 import { asyncHandler, validateBody, validateParams } from '../middleware/validate.js';
 import type { GradingDispatcher } from '../services/gradingDispatcher.js';
 import { ImageUploadService } from '../services/imageUploadService.js';
+import { RetentionService } from '../services/retentionService.js';
 import type { StorageAdapter, VirusScanner } from '../services/storage/index.js';
 import { StudentService } from '../services/studentService.js';
 
@@ -54,6 +55,7 @@ export function createStudentRouter(params: {
   const router = Router();
   const studentService = new StudentService(prisma, env, storage, gradingDispatcher);
   const imageUploadService = new ImageUploadService(prisma, env, storage, virusScanner);
+  const retentionService = new RetentionService(prisma, env, storage);
   const studentOnly = requireStudent(env);
 
   const resumeLimiter = createRateLimiter({
@@ -94,18 +96,15 @@ export function createStudentRouter(params: {
     }),
   );
 
-  router.post(
-    '/logout',
-    (_req, res) => {
-      res.clearCookie(STUDENT_SESSION_COOKIE, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: env.COOKIE_SECURE,
-        path: '/',
-      });
-      res.json({ ok: true });
-    },
-  );
+  router.post('/logout', (_req, res) => {
+    res.clearCookie(STUDENT_SESSION_COOKIE, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: env.COOKIE_SECURE,
+      path: '/',
+    });
+    res.json({ ok: true });
+  });
 
   router.post(
     '/consent',
@@ -238,11 +237,23 @@ export function createStudentRouter(params: {
     validateParams(UuidParamSchema),
     asyncHandler(async (req, res) => {
       const session = getStudentSession(req);
-      const result = await studentService.submitAttempt(
-        session.studentId,
-        getParamId(req),
-        req.ip,
-      );
+      const result = await studentService.submitAttempt(session.studentId, getParamId(req), req.ip);
+      res.json(result);
+    }),
+  );
+
+  router.delete(
+    '/data',
+    studentOnly,
+    asyncHandler(async (req, res) => {
+      const session = getStudentSession(req);
+      const result = await retentionService.deleteStudentData(session.studentId, req.ip);
+      res.clearCookie(STUDENT_SESSION_COOKIE, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: env.COOKIE_SECURE,
+        path: '/',
+      });
       res.json(result);
     }),
   );

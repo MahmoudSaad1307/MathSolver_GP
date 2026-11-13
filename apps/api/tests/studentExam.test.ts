@@ -7,7 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app.js';
 import { createLogger } from '../src/lib/logger.js';
 import { hashPassword, signTeacherAccessToken } from '../src/lib/security.js';
-import type { EssayGradingJobPayload, GradingDispatcher } from '../src/services/gradingDispatcher.js';
+import type {
+  EssayGradingJobPayload,
+  GradingDispatcher,
+} from '../src/services/gradingDispatcher.js';
 import { LocalDiskStorageAdapter, NoopVirusScanner } from '../src/services/storage/index.js';
 import { createInMemoryPrisma } from './helpers/fakePrisma.js';
 import { createTestEnv } from './helpers/testEnv.js';
@@ -274,9 +277,7 @@ describe('Cohorts, student join/consent/exam flow, image sanitization, and lock 
     expect(consentRes.body.step).toBe('PRETEST_IN_PROGRESS');
 
     // 3. Resume works using resumeCode & /me/state reflects step
-    const resumeRes = await request(app)
-      .post('/api/v1/student/resume')
-      .send({ resumeCode });
+    const resumeRes = await request(app).post('/api/v1/student/resume').send({ resumeCode });
     expect(resumeRes.status).toBe(200);
     const resumedCookie = extractCookie(resumeRes, 'ml_student_session');
 
@@ -399,7 +400,9 @@ describe('Cohorts, student join/consent/exam flow, image sanitization, and lock 
     expect(submit1.body.status).toBe('GRADING');
     expect(submit1.body.pendingEssayCount).toBe(1);
     expect(dispatchedJobs).toHaveLength(1);
-    expect(prisma._state.answers.find((a) => a.questionId === seeded.mcqQuestionId)?.score).toBe(10);
+    expect(prisma._state.answers.find((a) => a.questionId === seeded.mcqQuestionId)?.score).toBe(
+      10,
+    );
 
     // Double submit is idempotent and does not re-enqueue AI jobs
     const submit2 = await request(app)
@@ -412,9 +415,7 @@ describe('Cohorts, student join/consent/exam flow, image sanitization, and lock 
 
   it('rate-limits repeated student resume attempts cleanly', async () => {
     for (let i = 0; i < 10; i += 1) {
-      const r = await request(app)
-        .post('/api/v1/student/resume')
-        .send({ resumeCode: '234567' });
+      const r = await request(app).post('/api/v1/student/resume').send({ resumeCode: '234567' });
       expect(r.status).toBe(401);
     }
     const eleventh = await request(app)

@@ -475,7 +475,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         );
         return found ? hydrateTopic(found, include) : null;
       },
-      create: async ({ data }: { data: Partial<FakeTopicRow> & { ownerId: string; title: string; videoUrl: string } }) => {
+      create: async ({
+        data,
+      }: {
+        data: Partial<FakeTopicRow> & { ownerId: string; title: string; videoUrl: string };
+      }) => {
         const now = new Date();
         const row: FakeTopicRow = {
           id: data.id ?? crypto.randomUUID(),
@@ -493,13 +497,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         topics.push(row);
         return row;
       },
-      update: async ({
-        where,
-        data,
-      }: {
-        where: { id: string };
-        data: Partial<FakeTopicRow>;
-      }) => {
+      update: async ({ where, data }: { where: { id: string }; data: Partial<FakeTopicRow> }) => {
         const row = topics.find((t) => t.id === where.id);
         if (!row) throw new Error('Topic not found');
         Object.assign(row, data, { updatedAt: new Date() });
@@ -516,7 +514,8 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         include?: Record<string, unknown>;
         select?: Record<string, unknown>;
       }) => {
-        const hydration = include ?? (select?.questions ? { questions: select.questions } : undefined);
+        const hydration =
+          include ?? (select?.questions ? { questions: select.questions } : undefined);
         return examModels
           .filter((m) => {
             const matchesTopic =
@@ -555,7 +554,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         });
         return found ? hydrateExamModel(found, include) : null;
       },
-      create: async ({ data }: { data: Partial<FakeExamModelRow> & { topicId: string; modelNumber: number; title: string } }) => {
+      create: async ({
+        data,
+      }: {
+        data: Partial<FakeExamModelRow> & { topicId: string; modelNumber: number; title: string };
+      }) => {
         const now = new Date();
         const row: FakeExamModelRow = {
           id: data.id ?? crypto.randomUUID(),
@@ -641,16 +644,25 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
           if (where.examModel) {
             const em = examModels.find((m) => m.id === q.examModelId);
             if (!em) return false;
-            if (where.examModel.deletedAt !== undefined && em.deletedAt !== where.examModel.deletedAt) {
+            if (
+              where.examModel.deletedAt !== undefined &&
+              em.deletedAt !== where.examModel.deletedAt
+            ) {
               return false;
             }
             if (where.examModel.topic) {
               const t = topics.find((x) => x.id === em.topicId);
               if (!t) return false;
-              if (where.examModel.topic.ownerId !== undefined && t.ownerId !== where.examModel.topic.ownerId) {
+              if (
+                where.examModel.topic.ownerId !== undefined &&
+                t.ownerId !== where.examModel.topic.ownerId
+              ) {
                 return false;
               }
-              if (where.examModel.topic.deletedAt !== undefined && t.deletedAt !== where.examModel.topic.deletedAt) {
+              if (
+                where.examModel.topic.deletedAt !== undefined &&
+                t.deletedAt !== where.examModel.topic.deletedAt
+              ) {
                 return false;
               }
             }
@@ -717,8 +729,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
             (typeof where.examModelId === 'string'
               ? row.examModelId === where.examModelId
               : where.examModelId.in.includes(row.examModelId));
-          const matchesDeleted =
-            where.deletedAt === undefined || row.deletedAt === where.deletedAt;
+          const matchesDeleted = where.deletedAt === undefined || row.deletedAt === where.deletedAt;
           if (matchesExam && matchesDeleted) {
             Object.assign(row, data, { updatedAt: new Date() });
             count += 1;
@@ -992,13 +1003,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         cohorts.push(row);
         return row;
       },
-      update: async ({
-        where,
-        data,
-      }: {
-        where: { id: string };
-        data: Partial<FakeCohortRow>;
-      }) => {
+      update: async ({ where, data }: { where: { id: string }; data: Partial<FakeCohortRow> }) => {
         const row = cohorts.find((c) => c.id === where.id);
         if (!row) throw new Error('Cohort not found');
         Object.assign(row, data, { updatedAt: new Date() });
@@ -1090,13 +1095,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         students.push(row);
         return row;
       },
-      update: async ({
-        where,
-        data,
-      }: {
-        where: { id: string };
-        data: Partial<FakeStudentRow>;
-      }) => {
+      update: async ({ where, data }: { where: { id: string }; data: Partial<FakeStudentRow> }) => {
         const row = students.find((s) => s.id === where.id);
         if (!row) throw new Error('Student not found');
         Object.assign(row, data, { updatedAt: new Date() });
@@ -1183,13 +1182,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         attempts.push(row);
         return row;
       },
-      update: async ({
-        where,
-        data,
-      }: {
-        where: { id: string };
-        data: Partial<FakeAttemptRow>;
-      }) => {
+      update: async ({ where, data }: { where: { id: string }; data: Partial<FakeAttemptRow> }) => {
         const row = attempts.find((a) => a.id === where.id);
         if (!row) throw new Error('Attempt not found');
         Object.assign(row, data, { updatedAt: new Date() });
@@ -1284,13 +1277,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         }
         return { count: data.length };
       },
-      update: async ({
-        where,
-        data,
-      }: {
-        where: { id: string };
-        data: Partial<FakeAnswerRow>;
-      }) => {
+      update: async ({ where, data }: { where: { id: string }; data: Partial<FakeAnswerRow> }) => {
         const row = answers.find((a) => a.id === where.id);
         if (!row) throw new Error('Answer not found');
         Object.assign(row, data, { updatedAt: new Date() });
@@ -1381,7 +1368,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
           return true;
         }).length;
       },
-      create: async ({ data }: { data: Omit<FakeGradingResultRow, 'id' | 'createdAt' | 'updatedAt'> }) => {
+      create: async ({
+        data,
+      }: {
+        data: Omit<FakeGradingResultRow, 'id' | 'createdAt' | 'updatedAt'>;
+      }) => {
         const now = new Date();
         const row: FakeGradingResultRow = {
           id: crypto.randomUUID(),
@@ -1449,7 +1440,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       },
     },
     teacherOverride: {
-      create: async ({ data }: { data: Omit<FakeTeacherOverrideRow, 'id' | 'createdAt' | 'updatedAt'> }) => {
+      create: async ({
+        data,
+      }: {
+        data: Omit<FakeTeacherOverrideRow, 'id' | 'createdAt' | 'updatedAt'>;
+      }) => {
         const now = new Date();
         const row: FakeTeacherOverrideRow = {
           id: crypto.randomUUID(),
@@ -1500,10 +1495,18 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   };
 
   const matchId = (val: string, filter?: string | { in: string[] }) =>
-    filter === undefined ? true : typeof filter === 'string' ? val === filter : filter.in.includes(val);
+    filter === undefined
+      ? true
+      : typeof filter === 'string'
+        ? val === filter
+        : filter.in.includes(val);
 
   Object.assign(mock.mcqOption, {
-    findMany: async ({ where }: { where?: { questionId?: string | { in: string[] }; deletedAt?: null } }) =>
+    findMany: async ({
+      where,
+    }: {
+      where?: { questionId?: string | { in: string[] }; deletedAt?: null };
+    }) =>
       mcqOptions.filter(
         (o) =>
           matchId(o.questionId, where?.questionId) &&
@@ -1518,7 +1521,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
           (where?.questionId === undefined || m.questionId === where.questionId) &&
           (where?.deletedAt === undefined || m.deletedAt === where.deletedAt),
       ) ?? null,
-    findMany: async ({ where }: { where?: { questionId?: string | { in: string[] }; deletedAt?: null } }) =>
+    findMany: async ({
+      where,
+    }: {
+      where?: { questionId?: string | { in: string[] }; deletedAt?: null };
+    }) =>
       modelAnswers.filter(
         (m) =>
           matchId(m.questionId, where?.questionId) &&
@@ -1527,7 +1534,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   });
 
   Object.assign(mock.rubricCriterion, {
-    findMany: async ({ where }: { where?: { questionId?: string | { in: string[] }; deletedAt?: null } }) =>
+    findMany: async ({
+      where,
+    }: {
+      where?: { questionId?: string | { in: string[] }; deletedAt?: null };
+    }) =>
       rubricCriteria
         .filter(
           (c) =>
@@ -1538,7 +1549,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   });
 
   Object.assign(mock.student, {
-    findMany: async ({ where }: { where?: { cohortId?: string | { in: string[] }; deletedAt?: null } }) =>
+    findMany: async ({
+      where,
+    }: {
+      where?: { cohortId?: string | { in: string[] }; deletedAt?: null };
+    }) =>
       students
         .filter(
           (s) =>
@@ -1561,16 +1576,35 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   Object.assign(mock.answerImage, {
     findMany: async ({
       where,
+      include,
     }: {
-      where?: { answerId?: string | { in: string[] }; deletedAt?: null };
-    }) =>
+      where?: {
+        answerId?: string | { in: string[] };
+        deletedAt?: null;
+        pinnedByTeacher?: boolean;
+      };
+      include?: { answer?: { include?: { attempt?: boolean } } };
+    } = {}) =>
       answerImages
         .filter(
           (img) =>
             matchId(img.answerId, where?.answerId) &&
-            (where?.deletedAt === undefined || img.deletedAt === where.deletedAt),
+            (where?.deletedAt === undefined || img.deletedAt === where.deletedAt) &&
+            (where?.pinnedByTeacher === undefined || img.pinnedByTeacher === where.pinnedByTeacher),
         )
-        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        .map((img) => {
+          if (!include?.answer) return img;
+          const ans = answers.find((a) => a.id === img.answerId) ?? null;
+          const att =
+            ans && include.answer.include?.attempt
+              ? (attempts.find((x) => x.id === ans.attemptId) ?? null)
+              : undefined;
+          return {
+            ...img,
+            answer: ans ? { ...ans, ...(att !== undefined ? { attempt: att } : {}) } : null,
+          };
+        }),
   });
 
   const videoEvents: Array<{
@@ -1653,13 +1687,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       videoSessions.push(row as unknown as FakeVideoSessionRow);
       return row;
     },
-    update: async ({
-      where,
-      data,
-    }: {
-      where: { id: string };
-      data: Record<string, unknown>;
-    }) => {
+    update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
       const row = videoSessions.find((v) => v.id === where.id);
       if (!row) throw new Error('VideoSession not found');
       Object.assign(row, data, { updatedAt: new Date() });
@@ -1683,7 +1711,9 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         Object.assign(existing, update, { updatedAt: new Date() });
         return existing;
       }
-      return (videoSessionObj.create as (args: { data: Record<string, unknown> }) => Promise<unknown>)({
+      return (
+        videoSessionObj.create as (args: { data: Record<string, unknown> }) => Promise<unknown>
+      )({
         data: create,
       });
     },

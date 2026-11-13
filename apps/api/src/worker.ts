@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node';
 import { loadEnv } from './config/env.js';
 import { createLogger } from './lib/logger.js';
 import { getPrisma } from './lib/prisma.js';
-import { createGradingWorker } from './services/gradingDispatcher.js';
+import { createGradingWorker, createRetentionWorker } from './services/gradingDispatcher.js';
 import { createStorageAdapter } from './services/storage/index.js';
 
 async function main() {
@@ -17,18 +17,28 @@ async function main() {
   await prisma.$connect();
 
   const storage = createStorageAdapter(env);
-  const { close } = createGradingWorker({
+  const grading = createGradingWorker({
+    prisma,
+    env,
+    storage,
+    logger,
+  });
+  const retention = await createRetentionWorker({
     prisma,
     env,
     storage,
     logger,
   });
 
-  logger.info({ concurrency: env.GRADING_CONCURRENCY }, 'MathLens grading worker started');
+  logger.info(
+    { concurrency: env.GRADING_CONCURRENCY },
+    'MathLens grading & retention worker started',
+  );
 
   const shutdown = async (signal: string) => {
-    logger.info({ signal }, 'Shutting down grading worker');
-    await close();
+    logger.info({ signal }, 'Shutting down grading & retention worker');
+    await retention.close();
+    await grading.close();
     await prisma.$disconnect();
     process.exit(0);
   };

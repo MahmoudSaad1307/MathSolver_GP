@@ -356,7 +356,13 @@ describe('Phase 6 Video Gate, Fraud Guards, Teacher Unlocks & Comparison Analyti
     const t1 = new Date(t0.getTime() + 5000);
     const seekFraud = await svc.recordHeartbeat(
       STU_TREATMENT_ID,
-      { type: 'HEARTBEAT', position: 120, playbackRate: 1, tabVisible: true, clientTs: t1.toISOString() },
+      {
+        type: 'HEARTBEAT',
+        position: 120,
+        playbackRate: 1,
+        tabVisible: true,
+        clientTs: t1.toISOString(),
+      },
       t1,
     );
     expect(seekFraud.fraudWarning).toBe('SEEK_JUMP_IGNORED');
@@ -372,7 +378,13 @@ describe('Phase 6 Video Gate, Fraud Guards, Teacher Unlocks & Comparison Analyti
     const t3 = new Date(t2.getTime() + 5000);
     const tabHidden = await svc.recordHeartbeat(
       STU_TREATMENT_ID,
-      { type: 'HEARTBEAT', position: 5, playbackRate: 1, tabVisible: false, clientTs: t3.toISOString() },
+      {
+        type: 'HEARTBEAT',
+        position: 5,
+        playbackRate: 1,
+        tabVisible: false,
+        clientTs: t3.toISOString(),
+      },
       t3,
     );
     expect(tabHidden.fraudWarning).toBe('TAB_HIDDEN');
@@ -382,7 +394,13 @@ describe('Phase 6 Video Gate, Fraud Guards, Teacher Unlocks & Comparison Analyti
     const t4 = new Date(t3.getTime() + 5000);
     const fastRate = await svc.recordHeartbeat(
       STU_TREATMENT_ID,
-      { type: 'HEARTBEAT', position: 5, playbackRate: 2.0, tabVisible: true, clientTs: t4.toISOString() },
+      {
+        type: 'HEARTBEAT',
+        position: 5,
+        playbackRate: 2.0,
+        tabVisible: true,
+        clientTs: t4.toISOString(),
+      },
       t4,
     );
     expect(fastRate.fraudWarning).toBe('PLAYBACK_RATE_TOO_HIGH');
@@ -443,7 +461,9 @@ describe('Phase 6 Video Gate, Fraud Guards, Teacher Unlocks & Comparison Analyti
       .set('Cookie', treatmentCookie)
       .send({ errorCode: 150 });
     expect(alertRes.status).toBe(201);
-    const alerts = await (prisma as unknown as { videoAlert: { findMany: () => Promise<unknown[]> } }).videoAlert.findMany();
+    const alerts = await (
+      prisma as unknown as { videoAlert: { findMany: () => Promise<unknown[]> } }
+    ).videoAlert.findMany();
     expect(alerts).toHaveLength(1);
 
     // Teacher manual unlock for treatment student
@@ -521,7 +541,10 @@ describe('Phase 6 Video Gate, Fraud Guards, Teacher Unlocks & Comparison Analyti
     expect(compRes.body.deltaPercentage).toBe(45);
     expect(compRes.body.normalizedGain).toBe(0.75); // (85 - 40) / (100 - 40) = 45/60 = 0.75
     expect(compRes.body.concepts).toHaveLength(2);
-    expect(compRes.body.concepts.find((c: { conceptKey: string }) => c.conceptKey === 'exp-limit')?.status).toBe('IMPROVED');
+    expect(
+      compRes.body.concepts.find((c: { conceptKey: string }) => c.conceptKey === 'exp-limit')
+        ?.status,
+    ).toBe('IMPROVED');
     expect(compRes.body.twinQuestions).toHaveLength(2);
     // Ethics: Control student who skipped pre-post video is offered remediation after post-test
     expect(compRes.body.videoOfferAfterPost.recommendedForControl).toBe(true);

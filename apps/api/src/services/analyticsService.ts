@@ -464,7 +464,9 @@ export class AnalyticsService {
 
           const pct1 = q1.points > 0 && a1.score !== null ? (a1.score / q1.points) * 100 : 0;
           const ok1 =
-            a1.isCorrect !== null ? a1.isCorrect : q1.points > 0 && (a1.score ?? 0) >= q1.points * 0.6;
+            a1.isCorrect !== null
+              ? a1.isCorrect
+              : q1.points > 0 && (a1.score ?? 0) >= q1.points * 0.6;
           bucket.prePcts.push(pct1);
           if (ok1) bucket.preCorrectCount += 1;
 
@@ -661,9 +663,7 @@ export class AnalyticsService {
     const preOverallMean = mean(allPre);
     const postOverallMean = mean(allPost);
     const deltaOverall =
-      pairedPreAll.length > 0
-        ? mean(pairedPostAll.map((p, idx) => p - pairedPreAll[idx]!))
-        : null;
+      pairedPreAll.length > 0 ? mean(pairedPostAll.map((p, idx) => p - pairedPreAll[idx]!)) : null;
     const hakeOverall = mean(pairedHake);
 
     return {
@@ -747,7 +747,9 @@ export class AnalyticsService {
     const avgLatencyMs =
       totalCalls > 0 ? Math.round(latencies.reduce((a, b) => a + b, 0) / totalCalls) : 0;
     const p95LatencyMs =
-      latencies.length > 0 ? latencies[Math.min(latencies.length - 1, Math.floor(latencies.length * 0.95))]! : 0;
+      latencies.length > 0
+        ? latencies[Math.min(latencies.length - 1, Math.floor(latencies.length * 0.95))]!
+        : 0;
 
     const dailyMap = new Map<
       string,

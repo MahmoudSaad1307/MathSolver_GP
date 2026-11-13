@@ -22,7 +22,10 @@ export function StudentShell({
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-2 font-bold text-brand-700">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm text-white">
+            <span
+              aria-hidden="true"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm text-white"
+            >
               ∑
             </span>
             <span>{t('app.name')}</span>

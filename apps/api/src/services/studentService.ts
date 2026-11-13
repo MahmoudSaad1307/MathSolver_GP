@@ -113,10 +113,7 @@ export class StudentService {
       ip,
     });
 
-    const token = signStudentSessionToken(
-      { id: student.id, cohortId: student.cohortId },
-      this.env,
-    );
+    const token = signStudentSessionToken({ id: student.id, cohortId: student.cohortId }, this.env);
 
     return {
       token,
@@ -225,7 +222,9 @@ export class StudentService {
         cohortName: cohort.name,
         group: cohort.group,
         requireVideoBeforePost: cohort.requireVideoBeforePost,
-        consentAcceptedAt: student.consentAcceptedAt ? student.consentAcceptedAt.toISOString() : null,
+        consentAcceptedAt: student.consentAcceptedAt
+          ? student.consentAcceptedAt.toISOString()
+          : null,
       },
       topic: {
         id: topic.id,
@@ -584,8 +583,7 @@ export class StudentService {
       for (const ans of attempt.answers) {
         if (ans.question.type === 'MCQ') {
           const correctOption = ans.question.mcqOptions.find((o) => o.isCorrect);
-          const isCorrect =
-            Boolean(correctOption) && ans.selectedOptionId === correctOption?.id;
+          const isCorrect = Boolean(correctOption) && ans.selectedOptionId === correctOption?.id;
           const score = isCorrect ? ans.maxScore : 0;
           runningTotal += score;
           await tx.answer.update({

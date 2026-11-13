@@ -90,9 +90,7 @@ export default function AnalyticsPage() {
   const data = analyticsQuery.data;
   const paired = data?.formalStats.paired;
   const between = data?.formalStats.between;
-  const mcnemarMap = new Map(
-    (between?.mcnemar ?? []).map((m) => [m.concept_key, m]),
-  );
+  const mcnemarMap = new Map((between?.mcnemar ?? []).map((m) => [m.concept_key, m]));
 
   return (
     <TeacherShell teacherName={meQuery.data.teacher.displayName}>
@@ -213,7 +211,9 @@ export default function AnalyticsPage() {
                 <CardHeader className="pb-2">
                   <CardDescription>{t('analytics.hakeGain')}</CardDescription>
                   <CardTitle className="font-mono text-2xl" dir="ltr">
-                    {data.summary.hakeMeanGain === null ? '—' : data.summary.hakeMeanGain.toFixed(2)}
+                    {data.summary.hakeMeanGain === null
+                      ? '—'
+                      : data.summary.hakeMeanGain.toFixed(2)}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -276,7 +276,8 @@ export default function AnalyticsPage() {
                         <div className="flex justify-between gap-2">
                           <dt className="text-slate-600">{t('analytics.cohensDz')}</dt>
                           <dd className="font-mono font-semibold" dir="ltr">
-                            {paired.cohens_dz.estimate.toFixed(2)} [{paired.cohens_dz.ci_low.toFixed(2)},{' '}
+                            {paired.cohens_dz.estimate.toFixed(2)} [
+                            {paired.cohens_dz.ci_low.toFixed(2)},{' '}
                             {paired.cohens_dz.ci_high.toFixed(2)}]
                           </dd>
                         </div>
@@ -314,8 +315,11 @@ export default function AnalyticsPage() {
                         <div className="flex justify-between gap-2">
                           <dt className="text-slate-600">{t('analytics.didEstimate')}</dt>
                           <dd className="font-mono font-semibold text-emerald-700" dir="ltr">
-                            {fmtSigned(Number(between.group_comparison.did.estimate.toFixed(2)), '')} [
-                            {between.group_comparison.did.ci_low.toFixed(1)},{' '}
+                            {fmtSigned(
+                              Number(between.group_comparison.did.estimate.toFixed(2)),
+                              '',
+                            )}{' '}
+                            [{between.group_comparison.did.ci_low.toFixed(1)},{' '}
                             {between.group_comparison.did.ci_high.toFixed(1)}] (p=
                             {between.group_comparison.did.p_value.toFixed(4)})
                           </dd>
@@ -350,7 +354,9 @@ export default function AnalyticsPage() {
                 {between?.reliability && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">{t('analytics.reliabilitySection')}</CardTitle>
+                      <CardTitle className="text-base">
+                        {t('analytics.reliabilitySection')}
+                      </CardTitle>
                       <CardDescription dir="ltr">n = {between.reliability.n}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2 text-xs">
@@ -428,7 +434,12 @@ export default function AnalyticsPage() {
                         <YAxis domain={[0, 100]} />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="preAvgPct" name="Pre %" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                        <Bar
+                          dataKey="preAvgPct"
+                          name="Pre %"
+                          fill="#94a3b8"
+                          radius={[4, 4, 0, 0]}
+                        />
                         <Bar
                           dataKey="postAvgPct"
                           name="Post %"
@@ -481,7 +492,10 @@ export default function AnalyticsPage() {
                         <td className="py-2 pe-3 font-mono" dir="ltr">
                           {fmtPct(c.postAvgPct)}
                         </td>
-                        <td className="py-2 pe-3 font-mono font-semibold text-emerald-700" dir="ltr">
+                        <td
+                          className="py-2 pe-3 font-mono font-semibold text-emerald-700"
+                          dir="ltr"
+                        >
                           {fmtSigned(c.deltaPct)}
                         </td>
                         <td className="py-2 text-end">
@@ -543,7 +557,10 @@ export default function AnalyticsPage() {
                             <td className="py-2 pe-3 font-mono" dir="ltr">
                               {concept.postAvgPct}%
                             </td>
-                            <td className="py-2 pe-3 font-mono font-semibold text-emerald-700" dir="ltr">
+                            <td
+                              className="py-2 pe-3 font-mono font-semibold text-emerald-700"
+                              dir="ltr"
+                            >
                               {fmtSigned(concept.deltaPct)}
                             </td>
                             <td className="py-2 pe-3 font-mono" dir="ltr">

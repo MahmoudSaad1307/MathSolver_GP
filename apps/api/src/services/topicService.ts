@@ -211,9 +211,7 @@ export class TopicService {
         data: {
           ...(input.title !== undefined ? { title: input.title } : {}),
           ...(input.description !== undefined ? { description: input.description } : {}),
-          ...(input.videoUrl !== undefined
-            ? { videoUrl: nextVideoUrl, videoId: nextVideoId }
-            : {}),
+          ...(input.videoUrl !== undefined ? { videoUrl: nextVideoUrl, videoId: nextVideoId } : {}),
           ...(input.minWatchSeconds !== undefined
             ? { minWatchSeconds: input.minWatchSeconds }
             : {}),

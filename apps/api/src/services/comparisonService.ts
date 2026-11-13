@@ -27,7 +27,12 @@ export class ComparisonService {
       where: { id: studentId },
       include: { cohort: true },
     });
-    if (!student || student.deletedAt !== null || !student.cohort || student.cohort.deletedAt !== null) {
+    if (
+      !student ||
+      student.deletedAt !== null ||
+      !student.cohort ||
+      student.cohort.deletedAt !== null
+    ) {
       throw new AppError('NOT_FOUND');
     }
 
@@ -46,8 +51,8 @@ export class ComparisonService {
 
     const model1 = examModels.find((m) => m.modelNumber === 1) ?? null;
     const model2 = examModels.find((m) => m.modelNumber === 2) ?? null;
-    const preAttempt = model1 ? attempts.find((a) => a.examModelId === model1.id) ?? null : null;
-    const postAttempt = model2 ? attempts.find((a) => a.examModelId === model2.id) ?? null : null;
+    const preAttempt = model1 ? (attempts.find((a) => a.examModelId === model1.id) ?? null) : null;
+    const postAttempt = model2 ? (attempts.find((a) => a.examModelId === model2.id) ?? null) : null;
 
     if (!preAttempt || !postAttempt || postAttempt.status === 'IN_PROGRESS') {
       throw new AppError('CONFLICT', {

@@ -8,11 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Label } from '@/components/ui/Input';
 import { apiRequest, getApiErrorMessage } from '@/lib/api';
-import {
-  buildYoutubePreviewUrl,
-  formatSecondsToMmSs,
-  parseMmSsToSeconds,
-} from '@/lib/timeFormat';
+import { buildYoutubePreviewUrl, formatSecondsToMmSs, parseMmSsToSeconds } from '@/lib/timeFormat';
 import { useUiStore } from '@/store/uiStore';
 import type { QuestionItem } from '@/types/content';
 
@@ -57,9 +53,7 @@ export function QuestionEditorModal({
   const locale = useUiStore((s) => s.locale);
   const isEditing = Boolean(initialQuestion);
 
-  const [orderIndex, setOrderIndex] = React.useState(
-    initialQuestion?.orderIndex ?? nextOrderIndex,
-  );
+  const [orderIndex, setOrderIndex] = React.useState(initialQuestion?.orderIndex ?? nextOrderIndex);
   const [conceptKey, setConceptKey] = React.useState(initialQuestion?.conceptKey ?? '');
   const [type, setType] = React.useState<QuestionType>(initialQuestion?.type ?? 'MCQ');
   const [points, setPoints] = React.useState(initialQuestion?.points ?? 5);
@@ -226,7 +220,9 @@ export function QuestionEditorModal({
       <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
           <h2 id="question-editor-title" className="text-lg font-bold text-slate-900">
-            {isEditing ? t('teacher.questionEditor.editTitle') : t('teacher.questionEditor.createTitle')}
+            {isEditing
+              ? t('teacher.questionEditor.editTitle')
+              : t('teacher.questionEditor.createTitle')}
           </h2>
           <button
             type="button"
@@ -448,7 +444,9 @@ export function QuestionEditorModal({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="q-final-latex">{t('teacher.questionEditor.finalAnswerLatex')}</Label>
+                  <Label htmlFor="q-final-latex">
+                    {t('teacher.questionEditor.finalAnswerLatex')}
+                  </Label>
                   <Input
                     id="q-final-latex"
                     dir="ltr"
@@ -463,7 +461,9 @@ export function QuestionEditorModal({
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="q-final-sympy">{t('teacher.questionEditor.finalAnswerSympy')}</Label>
+                  <Label htmlFor="q-final-sympy">
+                    {t('teacher.questionEditor.finalAnswerSympy')}
+                  </Label>
                   <Input
                     id="q-final-sympy"
                     dir="ltr"

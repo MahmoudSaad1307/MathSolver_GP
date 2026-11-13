@@ -106,8 +106,7 @@ export class CohortService {
     }
 
     const joinCode = await this.generateUniqueJoinCode();
-    const requireVideoBeforePost =
-      input.requireVideoBeforePost ?? input.group === 'TREATMENT';
+    const requireVideoBeforePost = input.requireVideoBeforePost ?? input.group === 'TREATMENT';
 
     const cohort = await this.prisma.$transaction(async (tx) => {
       const created = await tx.cohort.create({

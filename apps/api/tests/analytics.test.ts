@@ -64,15 +64,22 @@ function createFakeStatsClient(): {
             },
           }
         : null,
-    mcnemar: input.twin_question_outcomes.map((item: { concept_key: string; order_index: number; pre_wrong_post_correct: number; pre_correct_post_wrong: number }) => ({
-      concept_key: item.concept_key,
-      order_index: item.order_index,
-      b_improved: item.pre_wrong_post_correct,
-      c_regressed: item.pre_correct_post_wrong,
-      p_value: 0.03125,
-      p_adjusted_holm: 0.03125,
-      significant: true,
-    })),
+    mcnemar: input.twin_question_outcomes.map(
+      (item: {
+        concept_key: string;
+        order_index: number;
+        pre_wrong_post_correct: number;
+        pre_correct_post_wrong: number;
+      }) => ({
+        concept_key: item.concept_key,
+        order_index: item.order_index,
+        b_improved: item.pre_wrong_post_correct,
+        c_regressed: item.pre_correct_post_wrong,
+        p_value: 0.03125,
+        p_adjusted_holm: 0.03125,
+        significant: true,
+      }),
+    ),
     reliability:
       input.reliability_pairs.length > 0
         ? {
@@ -637,9 +644,7 @@ describe('Phase 7: Analytics, Statistics Proxy, Exports & AI Cost Usage', () => 
     };
     const app = createApp({ env, prisma, logger, statsClient: failingStatsClient });
 
-    const res = await request(app)
-      .get('/api/v1/analytics')
-      .set('Authorization', `Bearer ${tok}`);
+    const res = await request(app).get('/api/v1/analytics').set('Authorization', `Bearer ${tok}`);
     expect(res.status).toBe(200);
     expect(res.body.formalStats.statsUnavailable).toBe(true);
     expect(res.body.formalStats.statsError).toContain('AI down');
@@ -654,7 +659,9 @@ describe('Phase 7: Analytics, Statistics Proxy, Exports & AI Cost Usage', () => 
 
     const origFetch = globalThis.fetch;
     try {
-      const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      const fetchSpy = vi.fn(
+        async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
+      );
       globalThis.fetch = fetchSpy as unknown as typeof fetch;
       const client = new HttpAiServiceClient(env);
       await client.computePairedStats({ pre_scores: [50], post_scores: [80] });

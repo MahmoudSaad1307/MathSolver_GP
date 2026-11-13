@@ -21,7 +21,9 @@ function makeQueryClient() {
   });
 }
 
-function buildResultsPayload(overrides: Partial<StudentAttemptResults['attempt']> = {}): StudentAttemptResults {
+function buildResultsPayload(
+  overrides: Partial<StudentAttemptResults['attempt']> = {},
+): StudentAttemptResults {
   return {
     attempt: {
       id: 'att-1',
@@ -160,7 +162,8 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
   it('renders StudentResultsPage with first error highlight, timestamp jump link, and 1-tap misread report', async () => {
     let misreadReported = false;
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : input.toString();
+      const url =
+        typeof input === 'string' ? input : input instanceof Request ? input.url : input.toString();
       if (url.includes('/report-misread')) {
         misreadReported = true;
         return new Response(JSON.stringify({ attemptStatus: 'NEEDS_REVIEW' }), {
@@ -169,7 +172,9 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
         });
       }
       const payload = buildResultsPayload(
-        misreadReported ? { status: 'NEEDS_REVIEW', scoreHidden: true, totalScore: null, percentage: null } : {},
+        misreadReported
+          ? { status: 'NEEDS_REVIEW', scoreHidden: true, totalScore: null, percentage: null }
+          : {},
       );
       if (misreadReported) {
         payload.questions[1]!.misreadReportedAt = '2026-11-13T10:30:00.000Z';
@@ -232,7 +237,7 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
             id: 'q-2',
             orderIndex: 2,
             conceptKey: 'chain-rule',
-            promptLatex: 'Find $y\'$',
+            promptLatex: "Find $y'$",
             points: 15,
             modelAnswer: {
               solutionStepsLatex: ["$y'=2/(2x+1)$"],
@@ -314,18 +319,27 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
     };
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : input.toString();
+      const url =
+        typeof input === 'string' ? input : input instanceof Request ? input.url : input.toString();
       if (url.includes('/auth/teacher/me')) {
         return new Response(
-          JSON.stringify({ teacher: { id: 't-1', email: 't@ml.local', displayName: 'أ. ندى', role: 'TEACHER' } }),
+          JSON.stringify({
+            teacher: { id: 't-1', email: 't@ml.local', displayName: 'أ. ندى', role: 'TEACHER' },
+          }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         );
       }
       if (url.includes('/topics')) {
-        return new Response(JSON.stringify({ topics: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ topics: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       if (url.includes('/cohorts')) {
-        return new Response(JSON.stringify({ cohorts: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ cohorts: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       if (url.includes('/grading-results/gr-1/override')) {
         return new Response(JSON.stringify({ override: { newTotal: 15 } }), {
@@ -452,18 +466,27 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
     };
 
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : input.toString();
+      const url =
+        typeof input === 'string' ? input : input instanceof Request ? input.url : input.toString();
       if (url.includes('/auth/teacher/me')) {
         return new Response(
-          JSON.stringify({ teacher: { id: 't-1', email: 't@ml.local', displayName: 'أ. ندى', role: 'TEACHER' } }),
+          JSON.stringify({
+            teacher: { id: 't-1', email: 't@ml.local', displayName: 'أ. ندى', role: 'TEACHER' },
+          }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         );
       }
       if (url.includes('/cohorts')) {
-        return new Response(JSON.stringify({ cohorts: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ cohorts: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       if (url.includes('/students/stu-1')) {
-        return new Response(JSON.stringify(detail), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify(detail), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       return new Response(JSON.stringify({ students: roster }), {
         status: 200,

@@ -64,7 +64,10 @@ export function TeacherShell({ teacherName, children }: TeacherShellProps) {
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
           <Link to="/teacher" className="flex items-center gap-2 font-bold text-brand-700">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm text-white">
+            <span
+              aria-hidden="true"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm text-white"
+            >
               ∑
             </span>
             <span>{t('app.name')}</span>

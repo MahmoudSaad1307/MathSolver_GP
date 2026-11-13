@@ -168,10 +168,7 @@ export function deriveStudentFlowStep(
     return { step: 'POSTTEST_UNLOCKED', postTestLockReason: null };
   }
 
-  if (
-    gate.reason?.code === 'VIDEO_WATCH_INCOMPLETE' &&
-    params.videoSession?.startedAt
-  ) {
+  if (gate.reason?.code === 'VIDEO_WATCH_INCOMPLETE' && params.videoSession?.startedAt) {
     return { step: 'REMEDIATION', postTestLockReason: gate.reason };
   }
 

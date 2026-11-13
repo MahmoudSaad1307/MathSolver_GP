@@ -4,7 +4,11 @@ import fs from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadEnv } from '../src/config/env.js';
 import { createLogger } from '../src/lib/logger.js';
-import { HttpAiServiceClient, type AiGradeEssayResponse, type AiServiceClient } from '../src/services/aiClient.js';
+import {
+  HttpAiServiceClient,
+  type AiGradeEssayResponse,
+  type AiServiceClient,
+} from '../src/services/aiClient.js';
 import { parseRedisConnectionOptions } from '../src/services/gradingDispatcher.js';
 import {
   boundAndRecomputeCriteriaScores,
@@ -234,8 +238,22 @@ function makeFakeAiResponse(overrides: Partial<AiGradeEssayResponse> = {}): AiGr
       latencyMs: 50,
     },
     criteriaScores: [
-      { criterionKey: 'rule', awardedPoints: 10, maxPoints: 10, met: true, evidenceStep: 1, commentAr: 'ممتاز' },
-      { criterionKey: 'eval', awardedPoints: 5, maxPoints: 5, met: true, evidenceStep: 2, commentAr: 'دقيق' },
+      {
+        criterionKey: 'rule',
+        awardedPoints: 10,
+        maxPoints: 10,
+        met: true,
+        evidenceStep: 1,
+        commentAr: 'ممتاز',
+      },
+      {
+        criterionKey: 'eval',
+        awardedPoints: 5,
+        maxPoints: 5,
+        met: true,
+        evidenceStep: 2,
+        commentAr: 'دقيق',
+      },
     ],
     aiTotal: 15,
     maxPoints: 15,
@@ -282,8 +300,22 @@ describe('Phase 4 AI Grading Orchestrator, Guardrails, Caps & Rollup', () => {
 
     const bounded = boundAndRecomputeCriteriaScores(
       [
-        { criterionKey: 'rule', awardedPoints: 18, maxPoints: 10, met: true, evidenceStep: 1, commentAr: '' },
-        { criterionKey: 'eval', awardedPoints: -2, maxPoints: 5, met: false, evidenceStep: 2, commentAr: '' },
+        {
+          criterionKey: 'rule',
+          awardedPoints: 18,
+          maxPoints: 10,
+          met: true,
+          evidenceStep: 1,
+          commentAr: '',
+        },
+        {
+          criterionKey: 'eval',
+          awardedPoints: -2,
+          maxPoints: 5,
+          met: false,
+          evidenceStep: 2,
+          commentAr: '',
+        },
       ],
       [
         { key: 'rule', maxPoints: 10 },
@@ -307,8 +339,22 @@ describe('Phase 4 AI Grading Orchestrator, Guardrails, Caps & Rollup', () => {
         makeFakeAiResponse({
           // Simulate over-cap attempt from AI response to confirm Node-side defense-in-depth
           criteriaScores: [
-            { criterionKey: 'rule', awardedPoints: 14, maxPoints: 10, met: true, evidenceStep: 1, commentAr: 'ok' },
-            { criterionKey: 'eval', awardedPoints: 5, maxPoints: 5, met: true, evidenceStep: 2, commentAr: 'ok' },
+            {
+              criterionKey: 'rule',
+              awardedPoints: 14,
+              maxPoints: 10,
+              met: true,
+              evidenceStep: 1,
+              commentAr: 'ok',
+            },
+            {
+              criterionKey: 'eval',
+              awardedPoints: 5,
+              maxPoints: 5,
+              met: true,
+              evidenceStep: 2,
+              commentAr: 'ok',
+            },
           ],
           aiTotal: 19,
         }),
@@ -316,7 +362,13 @@ describe('Phase 4 AI Grading Orchestrator, Guardrails, Caps & Rollup', () => {
       transcribeOnly: vi.fn(),
     };
 
-    const orch = new GradingOrchestrator(prisma, testEnv(), storage, aiClient, createLogger('silent'));
+    const orch = new GradingOrchestrator(
+      prisma,
+      testEnv(),
+      storage,
+      aiClient,
+      createLogger('silent'),
+    );
     const out = await orch.processEssayGradingJob({ attemptId, answerId: ans2Id, studentId });
 
     expect(out.needsReview).toBe(true);

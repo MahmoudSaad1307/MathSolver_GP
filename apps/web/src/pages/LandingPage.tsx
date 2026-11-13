@@ -105,7 +105,11 @@ export default function LandingPage() {
                 void handleCopyCode();
               }}
             >
-              {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? (
+                <Check className="h-4 w-4 text-emerald-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
               <span>{copied ? t('student.copied') : t('student.copyCode')}</span>
             </Button>
             <Button variant="outline" onClick={() => window.print()}>

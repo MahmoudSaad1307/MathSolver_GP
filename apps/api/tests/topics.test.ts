@@ -79,9 +79,7 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
     expect(topic.examModels[1].pairedWithId).toBe(topic.examModels[0].id);
 
     // Teacher B cannot list, inspect, patch, or delete Teacher A's topic
-    const listB = await request(app)
-      .get('/api/v1/topics')
-      .set('Authorization', `Bearer ${tokenB}`);
+    const listB = await request(app).get('/api/v1/topics').set('Authorization', `Bearer ${tokenB}`);
     expect(listB.status).toBe(200);
     expect(listB.body.topics).toHaveLength(0);
 
@@ -110,9 +108,7 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
       .set('Authorization', `Bearer ${tokenA}`);
     expect(delA.status).toBe(204);
 
-    const listA = await request(app)
-      .get('/api/v1/topics')
-      .set('Authorization', `Bearer ${tokenA}`);
+    const listA = await request(app).get('/api/v1/topics').set('Authorization', `Bearer ${tokenA}`);
     expect(listA.body.topics).toHaveLength(0);
   });
 
@@ -329,11 +325,13 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
             needsTeacherConfirmation: false,
             ...(q.type === 'MCQ'
               ? {
-                  mcqOptions: q.mcqOptions.map((o: { label: string; textLatex: string; isCorrect: boolean }) => ({
-                    label: o.label,
-                    textLatex: o.textLatex,
-                    isCorrect: o.isCorrect,
-                  })),
+                  mcqOptions: q.mcqOptions.map(
+                    (o: { label: string; textLatex: string; isCorrect: boolean }) => ({
+                      label: o.label,
+                      textLatex: o.textLatex,
+                      isCorrect: o.isCorrect,
+                    }),
+                  ),
                 }
               : {
                   modelAnswer: {

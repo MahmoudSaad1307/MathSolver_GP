@@ -287,10 +287,7 @@ export default function StudentRemediationPage() {
             </div>
 
             <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full bg-brand-600 transition-all"
-                style={{ width: `${pct}%` }}
-              />
+              <div className="h-full bg-brand-600 transition-all" style={{ width: `${pct}%` }} />
             </div>
 
             {unlocked ? (
@@ -333,7 +330,11 @@ export default function StudentRemediationPage() {
         <Card>
           <CardContent className="pt-5">
             <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-900">
-              <div ref={playerHostRef} data-testid="youtube-player-host" className="h-full w-full" />
+              <div
+                ref={playerHostRef}
+                data-testid="youtube-player-host"
+                className="h-full w-full"
+              />
             </div>
           </CardContent>
         </Card>

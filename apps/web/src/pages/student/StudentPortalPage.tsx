@@ -108,7 +108,9 @@ export default function StudentPortalPage() {
               <Button variant="outline" onClick={() => void stateQuery.refetch()}>
                 {t('student.portal.refreshStatus')}
               </Button>
-              {(data.step === 'POSTTEST_GRADING' ? data.postTestAttempt?.id : data.preTestAttempt?.id) && (
+              {(data.step === 'POSTTEST_GRADING'
+                ? data.postTestAttempt?.id
+                : data.preTestAttempt?.id) && (
                 <Button
                   variant="primary"
                   onClick={() =>

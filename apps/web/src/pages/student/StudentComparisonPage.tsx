@@ -102,7 +102,8 @@ export default function StudentComparisonPage() {
             <CardHeader>
               <CardDescription>{t('comparison.preTestCard')}</CardDescription>
               <CardTitle className="font-mono text-2xl text-slate-800" dir="ltr">
-                {Math.round(data.preTest.percentage)}% ({data.preTest.totalScore}/{data.preTest.maxScore})
+                {Math.round(data.preTest.percentage)}% ({data.preTest.totalScore}/
+                {data.preTest.maxScore})
               </CardTitle>
             </CardHeader>
           </Card>
@@ -110,7 +111,8 @@ export default function StudentComparisonPage() {
             <CardHeader>
               <CardDescription>{t('comparison.postTestCard')}</CardDescription>
               <CardTitle className="font-mono text-2xl text-brand-700" dir="ltr">
-                {Math.round(data.postTest.percentage)}% ({data.postTest.totalScore}/{data.postTest.maxScore})
+                {Math.round(data.postTest.percentage)}% ({data.postTest.totalScore}/
+                {data.postTest.maxScore})
               </CardTitle>
             </CardHeader>
           </Card>
@@ -226,7 +228,8 @@ export default function StudentComparisonPage() {
                   #{pair.orderIndex} · {pair.conceptKey}
                 </span>
                 <span className="font-mono text-xs text-slate-700" dir="ltr">
-                  M1: {pair.preScore}/{pair.preMax} | M2: {pair.postScore ?? '—'}/{pair.postMax ?? '—'}
+                  M1: {pair.preScore}/{pair.preMax} | M2: {pair.postScore ?? '—'}/
+                  {pair.postMax ?? '—'}
                 </span>
               </div>
             ))}

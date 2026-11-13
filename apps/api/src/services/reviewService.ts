@@ -237,9 +237,7 @@ export class ReviewService {
     const topics = await this.prisma.topic.findMany({
       where: { ownerId: teacherId, deletedAt: null },
     });
-    const scopedTopics = filters.topicId
-      ? topics.filter((t) => t.id === filters.topicId)
-      : topics;
+    const scopedTopics = filters.topicId ? topics.filter((t) => t.id === filters.topicId) : topics;
     if (scopedTopics.length === 0) {
       return { items: [], pendingCount: 0, totalCount: 0 };
     }
@@ -385,7 +383,7 @@ export class ReviewService {
         if (!cohort || !topic) return null;
 
         const latestResult = latestResultByAnswer.get(ans.id) ?? null;
-        const resultOverrides = latestResult ? overridesByResult.get(latestResult.id) ?? [] : [];
+        const resultOverrides = latestResult ? (overridesByResult.get(latestResult.id) ?? []) : [];
         const latestOverride = resultOverrides[0] ?? null;
 
         const misreadUnresolved =
@@ -439,7 +437,7 @@ export class ReviewService {
             descriptionAr: crit.descriptionAr,
             maxPoints: crit.maxPoints,
             aiAwarded: ai?.awardedPoints ?? 0,
-            effectiveAwarded: ov ? ov.awarded : ai?.awardedPoints ?? 0,
+            effectiveAwarded: ov ? ov.awarded : (ai?.awardedPoints ?? 0),
             commentAr: ov?.commentAr ?? ai?.commentAr ?? '',
           };
         });
@@ -510,8 +508,7 @@ export class ReviewService {
               }
             : null,
           effectiveCriteria,
-          effectiveTotal:
-            latestOverride?.newTotal ?? latestResult?.aiTotal ?? ans.score ?? 0,
+          effectiveTotal: latestOverride?.newTotal ?? latestResult?.aiTotal ?? ans.score ?? 0,
           effectiveExplanationAr:
             latestOverride?.newExplanationAr ?? latestResult?.errorExplanationAr ?? '',
           overrideHistory: resultOverrides.map((ov) => ({
@@ -570,8 +567,7 @@ export class ReviewService {
     );
 
     const isCorrect =
-      input.finalAnswerCorrect ??
-      newTotal >= ctx.question.points * ctx.topic.correctnessThreshold;
+      input.finalAnswerCorrect ?? newTotal >= ctx.question.points * ctx.topic.correctnessThreshold;
 
     return this.prisma.$transaction(async (tx) => {
       const createdOverride = await tx.teacherOverride.create({
@@ -675,8 +671,7 @@ export class ReviewService {
     );
 
     const isCorrect =
-      input.finalAnswerCorrect ??
-      newTotal >= ctx.question.points * ctx.topic.correctnessThreshold;
+      input.finalAnswerCorrect ?? newTotal >= ctx.question.points * ctx.topic.correctnessThreshold;
 
     const modelAnswer = await this.prisma.modelAnswer.findFirst({
       where: { questionId: ctx.question.id, deletedAt: null },
@@ -707,8 +702,7 @@ export class ReviewService {
           finalAnswerCorrect: isCorrect,
           firstErrorStep: null,
           errorType: input.errorType ?? 'none',
-          errorExplanationAr:
-            input.errorExplanationAr?.trim() ?? 'تم التصحيح يدوياً من قبل المعلم.',
+          errorExplanationAr: input.errorExplanationAr?.trim() ?? 'تم التصحيح يدوياً من قبل المعلم.',
           hintAr: '',
           confidence: 1,
           sympyCheck: toJson({
@@ -1010,7 +1004,9 @@ export class ReviewService {
         id: student.id,
         displayName: student.displayName,
         resumeCode: student.resumeCode,
-        consentAcceptedAt: student.consentAcceptedAt ? student.consentAcceptedAt.toISOString() : null,
+        consentAcceptedAt: student.consentAcceptedAt
+          ? student.consentAcceptedAt.toISOString()
+          : null,
         createdAt: student.createdAt.toISOString(),
         cohort: {
           id: cohort.id,
@@ -1155,7 +1151,7 @@ export class ReviewService {
           attAnswers.map(async (ans) => {
             const q = questionById.get(ans.questionId);
             const latest = latestResultByAnswer.get(ans.id) ?? null;
-            const latestOv = latest ? overridesByResult.get(latest.id)?.[0] ?? null : null;
+            const latestOv = latest ? (overridesByResult.get(latest.id)?.[0] ?? null) : null;
             const signedImgs = await Promise.all(
               (imagesByAnswer.get(ans.id) ?? []).map(async (img) => ({
                 id: img.id,
@@ -1213,7 +1209,9 @@ export class ReviewService {
         id: student.id,
         displayName: student.displayName,
         resumeCode: student.resumeCode,
-        consentAcceptedAt: student.consentAcceptedAt ? student.consentAcceptedAt.toISOString() : null,
+        consentAcceptedAt: student.consentAcceptedAt
+          ? student.consentAcceptedAt.toISOString()
+          : null,
         createdAt: student.createdAt.toISOString(),
       },
       cohort: {

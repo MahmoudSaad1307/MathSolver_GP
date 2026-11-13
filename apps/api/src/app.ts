@@ -113,7 +113,7 @@ export function createApp({
   // API v1 routes
   const v1 = express.Router();
   v1.use('/auth/teacher', createTeacherAuthRouter(prisma, env, redis));
-  v1.use('/cohorts', createCohortsRouter(prisma, env));
+  v1.use('/cohorts', createCohortsRouter(prisma, env, storage));
   v1.use(
     '/student',
     createStudentRouter({

@@ -10,7 +10,10 @@ import {
   signStudentSessionToken,
   signTeacherAccessToken,
 } from '../src/lib/security.js';
-import type { EssayGradingJobPayload, GradingDispatcher } from '../src/services/gradingDispatcher.js';
+import type {
+  EssayGradingJobPayload,
+  GradingDispatcher,
+} from '../src/services/gradingDispatcher.js';
 import { LocalDiskStorageAdapter } from '../src/services/storage/localStorage.js';
 import { createInMemoryPrisma } from './helpers/fakePrisma.js';
 import { createTestEnv } from './helpers/testEnv.js';
@@ -168,7 +171,7 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
     prisma._state.modelAnswers.push({
       id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
       questionId: Q_ESSAY_ID,
-      solutionStepsLatex: ["$u = 2x+1$", "$y' = \\frac{2}{2x+1}$"],
+      solutionStepsLatex: ['$u = 2x+1$', "$y' = \\frac{2}{2x+1}$"],
       finalAnswerLatex: '\\frac{2}{2x+1}',
       finalAnswerSympy: '2/(2*x+1)',
       commonMistakes: 'Forgetting chain rule factor 2',
@@ -326,15 +329,27 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
       },
       gradingJson: {},
       criteriaScores: [
-        { criterionKey: 'chain', awardedPoints: 5, maxPoints: 10, met: false, commentAr: 'نسيان معامل 2' },
-        { criterionKey: 'denom', awardedPoints: 5, maxPoints: 5, met: true, commentAr: 'المقام صحيح' },
+        {
+          criterionKey: 'chain',
+          awardedPoints: 5,
+          maxPoints: 10,
+          met: false,
+          commentAr: 'نسيان معامل 2',
+        },
+        {
+          criterionKey: 'denom',
+          awardedPoints: 5,
+          maxPoints: 5,
+          met: true,
+          commentAr: 'المقام صحيح',
+        },
       ],
       aiTotal: 10,
       finalAnswerCorrect: false,
       firstErrorStep: 2,
       errorType: 'rule_misuse',
       errorExplanationAr: 'أخطأت في الخطوة 2: نسيت ضرب البسط في مشتقة ما بداخل اللوغاريتم (2).',
-      hintAr: 'تذكر قاعدة السلسلة: مشتقة ln(g(x)) تساوي g\'(x)/g(x).',
+      hintAr: "تذكر قاعدة السلسلة: مشتقة ln(g(x)) تساوي g'(x)/g(x).",
       confidence: 0.92,
       sympyCheck: { checked: true, status: 'NOT_EQUIVALENT', equivalent: false },
       needsReview: false,
@@ -437,9 +452,7 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
     expect(otherTeacherQueue.status).toBe(200);
     expect(otherTeacherQueue.body.items).toHaveLength(0);
 
-    const queueRes = await request(app)
-      .get('/api/v1/review-queue')
-      .set('Cookie', teacherACookie);
+    const queueRes = await request(app).get('/api/v1/review-queue').set('Cookie', teacherACookie);
     expect(queueRes.status).toBe(200);
     expect(queueRes.body.pendingCount).toBe(1);
     expect(queueRes.body.items[0].question.modelAnswer.finalAnswerSympy).toBe('2/(2*x+1)');

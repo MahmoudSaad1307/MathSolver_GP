@@ -54,7 +54,10 @@ export function EssayUploadWidget({
   };
 
   const onDrop = React.useCallback(
-    (acceptedFiles: File[], rejections: ReadonlyArray<{ errors: ReadonlyArray<{ message: string }> }>) => {
+    (
+      acceptedFiles: File[],
+      rejections: ReadonlyArray<{ errors: ReadonlyArray<{ message: string }> }>,
+    ) => {
       setErrorMsg(null);
       if (rejections.length > 0) {
         setErrorMsg(
@@ -258,7 +261,11 @@ export function EssayUploadWidget({
           >
             <X className="h-5 w-5" />
           </button>
-          <img src={lightboxUrl} alt="Full size solution" className="max-h-[90vh] max-w-full rounded-lg" />
+          <img
+            src={lightboxUrl}
+            alt="Full size solution"
+            className="max-h-[90vh] max-w-full rounded-lg"
+          />
         </div>
       )}
     </div>

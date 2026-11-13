@@ -158,7 +158,9 @@ export default function StudentsPage() {
                           : '—'}
                       </td>
                       <td className="py-2.5 font-mono text-xs font-bold" dir="ltr">
-                        {s.scoreGain !== null ? `${s.scoreGain >= 0 ? '+' : ''}${s.scoreGain}%` : '—'}
+                        {s.scoreGain !== null
+                          ? `${s.scoreGain >= 0 ? '+' : ''}${s.scoreGain}%`
+                          : '—'}
                       </td>
                       <td className="py-2.5 text-end">
                         <Button

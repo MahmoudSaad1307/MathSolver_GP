@@ -13,10 +13,17 @@ import { requireTeacher } from '../middleware/auth.js';
 import { getParamId, getTeacherId, UuidParamSchema } from '../middleware/requestHelpers.js';
 import { asyncHandler, validateBody, validateParams } from '../middleware/validate.js';
 import { CohortService } from '../services/cohortService.js';
+import { RetentionService } from '../services/retentionService.js';
+import { createStorageAdapter, type StorageAdapter } from '../services/storage/index.js';
 
-export function createCohortsRouter(prisma: PrismaClient, env: AppEnv): Router {
+export function createCohortsRouter(
+  prisma: PrismaClient,
+  env: AppEnv,
+  storage: StorageAdapter = createStorageAdapter(env),
+): Router {
   const router = Router();
   const service = new CohortService(prisma, env);
+  const retentionService = new RetentionService(prisma, env, storage);
   const teacherOnly = requireTeacher(env);
 
   router.get(
@@ -67,12 +74,7 @@ export function createCohortsRouter(prisma: PrismaClient, env: AppEnv): Router {
     validateBody(UpdateCohortSchema),
     asyncHandler(async (req, res) => {
       const input = req.body as UpdateCohortInput;
-      const cohort = await service.updateCohort(
-        getTeacherId(req),
-        getParamId(req),
-        input,
-        req.ip,
-      );
+      const cohort = await service.updateCohort(getTeacherId(req), getParamId(req), input, req.ip);
       res.json({ cohort });
     }),
   );
@@ -84,6 +86,20 @@ export function createCohortsRouter(prisma: PrismaClient, env: AppEnv): Router {
     asyncHandler(async (req, res) => {
       await service.deleteCohort(getTeacherId(req), getParamId(req), req.ip);
       res.status(204).send();
+    }),
+  );
+
+  router.delete(
+    '/:id/data',
+    teacherOnly,
+    validateParams(UuidParamSchema),
+    asyncHandler(async (req, res) => {
+      const result = await retentionService.deleteCohortData(
+        getTeacherId(req),
+        getParamId(req),
+        req.ip,
+      );
+      res.json(result);
     }),
   );
 

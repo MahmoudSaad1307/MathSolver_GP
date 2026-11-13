@@ -8,10 +8,7 @@ export function signLocalStorageKey(
   expiresAtUnix: number,
   hmacSecret: string,
 ): string {
-  return crypto
-    .createHmac('sha256', hmacSecret)
-    .update(`${key}:${expiresAtUnix}`)
-    .digest('hex');
+  return crypto.createHmac('sha256', hmacSecret).update(`${key}:${expiresAtUnix}`).digest('hex');
 }
 
 export function verifyLocalStorageSignature(

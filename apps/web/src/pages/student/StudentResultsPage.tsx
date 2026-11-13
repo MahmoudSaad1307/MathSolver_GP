@@ -59,8 +59,7 @@ export default function StudentResultsPage() {
 
   const resultsQuery = useQuery({
     queryKey: ['student', 'attempt-results', attemptId],
-    queryFn: () =>
-      apiRequest<StudentAttemptResults>(`/student/attempts/${attemptId}/results`),
+    queryFn: () => apiRequest<StudentAttemptResults>(`/student/attempts/${attemptId}/results`),
     enabled: Boolean(attemptId),
     retry: false,
     refetchInterval: (query) => {
@@ -189,10 +188,7 @@ export default function StudentResultsPage() {
             )}
 
             {topic.videoId && (
-              <Button
-                variant="primary"
-                onClick={() => void navigate('/student/remediation')}
-              >
+              <Button variant="primary" onClick={() => void navigate('/student/remediation')}>
                 <PlayCircle className="h-4 w-4" />
                 <span>{t('results.watchExplanation')}</span>
               </Button>
@@ -235,7 +231,8 @@ export default function StudentResultsPage() {
                         >
                           <PlayCircle className="h-3.5 w-3.5" />
                           <span>
-                            {t('results.watchExplanation')} ({formatTimestamp(q.videoTimestampSeconds)})
+                            {t('results.watchExplanation')} (
+                            {formatTimestamp(q.videoTimestampSeconds)})
                           </span>
                         </Button>
                       )}
