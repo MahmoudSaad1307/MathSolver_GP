@@ -9,7 +9,7 @@ opencv-python-headless==4.11.0.86
 sympy==1.14.0
 lark==1.2.2
 scipy==1.15.3
-statsmodels==0.14.4
+statsmodels==0.15.0
 numpy==2.2.4
 anthropic==0.49.0
 groq==0.20.0
