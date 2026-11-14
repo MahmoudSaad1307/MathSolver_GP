@@ -1,7 +1,7 @@
 {
   "topic": {
-    "title": "Derivatives of Exponential and Logarithmic Functions",
-    "description": "Pre-test and post-test assessment covering logarithmic differentiation, exponential derivatives with arbitrary constants/bases, domain analysis, tangent geometry, and exponential vs. linear growth.",
+    "title": "تفاضل الدوال الأسية واللوغاريتمية",
+    "description": "تقييم قبلي وبعدي يقيس إتقان الاشتقاق اللوغاريتمي، ومشتقات الدوال الأسية ذات الأساسات الثابتة والمتغيرة، وتحليل المجال والنقاط الحرجة، ومعادلة المماس، ومقارنة النمو الأسي والخطي.",
     "videoUrl": "https://www.youtube.com/watch?v=REPLACE_ME",
     "minWatchSeconds": 300,
     "correctnessThreshold": 0.6
@@ -9,7 +9,7 @@
   "models": [
     {
       "modelNumber": 1,
-      "title": "Model 1 — Pre-Test: Derivatives of Exponential & Logarithmic Functions",
+      "title": "النموذج الأول — الاختبار القبلي: تفاضل الدوال الأسية واللوغاريتمية",
       "durationMinutes": 60,
       "status": "DRAFT",
       "questions": [
@@ -106,7 +106,7 @@
             ],
             "finalAnswerLatex": "(\\sec x)^{x}(\\ln(\\sec x) + x\\tan x)",
             "finalAnswerSympy": "sec(x)**x * (log(sec(x)) + x*tan(x))",
-            "commonMistakes": "Treating x as a constant exponent (power rule x*(sec x)^(x-1)), forgetting to differentiate LHS as y'/y, or forgetting to multiply back by y."
+            "commonMistakes": "التعامل مع الأس x كثابت وتطبيق قاعدة القوة x*(sec x)^(x-1)، أو نسيان اشتقاق الطرف الأيسر ضمنياً إلى y'/y، أو نسيان الضرب في y في الخطوة النهائية."
           },
           "rubricCriteria": [
             {
@@ -162,7 +162,7 @@
             ],
             "finalAnswerLatex": "2",
             "finalAnswerSympy": "2",
-            "commonMistakes": "Missing factor of 2 from chain rule on e^(2x), or writing +sin x instead of -sin x for derivative of cos x."
+            "commonMistakes": "نسيان معامل 2 الناتج عن قاعدة السلسلة عند اشتقاق e^(2x)، أو كتابة +sin x بدلاً من -sin x لمشتقة cos x."
           },
           "rubricCriteria": [
             {
@@ -220,7 +220,7 @@
             ],
             "finalAnswerLatex": "\\sqrt{10}",
             "finalAnswerSympy": "sqrt(10)",
-            "commonMistakes": "Computing y' = 1/x^3 without chain rule, getting slope 1 instead of 3, or dropping the negative sign when computing distance."
+            "commonMistakes": "حساب المشتقة y' = 1/x^3 دون تطبيق قاعدة السلسلة، أو إيجاد الميل 1 بدلاً من 3، أو إهمال الإشارة السالبة عند حساب المسافة."
           },
           "rubricCriteria": [
             {
@@ -276,7 +276,7 @@
             ],
             "finalAnswerLatex": "2^{x}\\ln 2",
             "finalAnswerSympy": "2**x * log(2)",
-            "commonMistakes": "Treating e^4 using power rule as 4e^3, or forgetting ln(a) in d/dx(a^x)."
+            "commonMistakes": "تطبيق قاعدة القوة على الثابت e^4 باعتباره 4e^3، أو نسيان معامل ln(a) عند اشتقاق الدالة الأسية a^x."
           },
           "rubricCriteria": [
             {
@@ -318,7 +318,7 @@
             ],
             "finalAnswerLatex": "P'(t)=8e^{0.04t}=0.04P,\\; Q'(t)=8",
             "finalAnswerSympy": null,
-            "commonMistakes": "Omitting chain rule factor 0.04 in P'(t), or failing to relate P'(t) to P(t)."
+            "commonMistakes": "إغفال معامل قاعدة السلسلة 0.04 في المشتقة P'(t)، أو عدم ربط المشتقة P'(t) بحجم المجتمع الأصلي P(t)."
           },
           "rubricCriteria": [
             {
@@ -375,7 +375,7 @@
             ],
             "finalAnswerLatex": "\\text{Domain } (-\\infty,1)\\cup(3,\\infty);\\; x=2 \\text{ is invalid (no critical points)}",
             "finalAnswerSympy": null,
-            "commonMistakes": "Solving x^2-4x+3 != 0 instead of > 0, or accepting x=2 because f'(2)=0 formally without checking domain."
+            "commonMistakes": "حل المعادلة x^2-4x+3 != 0 بدلاً من المتباينة > 0، أو قبول x=2 لأن البسط يساوي صفراً دون التحقق من انتمائها للمجال."
           },
           "rubricCriteria": [
             {
@@ -419,7 +419,7 @@
     },
     {
       "modelNumber": 2,
-      "title": "Model 2 — Post-Test: Derivatives of Exponential & Logarithmic Functions",
+      "title": "النموذج الثاني — الاختبار البعدي: تفاضل الدوال الأسية واللوغاريتمية",
       "durationMinutes": 60,
       "status": "DRAFT",
       "questions": [
@@ -519,7 +519,7 @@
             ],
             "finalAnswerLatex": "(\\tan x)^{x}\\left(\\ln(\\tan x)+\\frac{x\\sec^{2}x}{\\tan x}\\right)",
             "finalAnswerSympy": "tan(x)**x * (log(tan(x)) + x*sec(x)**2/tan(x))",
-            "commonMistakes": "Treating exponent x as constant, forgetting y'/y on LHS, or omitting sec^2(x) in d/dx ln(tan x)."
+            "commonMistakes": "التعامل مع الأس x كثابت، أو نسيان y'/y في الطرف الأيسر، أو إغفال sec^2(x) عند اشتقاق ln(tan x)."
           },
           "rubricCriteria": [
             {
@@ -574,7 +574,7 @@
             ],
             "finalAnswerLatex": "1",
             "finalAnswerSympy": "1",
-            "commonMistakes": "Missing factor 3 from chain rule on e^(3x), or evaluating cos(0) as 0."
+            "commonMistakes": "نسيان معامل 3 الناتج عن قاعدة السلسلة في e^(3x)، أو حساب cos(0) على أنها تساوي 0 بدلاً من 1."
           },
           "rubricCriteria": [
             {
@@ -632,7 +632,7 @@
             ],
             "finalAnswerLatex": "\\sqrt{26}",
             "finalAnswerSympy": "sqrt(26)",
-            "commonMistakes": "Computing y' = 1/x^5 without chain rule, or arithmetic error in 1^2 + 5^2."
+            "commonMistakes": "حساب y' = 1/x^5 دون تطبيق قاعدة السلسلة، أو الخطأ الحسابي في جمع 1^2 + 5^2 تحت الجذر."
           },
           "rubricCriteria": [
             {
@@ -687,7 +687,7 @@
             ],
             "finalAnswerLatex": "2e^{2x}",
             "finalAnswerSympy": "2*exp(2*x)",
-            "commonMistakes": "Applying the power rule to a numeric constant 7^3."
+            "commonMistakes": "تطبيق قاعدة القوة على الثابت العددي 7^3."
           },
           "rubricCriteria": [
             {
@@ -729,7 +729,7 @@
             ],
             "finalAnswerLatex": "A'(t)=6e^{0.02t}=0.02A,\\; B'(t)=6",
             "finalAnswerSympy": null,
-            "commonMistakes": "Missing chain rule factor 0.02, or failing to state proportional vs constant growth."
+            "commonMistakes": "نسيان معامل قاعدة السلسلة 0.02، أو عدم توضيح الفرق بين معدل النمو المتناسب مع الكمية والمعدل الثابت."
           },
           "rubricCriteria": [
             {
@@ -786,7 +786,7 @@
             ],
             "finalAnswerLatex": "\\text{Domain } (-\\infty,2)\\cup(4,\\infty);\\; x=3 \\text{ is invalid (no critical points)}",
             "finalAnswerSympy": null,
-            "commonMistakes": "Accepting x=3 without verifying domain positivity."
+            "commonMistakes": "قبول x=3 كنقطة حرجة دون التحقق من أن ما داخل اللوغاريتم موجب."
           },
           "rubricCriteria": [
             {
