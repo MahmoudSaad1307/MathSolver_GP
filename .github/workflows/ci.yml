@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -111,3 +111,42 @@ jobs:
       - name: Python dependency audit
         working-directory: services/ai
         run: pip-audit -r requirements.txt
+
+  deploy:
+    name: Trigger Production Deploys
+    needs: [js-checks, ai-service-checks]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render AI deploy hook
+        env:
+          HOOK_URL: ${{ secrets.RENDER_AI_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "::notice::RENDER_AI_DEPLOY_HOOK secret is not set; skipping."
+            exit 0
+          fi
+          curl -fsS --max-time 20 --retry 2 -X POST "$HOOK_URL"
+          echo "Triggered Render AI deployment."
+
+      - name: Trigger Render API deploy hook
+        env:
+          HOOK_URL: ${{ secrets.RENDER_API_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "::notice::RENDER_API_DEPLOY_HOOK secret is not set; skipping."
+            exit 0
+          fi
+          curl -fsS --max-time 20 --retry 2 -X POST "$HOOK_URL"
+          echo "Triggered Render API deployment."
+
+      - name: Trigger Vercel Web deploy hook
+        env:
+          HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "::notice::VERCEL_DEPLOY_HOOK secret is not set; skipping."
+            exit 0
+          fi
+          curl -fsS --max-time 20 --retry 2 -X POST "$HOOK_URL"
+          echo "Triggered Vercel Web deployment."
