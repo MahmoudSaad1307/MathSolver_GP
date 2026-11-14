@@ -1,9 +1,9 @@
 import { CreateCohortSchema, RandomizeRosterSplitSchema } from '@mathlens/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, Plus, Shuffle, Trash2, UsersRound } from 'lucide-react';
+import { Check, Copy, Plus, Shuffle, Trash2, Users, UsersRound } from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { TeacherShell } from '@/components/layouts/TeacherShell';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -378,7 +378,16 @@ export default function CohortsPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
-                      <span>{t('teacher.cohorts.studentsCount', { count: studentCount })}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{t('teacher.cohorts.studentsCount', { count: studentCount })}</span>
+                        <Link
+                          to={`/teacher/students?cohortId=${cohort.id}`}
+                          className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+                        >
+                          <Users className="h-3.5 w-3.5" />
+                          <span>{t('ux.teacher.viewCohortStudents')}</span>
+                        </Link>
+                      </div>
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"

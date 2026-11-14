@@ -41,7 +41,10 @@ export default function StudentComparisonPage() {
 
   const compQuery = useQuery({
     queryKey: ['student', 'comparison'],
-    queryFn: () => apiRequest<StudentComparisonResponse>('/student/comparison'),
+    queryFn: () =>
+      apiRequest<StudentComparisonResponse>('/student/comparison', {
+        retryStudentRefresh: true,
+      }),
     retry: false,
   });
 
@@ -105,6 +108,17 @@ export default function StudentComparisonPage() {
                 {Math.round(data.preTest.percentage)}% ({data.preTest.totalScore}/
                 {data.preTest.maxScore})
               </CardTitle>
+              {data.preTest.attemptId && (
+                <div className="pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void navigate(`/student/results/${data.preTest.attemptId}`)}
+                  >
+                    <span>{t('student.portal.viewModel1Results')}</span>
+                  </Button>
+                </div>
+              )}
             </CardHeader>
           </Card>
           <Card>
@@ -114,6 +128,17 @@ export default function StudentComparisonPage() {
                 {Math.round(data.postTest.percentage)}% ({data.postTest.totalScore}/
                 {data.postTest.maxScore})
               </CardTitle>
+              {data.postTest.attemptId && (
+                <div className="pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void navigate(`/student/results/${data.postTest.attemptId}`)}
+                  >
+                    <span>{t('student.portal.viewModel2Results')}</span>
+                  </Button>
+                </div>
+              )}
             </CardHeader>
           </Card>
           <Card>

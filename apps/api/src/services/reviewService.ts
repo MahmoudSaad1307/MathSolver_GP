@@ -1161,7 +1161,7 @@ export class ReviewService {
             const signedImgs = await Promise.all(
               (imagesByAnswer.get(ans.id) ?? []).map(async (img) => ({
                 id: img.id,
-                signedUrl: await this.storage.getSignedUrl(img.storageKey, 900),
+                signedUrl: await this.storage.getSignedUrl(img.storageKey, 900).catch(() => ''),
                 pinnedByTeacher: img.pinnedByTeacher,
               })),
             );

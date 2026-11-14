@@ -31,6 +31,7 @@ export default function TopicsPage() {
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [formError, setFormError] = React.useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
 
   const topicsQuery = useQuery({
     queryKey: ['teacher', 'topics'],
@@ -232,14 +233,37 @@ export default function TopicsPage() {
                         <Download className="h-3.5 w-3.5" />
                         <span>{t('teacher.topics.exportJson')}</span>
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        aria-label={t('app.delete')}
-                        onClick={() => deleteMutation.mutate(topic.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+                      {confirmDeleteId === topic.id ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            disabled={deleteMutation.isPending}
+                            onClick={() => {
+                              setConfirmDeleteId(null);
+                              deleteMutation.mutate(topic.id);
+                            }}
+                          >
+                            {t('ux.teacher.confirmDeleteYes')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            {t('app.cancel')}
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          aria-label={t('app.delete')}
+                          onClick={() => setConfirmDeleteId(topic.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

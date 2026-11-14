@@ -492,5 +492,80 @@
     "sympy_NOT_APPLICABLE": "SymPy N/A",
     "dualAgreed": "OCR Verified",
     "dualDisagreed": "OCR Disagreement"
+  },
+  "common": {
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "retry": "Retry",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "copied": "Copied!"
+  },
+  "ux": {
+    "journey": {
+      "title": "Interactive Learning Journey",
+      "step1": "1. Pre-Test (Model 1)",
+      "step1Sub": "Baseline diagnostic",
+      "step2": "2. Guided Video",
+      "step2Sub": "Targeted remediation",
+      "step3": "3. Post-Test (Model 2)",
+      "step3Sub": "Measure learning gain",
+      "step4": "4. Performance Report",
+      "step4Sub": "Before & after insights"
+    },
+    "landing": {
+      "feature1Title": "AI Handwriting Grading",
+      "feature1Desc": "Reads handwritten math steps and pinpoints the exact first error step.",
+      "feature2Title": "Targeted Video Remediation",
+      "feature2Desc": "Directs students specifically to explanation videos for questions they missed.",
+      "feature3Title": "Research-Grade Analytics",
+      "feature3Desc": "Computes Hake's normalized gain, t-tests, and ANCOVA for experimental studies."
+    },
+    "results": {
+      "filterAll": "All Questions",
+      "filterMistakes": "Needs Review / Below Threshold",
+      "filterMastered": "Mastered",
+      "zoomImage": "Zoom solution photo"
+    },
+    "exam": {
+      "legendCurrent": "Current",
+      "legendAnswered": "Answered",
+      "legendFlagged": "Flagged",
+      "legendUnanswered": "Unanswered",
+      "keyboardHint": "Tip: Use Left/Right arrow keys to navigate between questions"
+    },
+    "teacher": {
+      "workflowTitle": "Teacher Experimental Workflow Guide",
+      "workflowStep1": "1. Build Topic & Twin Models",
+      "workflowStep1Desc": "Create your topic with aligned Pre/Post questions and solution video links.",
+      "workflowStep2": "2. Configure Cohorts",
+      "workflowStep2Desc": "Set up Treatment or Control cohorts and share the join code with students.",
+      "workflowStep3": "3. Monitor Students & Review AI Grading",
+      "workflowStep3Desc": "Track student progress and verify or override flagged handwritten solutions.",
+      "workflowStep4": "4. Research Analytics & CSV Export",
+      "workflowStep4Desc": "Inspect statistical comparisons and export de-identified research datasets.",
+      "viewCohortStudents": "View Cohort Students",
+      "recentStudentsTitle": "Recent Enrolled Students",
+      "viewAllStudents": "View All Students",
+      "totalStudentsKpi": "Total Students",
+      "completedBothKpi": "Completed Both Models",
+      "inRemediationKpi": "In Video Remediation",
+      "needsReviewKpi": "Awaiting Teacher Review",
+      "filterAllStages": "All Stages",
+      "studentDetailSubtitle": "Full student timeline, attempts, uploaded solutions, and video progress",
+      "prevStudent": "Previous Student",
+      "nextStudent": "Next Student",
+      "loadingDetail": "Loading student timeline and attempts...",
+      "errorDetail": "Could not load student details. Please try again.",
+      "openReviewQueue": "Open in Review Queue",
+      "handwrittenPhotos": "Uploaded Handwritten Photos",
+      "misreadReportedBadge": "Student Reported OCR Misread",
+      "aiConfidence": "AI Confidence",
+      "confirmDeletePrompt": "Confirm deletion?",
+      "confirmDeleteYes": "Yes, delete",
+      "PortalLink": "Portal Home"
+    }
   }
 }

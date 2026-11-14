@@ -457,9 +457,55 @@ export default function LandingPage() {
           )}
         </Card>
 
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Card className="border-slate-200/80 bg-white/90">
+            <div className="space-y-1.5">
+              <div className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 font-mono text-xs font-bold text-brand-700">
+                01
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">
+                {t('ux.landing.feature1Title')}
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                {t('ux.landing.feature1Desc')}
+              </p>
+            </div>
+          </Card>
+
+          <Card className="border-slate-200/80 bg-white/90">
+            <div className="space-y-1.5">
+              <div className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 font-mono text-xs font-bold text-emerald-700">
+                02
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">
+                {t('ux.landing.feature2Title')}
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                {t('ux.landing.feature2Desc')}
+              </p>
+            </div>
+          </Card>
+
+          <Card className="border-slate-200/80 bg-white/90">
+            <div className="space-y-1.5">
+              <div className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 font-mono text-xs font-bold text-amber-700">
+                03
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">
+                {t('ux.landing.feature3Title')}
+              </h3>
+              <p className="text-xs leading-relaxed text-slate-600">
+                {t('ux.landing.feature3Desc')}
+              </p>
+            </div>
+          </Card>
+        </div>
+
         <Card className="bg-slate-100/70">
-          <p className="mb-2 text-xs font-semibold text-slate-600">معاينة عرض المعادلات (LTR):</p>
-          <MathBlock text="If $y = x^{\sin x}$, find $\frac{dy}{dx}$." />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-slate-600">{t('ux.journey.title')}:</p>
+            <MathBlock text="If $y = x^{\sin x}$, find $\frac{dy}{dx}$." />
+          </div>
         </Card>
       </div>
     </StudentShell>

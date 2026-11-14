@@ -492,5 +492,80 @@
     "sympy_NOT_APPLICABLE": "لا ينطبق",
     "dualAgreed": "تطابق بصري",
     "dualDisagreed": "اختلاف بصري"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "save": "حفظ",
+    "retry": "إعادة المحاولة",
+    "confirm": "تأكيد",
+    "delete": "حذف",
+    "copied": "تم النسخ!"
+  },
+  "ux": {
+    "journey": {
+      "title": "مسار التعلم التفاعلي",
+      "step1": "1. الاختبار القبلي",
+      "step1Sub": "قياس المستوى الأساسي",
+      "step2": "2. الشرح الموجه",
+      "step2Sub": "فيديوهات علاجية للأخطاء",
+      "step3": "3. الاختبار البعدي",
+      "step3Sub": "قياس التحسن الفعلي",
+      "step4": "4. مقارنة الأداء",
+      "step4Sub": "تقرير التقدم التفصيلي"
+    },
+    "landing": {
+      "feature1Title": "تصحيح ذكي للخط اليدوي",
+      "feature1Desc": "يقرأ الذكاء الاصطناعي خطوات الحل المكتوبة بخط اليد ويحدد موضع الخطأ الأول بدقة.",
+      "feature2Title": "تدخل علاجي مخصص",
+      "feature2Desc": "توجيه الطالب مباشرة إلى مقاطع الفيديو الخاصة بالأسئلة التي تعثر فيها فقط.",
+      "feature3Title": "إحصاءات بحثية دقيقة",
+      "feature3Desc": "قياس الكسب المعدل لـ Hake، واختبارات t، وتحليل التباين المصاحب ANCOVA للمعلم."
+    },
+    "results": {
+      "filterAll": "كل الأسئلة",
+      "filterMistakes": "تحتاج مراجعة / أخطاء",
+      "filterMastered": "إجابات متقنة",
+      "zoomImage": "تكبير صورة الحل"
+    },
+    "exam": {
+      "legendCurrent": "السؤال الحالي",
+      "legendAnswered": "تمت الإجابة",
+      "legendFlagged": "مُعلّم للمراجعة",
+      "legendUnanswered": "بدون إجابة",
+      "keyboardHint": "تلميح: يمكنك التنقل بين الأسئلة باستخدام أسهم لوحة المفاتيح"
+    },
+    "teacher": {
+      "workflowTitle": "دليل سير العمل التجريبي للمعلم",
+      "workflowStep1": "1. بناء الموضوع والنموذجين",
+      "workflowStep1Desc": "أنشئ الموضوع وأضف أسئلة متكافئة في النموذجين القبلي والبعدي مع روابط فيديو الحل.",
+      "workflowStep2": "2. إعداد المجموعات (Cohorts)",
+      "workflowStep2Desc": "أنشئ مجموعة تجريبية أو ضابطة وشارك كود الانضمام مع الطلاب.",
+      "workflowStep3": "3. متابعة الطلاب ومراجعة التصحيح",
+      "workflowStep3Desc": "راقب تقدم كل طالب واعتمد أو عدّل تصحيح الذكاء الاصطناعي للحلول المقالية.",
+      "workflowStep4": "4. التحليلات والتصدير البحثي",
+      "workflowStep4Desc": "استعرض الفروق الإحصائية وصدّر البيانات الجاهزة للتحليل الأكاديمي.",
+      "viewCohortStudents": "عرض طلاب المجموعة",
+      "recentStudentsTitle": "أحدث الطلاب المسجلين",
+      "viewAllStudents": "عرض كل الطلاب",
+      "totalStudentsKpi": "إجمالي الطلاب",
+      "completedBothKpi": "أكملوا النموذجين",
+      "inRemediationKpi": "في مرحلة الفيديو",
+      "needsReviewKpi": "بانتظار مراجعة المعلم",
+      "filterAllStages": "كل المراحل",
+      "studentDetailSubtitle": "السجل التفصيلي لمحاولات الطالب والإجابات وتقدم الفيديو",
+      "prevStudent": "الطالب السابق",
+      "nextStudent": "الطالب التالي",
+      "loadingDetail": "جارٍ تحميل تفاصيل الطالب ومحاولاته...",
+      "errorDetail": "تعذر تحميل تفاصيل الطالب. يرجى المحاولة مرة أخرى.",
+      "openReviewQueue": "فتح في طابور المراجعة",
+      "handwrittenPhotos": "صور الحل المرفوعة",
+      "misreadReportedBadge": "أبلغ الطالب عن خطأ قراءة",
+      "aiConfidence": "ثقة الذكاء الاصطناعي",
+      "confirmDeletePrompt": "هل أنت متأكد من الحذف؟",
+      "confirmDeleteYes": "نعم، احذف",
+      "PortalLink": "العودة للبوابة"
+    }
   }
 }

@@ -76,7 +76,10 @@ export default function StudentRemediationPage() {
 
   const stateQuery = useQuery({
     queryKey: ['student', 'video-state'],
-    queryFn: () => apiRequest<StudentVideoStateResponse>('/student/video/state'),
+    queryFn: () =>
+      apiRequest<StudentVideoStateResponse>('/student/video/state', {
+        retryStudentRefresh: true,
+      }),
     retry: false,
   });
 
@@ -85,6 +88,7 @@ export default function StudentRemediationPage() {
       apiRequest<VideoHeartbeatResponse>('/student/video/heartbeat', {
         method: 'POST',
         body: JSON.stringify(payload),
+        retryStudentRefresh: true,
       }),
     onSuccess: async (res) => {
       setLiveProgress({
@@ -106,6 +110,7 @@ export default function StudentRemediationPage() {
       apiRequest('/student/video/alert', {
         method: 'POST',
         body: JSON.stringify({ errorCode }),
+        retryStudentRefresh: true,
       }),
   });
 

@@ -32,6 +32,7 @@ export function UnlockPostTestButton({ studentId }: UnlockPostTestButtonProps) {
       setStatusMessage(t('students.unlockSuccess'));
       await queryClient.invalidateQueries({ queryKey: ['teacher', 'students'] });
       await queryClient.invalidateQueries({ queryKey: ['teacher', 'student', studentId] });
+      await queryClient.invalidateQueries({ queryKey: ['teacher', 'student-detail', studentId] });
     },
     onError: (err) => {
       setStatusMessage(null);

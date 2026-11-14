@@ -109,6 +109,7 @@ export function EssayUploadWidget({
         {
           method: 'POST',
           body: formData,
+          retryStudentRefresh: true,
         },
       );
       clearStaged();
@@ -126,6 +127,7 @@ export function EssayUploadWidget({
     try {
       await apiRequest<void>(`/student/answer-images/${imageId}`, {
         method: 'DELETE',
+        retryStudentRefresh: true,
       });
       onChanged(images.filter((img) => img.id !== imageId));
     } catch (err) {

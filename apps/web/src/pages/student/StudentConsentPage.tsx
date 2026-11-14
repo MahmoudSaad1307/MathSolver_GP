@@ -24,7 +24,9 @@ export default function StudentConsentPage() {
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    void apiRequest<MeStateResponse>('/student/me/state')
+    void apiRequest<MeStateResponse>('/student/me/state', {
+      retryStudentRefresh: true,
+    })
       .then((state) => {
         setStudentName(state.student.displayName);
         if (state.student.consentAcceptedAt) {
@@ -60,6 +62,7 @@ export default function StudentConsentPage() {
       await apiRequest<MeStateResponse>('/student/consent', {
         method: 'POST',
         body: JSON.stringify({ accepted: true }),
+        retryStudentRefresh: true,
       });
       void navigate('/student/exam/1');
     } catch (err) {

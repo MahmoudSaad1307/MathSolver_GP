@@ -47,6 +47,7 @@ export default function TopicBuilderPage() {
     text: string;
   } | null>(null);
 
+  const [confirmDeleteQId, setConfirmDeleteQId] = React.useState<string | null>(null);
   const [editingModalState, setEditingModalState] = React.useState<{
     examId: string;
     nextOrderIndex: number;
@@ -301,14 +302,37 @@ export default function TopicBuilderPage() {
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={t('app.delete')}
-                    onClick={() => deleteQuestionMutation.mutate(q.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-red-600" />
-                  </Button>
+                  {confirmDeleteQId === q.id ? (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={deleteQuestionMutation.isPending}
+                        onClick={() => {
+                          setConfirmDeleteQId(null);
+                          deleteQuestionMutation.mutate(q.id);
+                        }}
+                      >
+                        {t('ux.teacher.confirmDeleteYes')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setConfirmDeleteQId(null)}
+                      >
+                        {t('app.cancel')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={t('app.delete')}
+                      onClick={() => setConfirmDeleteQId(q.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                    </Button>
+                  )}
                 </div>
               </div>
 

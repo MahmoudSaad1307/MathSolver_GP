@@ -85,6 +85,7 @@ export default function StudentExamPage() {
     void apiRequest<{ attempt: StudentExamAttempt }>('/student/attempts', {
       method: 'POST',
       body: JSON.stringify({ modelNumber }),
+      retryStudentRefresh: true,
     })
       .then((res) => {
         if (!active) return;
@@ -141,11 +142,13 @@ export default function StudentExamPage() {
           await apiRequest(`/student/attempts/${entry.attemptId}/answers/${entry.questionId}`, {
             method: 'PUT',
             body: JSON.stringify({ selectedOptionId: entry.selectedOptionId }),
+            retryStudentRefresh: true,
           });
         });
 
         await apiRequest(`/student/attempts/${attemptId}/submit`, {
           method: 'POST',
+          retryStudentRefresh: true,
         });
         await queryClient.invalidateQueries({ queryKey: ['student', 'state'] });
         void navigate('/student', { replace: true });
@@ -222,6 +225,7 @@ export default function StudentExamPage() {
       await apiRequest(`/student/attempts/${attempt.id}/answers/${questionId}`, {
         method: 'PUT',
         body: JSON.stringify({ selectedOptionId: optionId }),
+        retryStudentRefresh: true,
       });
       removeQueuedMcqAutosave(attempt.id, questionId);
       setPendingOfflineCount(getQueuedAutosaveCount(attempt.id));
@@ -393,8 +397,22 @@ export default function StudentExamPage() {
         {/* Question Navigator */}
         <Card>
           <CardContent className="p-3">
-            <div className="mb-2 text-xs font-semibold text-slate-600">
-              {t('student.exam.questionNav')}
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600">
+              <span>{t('student.exam.questionNav')}</span>
+              <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-500">
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-xs bg-brand-600" />
+                  {t('ux.exam.legendCurrent')}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-xs border border-emerald-400 bg-emerald-100" />
+                  {t('ux.exam.legendAnswered')}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-xs border border-slate-300 bg-white" />
+                  {t('ux.exam.legendUnanswered')}
+                </span>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {questions.map((q, idx) => {

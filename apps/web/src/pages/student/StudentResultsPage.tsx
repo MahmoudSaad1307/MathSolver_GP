@@ -49,12 +49,19 @@ export default function StudentResultsPage() {
   const [openMisreadAnswerId, setOpenMisreadAnswerId] = React.useState<string | null>(null);
   const [misreadNotes, setMisreadNotes] = React.useState<Record<string, string>>({});
   const [misreadError, setMisreadError] = React.useState<string | null>(null);
+  const [questionFilter, setQuestionFilter] = React.useState<'ALL' | 'MISTAKES' | 'MASTERED'>(
+    'ALL',
+  );
+  const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
 
   const pollCounterRef = React.useRef(0);
 
   const resultsQuery = useQuery({
     queryKey: ['student', 'attempt-results', attemptId],
-    queryFn: () => apiRequest<StudentAttemptResults>(`/student/attempts/${attemptId}/results`),
+    queryFn: () =>
+      apiRequest<StudentAttemptResults>(`/student/attempts/${attemptId}/results`, {
+        retryStudentRefresh: true,
+      }),
     enabled: Boolean(attemptId),
     retry: false,
     refetchInterval: (query) => {
@@ -73,6 +80,7 @@ export default function StudentResultsPage() {
       apiRequest(`/student/answers/${vars.answerId}/report-misread`, {
         method: 'POST',
         body: JSON.stringify({ note: vars.note }),
+        retryStudentRefresh: true,
       }),
     onSuccess: async () => {
       setMisreadError(null);
@@ -114,6 +122,15 @@ export default function StudentResultsPage() {
   }
 
   const { attempt, topic, statusCounts, questions } = resultsQuery.data;
+  const visibleQuestions = questions.filter((q) => {
+    if (questionFilter === 'MISTAKES') {
+      return q.belowThreshold || q.statusChip === 'NEEDS_REVIEW';
+    }
+    if (questionFilter === 'MASTERED') {
+      return !q.belowThreshold && q.statusChip !== 'NEEDS_REVIEW';
+    }
+    return true;
+  });
 
   return (
     <StudentShell>
@@ -193,9 +210,46 @@ export default function StudentResultsPage() {
 
         {misreadError && <Alert tone="danger">{misreadError}</Alert>}
 
+        {questions.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {(
+              [
+                { id: 'ALL', label: `${t('ux.results.filterAll')} (${questions.length})` },
+                {
+                  id: 'MISTAKES',
+                  label: `${t('ux.results.filterMistakes')} (${
+                    questions.filter((q) => q.belowThreshold || q.statusChip === 'NEEDS_REVIEW')
+                      .length
+                  })`,
+                },
+                {
+                  id: 'MASTERED',
+                  label: `${t('ux.results.filterMastered')} (${
+                    questions.filter((q) => !q.belowThreshold && q.statusChip !== 'NEEDS_REVIEW')
+                      .length
+                  })`,
+                },
+              ] as const
+            ).map((pill) => (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => setQuestionFilter(pill.id)}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  questionFilter === pill.id
+                    ? 'bg-brand-600 text-white shadow-2xs'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Per-question detailed feedback */}
         <div className="space-y-4">
-          {questions.map((q) => {
+          {visibleQuestions.map((q) => {
             const misreadOpen = openMisreadAnswerId === q.answerId;
             return (
               <Card key={q.questionId} data-testid={`result-question-${q.orderIndex}`}>
@@ -331,12 +385,18 @@ export default function StudentResultsPage() {
                             </div>
                             <div className="grid gap-2">
                               {q.images.map((img, idx) => (
-                                <img
+                                <button
                                   key={img.id}
-                                  src={img.signedUrl}
-                                  alt={`${t('results.studentPhoto')} ${idx + 1}`}
-                                  className="max-h-72 w-full rounded-lg border border-slate-200 object-contain bg-slate-50"
-                                />
+                                  type="button"
+                                  onClick={() => setLightboxUrl(img.signedUrl)}
+                                  className="group relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                                >
+                                  <img
+                                    src={img.signedUrl}
+                                    alt={`${t('results.studentPhoto')} ${idx + 1}`}
+                                    className="max-h-72 w-full object-contain transition-transform group-hover:scale-[1.02]"
+                                  />
+                                </button>
                               ))}
                             </div>
                           </div>
@@ -459,6 +519,22 @@ export default function StudentResultsPage() {
             );
           })}
         </div>
+
+        {lightboxUrl && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <img
+              src={lightboxUrl}
+              alt={t('results.studentPhoto')}
+              className="max-h-[90vh] max-w-full rounded-xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
       </div>
     </StudentShell>
   );

@@ -14,7 +14,7 @@ import { useUiStore } from '@/store/uiStore';
 export default function TeacherLoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const locale = useUiStore((s) => s.locale);
+  const { locale, setLocale } = useUiStore();
   const [serverError, setServerError] = React.useState<string | null>(null);
 
   const form = useForm<TeacherLoginInput>({
@@ -42,10 +42,18 @@ export default function TeacherLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8">
       <div className="w-full max-w-md space-y-4">
-        <div className="text-center">
+        <div className="flex items-center justify-between">
           <Link to="/" className="text-sm font-semibold text-brand-700 hover:underline">
             {t('app.name')}
           </Link>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
+          >
+            {t('teacher.switchLang')}
+          </Button>
         </div>
 
         <Card>

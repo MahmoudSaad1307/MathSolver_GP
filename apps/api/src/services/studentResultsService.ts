@@ -318,7 +318,7 @@ export class StudentResultsService {
         const signedImages = await Promise.all(
           answerImages.map(async (img) => ({
             id: img.id,
-            signedUrl: await this.storage.getSignedUrl(img.storageKey, 900),
+            signedUrl: await this.storage.getSignedUrl(img.storageKey, 900).catch(() => ''),
             width: img.width,
             height: img.height,
           })),

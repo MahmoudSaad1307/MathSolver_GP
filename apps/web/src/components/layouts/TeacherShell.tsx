@@ -52,9 +52,17 @@ export function TeacherShell({ teacherName, children }: TeacherShellProps) {
         {t('app.skipToContent')}
       </a>
 
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-2xs lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       <aside
         className={cn(
-          'fixed inset-y-0 start-0 z-40 w-64 border-e border-slate-200 bg-white transition-transform lg:static lg:translate-x-0',
+          'fixed inset-y-0 start-0 z-40 w-64 border-e border-slate-200 bg-white shadow-sm transition-transform lg:static lg:translate-x-0 lg:shadow-none',
           sidebarOpen
             ? 'translate-x-0'
             : locale === 'ar'
@@ -94,7 +102,9 @@ export function TeacherShell({ teacherName, children }: TeacherShellProps) {
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                    isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-100',
+                    isActive
+                      ? 'border-s-4 border-brand-600 bg-brand-50 font-semibold text-brand-700'
+                      : 'text-slate-700 hover:bg-slate-100',
                   )
                 }
               >

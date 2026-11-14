@@ -43,7 +43,7 @@ export function App() {
         <React.Suspense
           fallback={
             <div className="flex min-h-screen items-center justify-center text-sm text-slate-600">
-              جارٍ التحميل...
+              {locale === 'ar' ? 'جارٍ التحميل...' : 'Loading...'}
             </div>
           }
         >

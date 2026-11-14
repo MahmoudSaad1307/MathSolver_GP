@@ -99,6 +99,17 @@ export default function StudentPortalPage() {
     }
   };
 
+  const handleOpenEnrollmentResults = async (
+    enrollmentId: string,
+    attemptId: string,
+    isActive: boolean,
+  ) => {
+    if (!isActive && accountQuery.data) {
+      await handleSelectEnrollment(enrollmentId).catch(() => undefined);
+    }
+    void navigate(`/student/results/${attemptId}`);
+  };
+
   if (accountQuery.isLoading && stateQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-slate-600">
@@ -221,6 +232,72 @@ export default function StudentPortalPage() {
         {/* Active Quiz Workflow Card */}
         {data && (
           <div className="space-y-4">
+            {/* 4-Step Learning Journey Stepper */}
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+              <div className="mb-3 text-xs font-bold tracking-wide text-slate-500 uppercase">
+                {t('ux.journey.title')}
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {(
+                  [
+                    {
+                      idx: 0,
+                      title: t('ux.journey.step1'),
+                      sub: t('ux.journey.step1Sub'),
+                    },
+                    {
+                      idx: 1,
+                      title: t('ux.journey.step2'),
+                      sub: t('ux.journey.step2Sub'),
+                    },
+                    {
+                      idx: 2,
+                      title: t('ux.journey.step3'),
+                      sub: t('ux.journey.step3Sub'),
+                    },
+                    {
+                      idx: 3,
+                      title: t('ux.journey.step4'),
+                      sub: t('ux.journey.step4Sub'),
+                    },
+                  ] as const
+                ).map((item) => {
+                  const activeStageIdx =
+                    data.step === 'PRETEST_IN_PROGRESS' ||
+                    data.step === 'PRETEST_SUBMITTED' ||
+                    data.step === 'PRETEST_GRADING'
+                      ? 0
+                      : data.step === 'PRETEST_RESULTS' || data.step === 'REMEDIATION'
+                        ? 1
+                        : data.step === 'POSTTEST_UNLOCKED' ||
+                            data.step === 'POSTTEST_IN_PROGRESS' ||
+                            data.step === 'POSTTEST_GRADING'
+                          ? 2
+                          : 3;
+                  const isDone = item.idx < activeStageIdx || data.step === 'COMPARISON';
+                  const isCurrent = item.idx === activeStageIdx;
+                  return (
+                    <div
+                      key={item.idx}
+                      className={`rounded-lg border p-2.5 transition-colors ${
+                        isCurrent
+                          ? 'border-brand-500 bg-brand-50/70 text-brand-950 ring-1 ring-brand-500/30'
+                          : isDone
+                            ? 'border-emerald-200 bg-emerald-50/50 text-emerald-950'
+                            : 'border-slate-200 bg-slate-50/70 text-slate-500'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-bold">{item.title}</span>
+                        {isDone && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
+                      </div>
+                      <p className="mt-0.5 text-[11px] opacity-80">{item.sub}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {data.step === 'PRETEST_IN_PROGRESS' && (
               <Card>
                 <CardHeader>
@@ -375,15 +452,30 @@ export default function StudentPortalPage() {
                   >
                     {t('student.portal.viewComparison')}
                   </Button>
-                  {data.postTestAttempt && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => void navigate(`/student/results/${data.postTestAttempt?.id}`)}
-                    >
-                      {t('student.portal.viewModel2Results')}
-                    </Button>
-                  )}
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {data.preTestAttempt && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => void navigate(`/student/results/${data.preTestAttempt?.id}`)}
+                      >
+                        <FileCheck2 className="h-4 w-4" />
+                        <span>{t('student.portal.viewModel1Results')}</span>
+                      </Button>
+                    )}
+                    {data.postTestAttempt && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() =>
+                          void navigate(`/student/results/${data.postTestAttempt?.id}`)
+                        }
+                      >
+                        <FileCheck2 className="h-4 w-4" />
+                        <span>{t('student.portal.viewModel2Results')}</span>
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -485,7 +577,11 @@ export default function StudentPortalPage() {
                               size="sm"
                               variant="outline"
                               onClick={() =>
-                                void navigate(`/student/results/${item.preTestAttempt!.id}`)
+                                void handleOpenEnrollmentResults(
+                                  item.studentId,
+                                  item.preTestAttempt!.id,
+                                  isActive,
+                                )
                               }
                             >
                               <FileCheck2 className="h-4 w-4" />
@@ -499,7 +595,11 @@ export default function StudentPortalPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() =>
-                                  void navigate(`/student/results/${item.postTestAttempt!.id}`)
+                                  void handleOpenEnrollmentResults(
+                                    item.studentId,
+                                    item.postTestAttempt!.id,
+                                    isActive,
+                                  )
                                 }
                               >
                                 <FileCheck2 className="h-4 w-4" />
