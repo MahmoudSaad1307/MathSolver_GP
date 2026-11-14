@@ -1558,14 +1558,34 @@ async function main() {
     });
   };
 
-  // 5. Create Students, Attempts, VideoSessions, and VideoEvents
+  // 5. Create StudentAccounts, Students, Attempts, VideoSessions, and VideoEvents
+  const studentPasswordHash = await hashPassword('StudentPass123!');
+
   for (let idx = 0; idx < MOCK_STUDENTS.length; idx += 1) {
     const spec = MOCK_STUDENTS[idx]!;
     const cohort = cohortByKey.get(spec.cohortKey)!;
     const baseTime = new Date(Date.now() - (12 - (idx % 10)) * 86_400_000);
+    const studentEmail = `${spec.resumeCode.toLowerCase()}@student.mathlens.local`;
+
+    const studentAccount = await prisma.studentAccount.upsert({
+      where: { email: studentEmail },
+      update: {
+        displayName: spec.displayName,
+        passwordHash: studentPasswordHash,
+        consentAcceptedAt: baseTime,
+        deletedAt: null,
+      },
+      create: {
+        email: studentEmail,
+        displayName: spec.displayName,
+        passwordHash: studentPasswordHash,
+        consentAcceptedAt: baseTime,
+      },
+    });
 
     const student = await prisma.student.create({
       data: {
+        accountId: studentAccount.id,
         cohortId: cohort.id,
         displayName: spec.displayName,
         resumeCode: spec.resumeCode,

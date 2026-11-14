@@ -9,6 +9,8 @@ export const ErrorCodeSchema = z.enum([
   'RATE_LIMITED',
   'POSTTEST_LOCKED',
   'INVALID_CREDENTIALS',
+  'EMAIL_ALREADY_REGISTERED',
+  'NO_ACTIVE_QUIZ_SELECTED',
   'INVALID_COHORT_CODE',
   'COHORT_CLOSED',
   'INVALID_RESUME_CODE',
@@ -74,6 +76,16 @@ export const ERROR_CATALOG: Record<
     status: 401,
     message_ar: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
     message_en: 'Invalid email or password.',
+  },
+  EMAIL_ALREADY_REGISTERED: {
+    status: 409,
+    message_ar: 'هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول إلى حسابك.',
+    message_en: 'An account with this email already exists. Please log in.',
+  },
+  NO_ACTIVE_QUIZ_SELECTED: {
+    status: 400,
+    message_ar: 'يرجى إدخال كود الاختبار أو اختيار اختبار من حسابك أولاً.',
+    message_en: 'Please enter a quiz code or select an active quiz from your account first.',
   },
   INVALID_COHORT_CODE: {
     status: 404,

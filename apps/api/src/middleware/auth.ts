@@ -6,6 +6,7 @@ import { verifyStudentSessionToken, verifyTeacherAccessToken } from '../lib/secu
 export const TEACHER_ACCESS_COOKIE = 'ml_teacher_access';
 export const TEACHER_REFRESH_COOKIE = 'ml_teacher_refresh';
 export const STUDENT_SESSION_COOKIE = 'ml_student_session';
+export const STUDENT_REFRESH_COOKIE = 'ml_student_refresh';
 
 export function getCookieValue(req: { cookies?: unknown }, name: string): string | undefined {
   if (!req.cookies || typeof req.cookies !== 'object') {
@@ -40,22 +41,74 @@ export function requireTeacher(env: AppEnv): RequestHandler {
   };
 }
 
-export function requireStudent(env: AppEnv): RequestHandler {
+export function tryGetStudentClaims(req: { cookies?: unknown; header?: (name: string) => string | undefined }, env: AppEnv) {
+  const cookieToken = getCookieValue(req, STUDENT_SESSION_COOKIE);
+  const authHeader = req.header?.('authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
+  const token = cookieToken || bearerToken;
+  if (!token) {
+    return null;
+  }
+  return verifyStudentSessionToken(token, env);
+}
+
+export function requireStudentAccount(env: AppEnv): RequestHandler {
   return (req, _res, next) => {
-    const token = getCookieValue(req, STUDENT_SESSION_COOKIE);
-    if (!token) {
+    const claims = tryGetStudentClaims(req, env);
+    if (!claims || !claims.accountId) {
       return next(new AppError('UNAUTHORIZED'));
     }
 
-    const claims = verifyStudentSessionToken(token, env);
+    req.studentAccount = {
+      id: claims.accountId,
+      email: claims.email ?? '',
+      activeStudentId: claims.cohortId ? claims.sub : null,
+      activeCohortId: claims.cohortId || null,
+    };
+
+    if (claims.cohortId) {
+      req.studentSession = {
+        studentId: claims.sub,
+        cohortId: claims.cohortId,
+        accountId: claims.accountId,
+        email: claims.email,
+      };
+    }
+
+    return next();
+  };
+}
+
+export function requireStudent(env: AppEnv): RequestHandler {
+  return (req, _res, next) => {
+    const claims = tryGetStudentClaims(req, env);
     if (!claims) {
+      return next(new AppError('UNAUTHORIZED'));
+    }
+
+    if (!claims.cohortId) {
+      if (claims.accountId) {
+        return next(new AppError('NO_ACTIVE_QUIZ_SELECTED'));
+      }
       return next(new AppError('UNAUTHORIZED'));
     }
 
     req.studentSession = {
       studentId: claims.sub,
       cohortId: claims.cohortId,
+      accountId: claims.accountId,
+      email: claims.email,
     };
+
+    if (claims.accountId) {
+      req.studentAccount = {
+        id: claims.accountId,
+        email: claims.email ?? '',
+        activeStudentId: claims.sub,
+        activeCohortId: claims.cohortId,
+      };
+    }
+
     return next();
   };
 }

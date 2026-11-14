@@ -1,12 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   StudentJoinSchema,
+  StudentLoginSchema,
+  StudentRegisterSchema,
   StudentResumeSchema,
+  type StudentAccountMeResponse,
   type StudentJoinInput,
   type StudentJoinResponse,
+  type StudentLoginInput,
+  type StudentRegisterInput,
   type StudentResumeInput,
 } from '@mathlens/shared';
-import { Check, Copy, Printer } from 'lucide-react';
+import { Check, Copy, KeyRound, LogIn, Printer, UserPlus } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +30,10 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const locale = useUiStore((s) => s.locale);
 
+  const [accountTab, setAccountTab] = React.useState<'login' | 'register'>('login');
+  const [accountError, setAccountError] = React.useState<string | null>(null);
+  const [accountSubmitting, setAccountSubmitting] = React.useState(false);
+
   const [mode, setMode] = React.useState<'join' | 'resume'>('join');
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
@@ -32,6 +41,16 @@ export default function LandingPage() {
     null,
   );
   const [copied, setCopied] = React.useState(false);
+
+  const loginForm = useForm<StudentLoginInput>({
+    resolver: zodResolver(StudentLoginSchema),
+    defaultValues: { email: '', password: '' },
+  });
+
+  const registerForm = useForm<StudentRegisterInput>({
+    resolver: zodResolver(StudentRegisterSchema),
+    defaultValues: { displayName: '', email: '', password: '', consentAccepted: true },
+  });
 
   const joinForm = useForm<StudentJoinInput>({
     resolver: zodResolver(StudentJoinSchema),
@@ -42,6 +61,38 @@ export default function LandingPage() {
     resolver: zodResolver(StudentResumeSchema),
     defaultValues: { resumeCode: '' },
   });
+
+  const onStudentLoginSubmit = async (data: StudentLoginInput) => {
+    setAccountError(null);
+    setAccountSubmitting(true);
+    try {
+      await apiRequest<StudentAccountMeResponse>('/auth/student/login', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      void navigate('/student');
+    } catch (err) {
+      setAccountError(getApiErrorMessage(err, locale, t('errors.generic')));
+    } finally {
+      setAccountSubmitting(false);
+    }
+  };
+
+  const onStudentRegisterSubmit = async (data: StudentRegisterInput) => {
+    setAccountError(null);
+    setAccountSubmitting(true);
+    try {
+      await apiRequest<StudentAccountMeResponse>('/auth/student/register', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      void navigate('/student');
+    } catch (err) {
+      setAccountError(getApiErrorMessage(err, locale, t('errors.generic')));
+    } finally {
+      setAccountSubmitting(false);
+    }
+  };
 
   const onJoinSubmit = async (data: StudentJoinInput) => {
     setErrorMsg(null);
@@ -84,7 +135,7 @@ export default function LandingPage() {
 
   if (joinedStudent) {
     return (
-      <StudentShell studentName={joinedStudent.displayName}>
+      <StudentShell studentName={joinedStudent.displayName} studentEmail={joinedStudent.email}>
         <Card className="mx-auto max-w-lg space-y-5 text-center">
           <CardHeader>
             <CardTitle className="text-xl text-brand-700">{t('student.resumeCardTitle')}</CardTitle>
@@ -140,6 +191,164 @@ export default function LandingPage() {
           <p className="text-sm text-slate-600">{t('app.subtitle')}</p>
         </div>
 
+        {/* Primary Student Account Card (Email + Password) */}
+        <Card className="border-brand-200 shadow-sm">
+          <div className="mb-4 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+            <Button
+              variant={accountTab === 'login' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => {
+                setAccountTab('login');
+                setAccountError(null);
+              }}
+            >
+              <LogIn className="h-4 w-4" />
+              <span>{t('landing.loginTab')}</span>
+            </Button>
+            <Button
+              variant={accountTab === 'register' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => {
+                setAccountTab('register');
+                setAccountError(null);
+              }}
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>{t('landing.registerTab')}</span>
+            </Button>
+          </div>
+
+          {accountError ? (
+            <Alert tone="danger" className="mb-4">
+              {accountError}
+            </Alert>
+          ) : null}
+
+          {accountTab === 'login' ? (
+            <form
+              onSubmit={(e) => void loginForm.handleSubmit(onStudentLoginSubmit)(e)}
+              className="space-y-4"
+            >
+              <CardHeader className="mb-2">
+                <CardTitle>{t('landing.loginTitle')}</CardTitle>
+                <CardDescription>{t('landing.loginDesc')}</CardDescription>
+              </CardHeader>
+
+              <div>
+                <Label htmlFor="studentLoginEmail">{t('landing.email')}</Label>
+                <Input
+                  id="studentLoginEmail"
+                  type="email"
+                  dir="ltr"
+                  autoComplete="email"
+                  placeholder="student@example.com"
+                  {...loginForm.register('email')}
+                />
+                {loginForm.formState.errors.email ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    {loginForm.formState.errors.email.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div>
+                <Label htmlFor="studentLoginPassword">{t('landing.password')}</Label>
+                <Input
+                  id="studentLoginPassword"
+                  type="password"
+                  dir="ltr"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  {...loginForm.register('password')}
+                />
+                {loginForm.formState.errors.password ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    {loginForm.formState.errors.password.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <Button type="submit" className="w-full" size="lg" disabled={accountSubmitting}>
+                <LogIn className="h-4 w-4" />
+                <span>{accountSubmitting ? t('app.loading') : t('landing.loginButton')}</span>
+              </Button>
+            </form>
+          ) : (
+            <form
+              onSubmit={(e) => void registerForm.handleSubmit(onStudentRegisterSubmit)(e)}
+              className="space-y-4"
+            >
+              <CardHeader className="mb-2">
+                <CardTitle>{t('landing.registerTitle')}</CardTitle>
+                <CardDescription>{t('landing.registerDesc')}</CardDescription>
+              </CardHeader>
+
+              <div>
+                <Label htmlFor="studentRegisterName">{t('landing.displayName')}</Label>
+                <Input
+                  id="studentRegisterName"
+                  placeholder="عبدالله محمد العتيبي"
+                  {...registerForm.register('displayName')}
+                />
+                {registerForm.formState.errors.displayName ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    {registerForm.formState.errors.displayName.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div>
+                <Label htmlFor="studentRegisterEmail">{t('landing.email')}</Label>
+                <Input
+                  id="studentRegisterEmail"
+                  type="email"
+                  dir="ltr"
+                  autoComplete="email"
+                  placeholder="student@example.com"
+                  {...registerForm.register('email')}
+                />
+                {registerForm.formState.errors.email ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    {registerForm.formState.errors.email.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div>
+                <Label htmlFor="studentRegisterPassword">{t('landing.password')}</Label>
+                <Input
+                  id="studentRegisterPassword"
+                  type="password"
+                  dir="ltr"
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  {...registerForm.register('password')}
+                />
+                {registerForm.formState.errors.password ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    {registerForm.formState.errors.password.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <label className="flex items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600"
+                  {...registerForm.register('consentAccepted')}
+                />
+                <span>{t('landing.consentInline')}</span>
+              </label>
+
+              <Button type="submit" className="w-full" size="lg" disabled={accountSubmitting}>
+                <UserPlus className="h-4 w-4" />
+                <span>{accountSubmitting ? t('app.loading') : t('landing.registerButton')}</span>
+              </Button>
+            </form>
+          )}
+        </Card>
+
+        {/* Quick Cohort Code / Resume Code Card */}
         <Card>
           <div className="mb-4 flex gap-2 border-b border-slate-200 pb-3">
             <Button
@@ -150,7 +359,8 @@ export default function LandingPage() {
                 setErrorMsg(null);
               }}
             >
-              {t('landing.joinTitle')}
+              <KeyRound className="h-4 w-4" />
+              <span>{t('landing.joinTitle')}</span>
             </Button>
             <Button
               variant={mode === 'resume' ? 'primary' : 'ghost'}

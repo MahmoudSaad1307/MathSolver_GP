@@ -12,6 +12,14 @@ declare module 'express-serve-static-core' {
     studentSession?: {
       studentId: string;
       cohortId: string;
+      accountId?: string;
+      email?: string;
+    };
+    studentAccount?: {
+      id: string;
+      email: string;
+      activeStudentId: string | null;
+      activeCohortId: string | null;
     };
   }
 }

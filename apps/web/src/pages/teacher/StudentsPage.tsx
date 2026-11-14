@@ -129,6 +129,11 @@ export default function StudentsPage() {
                     <tr key={s.id} className="hover:bg-slate-50">
                       <td className="py-2.5 font-medium text-slate-900">
                         <div>{s.displayName}</div>
+                        {s.email ? (
+                          <div className="text-xs text-slate-500" dir="ltr">
+                            {s.email}
+                          </div>
+                        ) : null}
                         <div className="font-mono text-xs text-slate-500" dir="ltr">
                           {s.resumeCode}
                         </div>

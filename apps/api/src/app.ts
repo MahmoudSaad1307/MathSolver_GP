@@ -17,6 +17,7 @@ import { createHealthRouter } from './routes/health.js';
 import { createReviewRouter } from './routes/review.js';
 import { createStorageRouter } from './routes/storage.js';
 import { createStudentRouter } from './routes/student.js';
+import { createStudentAuthRouter } from './routes/studentAuth.js';
 import { createStudentResultsRouter } from './routes/studentResults.js';
 import { createStudentVideoRouter } from './routes/studentVideo.js';
 import { createTeacherAuthRouter } from './routes/teacherAuth.js';
@@ -126,6 +127,7 @@ export function createApp({
   // API v1 routes
   const v1 = express.Router();
   v1.use('/auth/teacher', createTeacherAuthRouter(prisma, env, redis));
+  v1.use('/auth/student', createStudentAuthRouter(prisma, env, redis));
   v1.use('/cohorts', createCohortsRouter(prisma, env, storage));
   v1.use(
     '/student',

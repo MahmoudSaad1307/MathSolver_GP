@@ -195,6 +195,8 @@ export interface ReviewQueueResponse {
 
 export interface TeacherStudentRow {
   id: string;
+  accountId?: string | null;
+  email?: string | null;
   displayName: string;
   resumeCode: string;
   consentAcceptedAt: string | null;
@@ -239,6 +241,8 @@ export interface TeacherStudentRow {
 export interface TeacherStudentDetailResponse {
   student: {
     id: string;
+    accountId?: string | null;
+    email?: string | null;
     displayName: string;
     resumeCode: string;
     consentAcceptedAt: string | null;

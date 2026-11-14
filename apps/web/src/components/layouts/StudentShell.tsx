@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 
 export function StudentShell({
   studentName,
+  studentEmail,
   children,
 }: {
   studentName?: string;
+  studentEmail?: string | null;
   children: React.ReactNode;
 }) {
   const { t } = useTranslation();
@@ -32,9 +34,17 @@ export function StudentShell({
           </Link>
           <div className="flex items-center gap-3">
             {studentName && (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                {studentName}
-              </span>
+              <Link
+                to="/student"
+                className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+              >
+                <span>{studentName}</span>
+                {studentEmail ? (
+                  <span className="hidden text-slate-500 sm:inline" dir="ltr">
+                    ({studentEmail})
+                  </span>
+                ) : null}
+              </Link>
             )}
             <Link
               to="/teacher/login"

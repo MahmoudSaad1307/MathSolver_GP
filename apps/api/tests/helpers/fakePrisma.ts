@@ -130,8 +130,31 @@ export interface FakeCohortRow {
   deletedAt: Date | null;
 }
 
+export interface FakeStudentAccountRow {
+  id: string;
+  email: string;
+  passwordHash: string;
+  displayName: string;
+  consentAcceptedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export interface FakeStudentRefreshTokenRow {
+  id: string;
+  accountId: string;
+  tokenHash: string;
+  familyId: string;
+  expiresAt: Date;
+  revokedAt: Date | null;
+  replacedById: string | null;
+  createdAt: Date;
+}
+
 export interface FakeStudentRow {
   id: string;
+  accountId?: string | null;
   cohortId: string;
   displayName: string;
   resumeCode: string;
@@ -267,6 +290,8 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   const modelAnswers: FakeModelAnswerRow[] = [];
   const rubricCriteria: FakeRubricCriterionRow[] = [];
   const cohorts: FakeCohortRow[] = [];
+  const studentAccounts: FakeStudentAccountRow[] = [];
+  const studentRefreshTokens: FakeStudentRefreshTokenRow[] = [];
   const students: FakeStudentRow[] = [];
   const attempts: FakeAttemptRow[] = [];
   const answers: FakeAnswerRow[] = [];
@@ -360,6 +385,8 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       modelAnswers,
       rubricCriteria,
       cohorts,
+      studentAccounts,
+      studentRefreshTokens,
       students,
       attempts,
       answers,
@@ -1021,39 +1048,198 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         return row;
       },
     },
+    studentAccount: {
+      findUnique: async ({ where }: { where: { email?: string; id?: string } }) => {
+        if (where.email) {
+          return studentAccounts.find((a) => a.email === where.email) ?? null;
+        }
+        if (where.id) {
+          return studentAccounts.find((a) => a.id === where.id) ?? null;
+        }
+        return null;
+      },
+      findFirst: async ({ where }: { where: { email?: string; id?: string; deletedAt?: null } }) => {
+        return (
+          studentAccounts.find(
+            (a) =>
+              (where.email === undefined || a.email === where.email) &&
+              (where.id === undefined || a.id === where.id) &&
+              (where.deletedAt === undefined || a.deletedAt === where.deletedAt),
+          ) ?? null
+        );
+      },
+      create: async ({
+        data,
+      }: {
+        data: {
+          id?: string;
+          email: string;
+          passwordHash: string;
+          displayName: string;
+          consentAcceptedAt?: Date | null;
+        };
+      }) => {
+        const now = new Date();
+        const row: FakeStudentAccountRow = {
+          id: data.id ?? crypto.randomUUID(),
+          email: data.email,
+          passwordHash: data.passwordHash,
+          displayName: data.displayName,
+          consentAcceptedAt: data.consentAcceptedAt ?? null,
+          createdAt: now,
+          updatedAt: now,
+          deletedAt: null,
+        };
+        studentAccounts.push(row);
+        return row;
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeStudentAccountRow>;
+      }) => {
+        const row = studentAccounts.find((a) => a.id === where.id);
+        if (!row) throw new Error('StudentAccount not found');
+        Object.assign(row, data, { updatedAt: new Date() });
+        return row;
+      },
+    },
+    studentRefreshToken: {
+      create: async ({
+        data,
+      }: {
+        data: Omit<
+          FakeStudentRefreshTokenRow,
+          'id' | 'revokedAt' | 'replacedById' | 'createdAt'
+        > & { id?: string };
+      }) => {
+        const row: FakeStudentRefreshTokenRow = {
+          id: data.id ?? crypto.randomUUID(),
+          accountId: data.accountId,
+          tokenHash: data.tokenHash,
+          familyId: data.familyId,
+          expiresAt: data.expiresAt,
+          revokedAt: null,
+          replacedById: null,
+          createdAt: new Date(),
+        };
+        studentRefreshTokens.push(row);
+        return row;
+      },
+      findUnique: async ({
+        where,
+        include,
+      }: {
+        where: { tokenHash: string };
+        include?: { account?: boolean };
+      }) => {
+        const found = studentRefreshTokens.find((t) => t.tokenHash === where.tokenHash);
+        if (!found) return null;
+        if (include?.account) {
+          const account = studentAccounts.find((a) => a.id === found.accountId);
+          return account ? { ...found, account } : null;
+        }
+        return found;
+      },
+      update: async ({
+        where,
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeStudentRefreshTokenRow>;
+      }) => {
+        const row = studentRefreshTokens.find((t) => t.id === where.id);
+        if (!row) throw new Error('StudentRefreshToken not found');
+        Object.assign(row, data);
+        return row;
+      },
+      updateMany: async ({
+        where,
+        data,
+      }: {
+        where: { accountId?: string; familyId?: string; tokenHash?: string; revokedAt?: null };
+        data: Partial<FakeStudentRefreshTokenRow>;
+      }) => {
+        let count = 0;
+        for (const row of studentRefreshTokens) {
+          const matchesAccount =
+            where.accountId === undefined || row.accountId === where.accountId;
+          const matchesFamily = where.familyId === undefined || row.familyId === where.familyId;
+          const matchesHash = where.tokenHash === undefined || row.tokenHash === where.tokenHash;
+          const matchesRevoked =
+            where.revokedAt === undefined || row.revokedAt === where.revokedAt;
+          if (matchesAccount && matchesFamily && matchesHash && matchesRevoked) {
+            Object.assign(row, data);
+            count += 1;
+          }
+        }
+        return { count };
+      },
+    },
     student: {
       findUnique: async ({
         where,
         include,
       }: {
-        where: { resumeCode?: string; id?: string };
-        include?: { cohort?: boolean };
+        where: {
+          resumeCode?: string;
+          id?: string;
+          accountId_cohortId?: { accountId: string; cohortId: string };
+        };
+        include?: { cohort?: boolean; account?: boolean };
       }) => {
-        const found = students.find(
-          (s) =>
+        const found = students.find((s) => {
+          if (where.accountId_cohortId) {
+            return (
+              s.accountId === where.accountId_cohortId.accountId &&
+              s.cohortId === where.accountId_cohortId.cohortId
+            );
+          }
+          return (
             (where.resumeCode === undefined || s.resumeCode === where.resumeCode) &&
-            (where.id === undefined || s.id === where.id),
-        );
+            (where.id === undefined || s.id === where.id)
+          );
+        });
         if (!found) return null;
+        const out: Record<string, unknown> = { ...found };
         if (include?.cohort) {
-          return { ...found, cohort: cohorts.find((c) => c.id === found.cohortId) ?? null };
+          out.cohort = cohorts.find((c) => c.id === found.cohortId) ?? null;
         }
-        return found;
+        if (include?.account) {
+          out.account = found.accountId
+            ? (studentAccounts.find((a) => a.id === found.accountId) ?? null)
+            : null;
+        }
+        return out;
       },
       findFirst: async ({
         where,
         include,
       }: {
-        where: { id?: string; deletedAt?: null };
+        where: {
+          id?: string;
+          accountId?: string;
+          cohortId?: string;
+          deletedAt?: null;
+        };
         include?: Record<string, unknown>;
       }) => {
         const found = students.find(
           (s) =>
             (where.id === undefined || s.id === where.id) &&
+            (where.accountId === undefined || s.accountId === where.accountId) &&
+            (where.cohortId === undefined || s.cohortId === where.cohortId) &&
             (where.deletedAt === undefined || s.deletedAt === where.deletedAt),
         );
         if (!found) return null;
         const out: Record<string, unknown> = { ...found };
+        if (include?.account) {
+          out.account = found.accountId
+            ? (studentAccounts.find((a) => a.id === found.accountId) ?? null)
+            : null;
+        }
         if (include?.cohort) {
           const cohort = cohorts.find((c) => c.id === found.cohortId);
           if (cohort) {
@@ -1090,15 +1276,22 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       create: async ({
         data,
       }: {
-        data: { cohortId: string; displayName: string; resumeCode: string };
+        data: {
+          accountId?: string | null;
+          cohortId: string;
+          displayName: string;
+          resumeCode: string;
+          consentAcceptedAt?: Date | null;
+        };
       }) => {
         const now = new Date();
         const row: FakeStudentRow = {
           id: crypto.randomUUID(),
+          accountId: data.accountId ?? null,
           cohortId: data.cohortId,
           displayName: data.displayName,
           resumeCode: data.resumeCode,
-          consentAcceptedAt: null,
+          consentAcceptedAt: data.consentAcceptedAt ?? null,
           createdAt: now,
           updatedAt: now,
           deletedAt: null,
@@ -1562,16 +1755,72 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   Object.assign(mock.student, {
     findMany: async ({
       where,
+      include,
+      orderBy,
     }: {
-      where?: { cohortId?: string | { in: string[] }; deletedAt?: null };
-    }) =>
-      students
-        .filter(
-          (s) =>
-            matchId(s.cohortId, where?.cohortId) &&
-            (where?.deletedAt === undefined || s.deletedAt === where.deletedAt),
-        )
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+      where?: {
+        cohortId?: string | { in: string[] };
+        accountId?: string | { in: string[] };
+        deletedAt?: null;
+      };
+      include?: Record<string, unknown>;
+      orderBy?: { createdAt?: 'asc' | 'desc'; updatedAt?: 'asc' | 'desc' };
+    } = {}) => {
+      const matched = students.filter(
+        (s) =>
+          matchId(s.cohortId, where?.cohortId) &&
+          (where?.accountId === undefined ||
+            (s.accountId !== null &&
+              s.accountId !== undefined &&
+              matchId(s.accountId, where.accountId))) &&
+          (where?.deletedAt === undefined || s.deletedAt === where.deletedAt),
+      );
+      if (orderBy?.updatedAt === 'desc') {
+        matched.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      } else {
+        matched.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      }
+      return matched.map((found) => {
+        const out: Record<string, unknown> = { ...found };
+        if (include?.account) {
+          out.account = found.accountId
+            ? (studentAccounts.find((a) => a.id === found.accountId) ?? null)
+            : null;
+        }
+        if (include?.cohort) {
+          const cohort = cohorts.find((c) => c.id === found.cohortId);
+          if (cohort) {
+            const topic = topics.find((t) => t.id === cohort.topicId);
+            out.cohort = {
+              ...cohort,
+              topic: topic
+                ? hydrateTopic(topic, {
+                    examModels: {
+                      include: {
+                        questions: { where: { deletedAt: null } },
+                      },
+                    },
+                  })
+                : null,
+            };
+          } else {
+            out.cohort = null;
+          }
+        }
+        if (include?.attempts) {
+          out.attempts = attempts
+            .filter((a) => a.studentId === found.id)
+            .map((a) => ({
+              ...a,
+              examModel: examModels.find((m) => m.id === a.examModelId) ?? null,
+            }));
+        }
+        if (include?.videoSessions) {
+          out.videoSessions = videoSessions.filter((v) => v.studentId === found.id);
+        }
+        return out;
+      });
+    },
   });
 
   Object.assign(mock.attempt, {
@@ -1889,6 +2138,8 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       modelAnswers: FakeModelAnswerRow[];
       rubricCriteria: FakeRubricCriterionRow[];
       cohorts: FakeCohortRow[];
+      studentAccounts: FakeStudentAccountRow[];
+      studentRefreshTokens: FakeStudentRefreshTokenRow[];
       students: FakeStudentRow[];
       attempts: FakeAttemptRow[];
       answers: FakeAnswerRow[];

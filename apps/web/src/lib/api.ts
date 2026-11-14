@@ -29,9 +29,9 @@ async function rawFetch(path: string, init: RequestInit): Promise<Response> {
 
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit & { retryRefresh?: boolean } = {},
+  options: RequestInit & { retryRefresh?: boolean; retryStudentRefresh?: boolean } = {},
 ): Promise<T> {
-  const { retryRefresh = false, headers, ...rest } = options;
+  const { retryRefresh = false, retryStudentRefresh = false, headers, ...rest } = options;
   const finalHeaders = new Headers(headers);
   if (
     !(rest.body instanceof FormData) &&
@@ -45,6 +45,11 @@ export async function apiRequest<T>(
 
   if (res.status === 401 && retryRefresh) {
     const refreshRes = await rawFetch('/auth/teacher/refresh', { method: 'POST' });
+    if (refreshRes.ok) {
+      res = await rawFetch(path, { ...rest, headers: finalHeaders });
+    }
+  } else if (res.status === 401 && retryStudentRefresh) {
+    const refreshRes = await rawFetch('/auth/student/refresh', { method: 'POST' });
     if (refreshRes.ok) {
       res = await rawFetch(path, { ...rest, headers: finalHeaders });
     }

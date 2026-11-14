@@ -6,17 +6,30 @@ import { z } from 'zod';
 import {
   McqAutosaveSchema,
   StudentConsentSchema,
+  StudentEnterQuizCodeSchema,
   StudentJoinSchema,
   StudentResumeSchema,
   type McqAutosaveInput,
+  type StudentEnterQuizCodeInput,
   type StudentJoinInput,
   type StudentResumeInput,
 } from '@mathlens/shared';
 import type { AppEnv } from '../config/env.js';
 import { AppError } from '../lib/errors.js';
-import { requireStudent, STUDENT_SESSION_COOKIE } from '../middleware/auth.js';
+import {
+  requireStudent,
+  requireStudentAccount,
+  STUDENT_REFRESH_COOKIE,
+  STUDENT_SESSION_COOKIE,
+  tryGetStudentClaims,
+} from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/rateLimit.js';
-import { getParamId, getStudentSession, UuidParamSchema } from '../middleware/requestHelpers.js';
+import {
+  getParamId,
+  getStudentAccount,
+  getStudentSession,
+  UuidParamSchema,
+} from '../middleware/requestHelpers.js';
 import { asyncHandler, validateBody, validateParams } from '../middleware/validate.js';
 import type { GradingDispatcher } from '../services/gradingDispatcher.js';
 import { ImageUploadService } from '../services/imageUploadService.js';
@@ -57,6 +70,7 @@ export function createStudentRouter(params: {
   const imageUploadService = new ImageUploadService(prisma, env, storage, virusScanner);
   const retentionService = new RetentionService(prisma, env, storage);
   const studentOnly = requireStudent(env);
+  const studentAccountOnly = requireStudentAccount(env);
 
   const resumeLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000,
@@ -78,9 +92,35 @@ export function createStudentRouter(params: {
     validateBody(StudentJoinSchema),
     asyncHandler(async (req, res) => {
       const input = req.body as StudentJoinInput;
-      const result = await studentService.join(input, req.ip);
+      const existingClaims = tryGetStudentClaims(req, env);
+      const result = await studentService.join(input, req.ip, existingClaims?.accountId);
       setStudentSessionCookie(res, env, result.token);
       res.status(201).json({ student: result.student });
+    }),
+  );
+
+  router.post(
+    '/join-quiz',
+    studentAccountOnly,
+    validateBody(StudentEnterQuizCodeSchema),
+    asyncHandler(async (req, res) => {
+      const account = getStudentAccount(req);
+      const input = req.body as StudentEnterQuizCodeInput;
+      const result = await studentService.joinQuizWithAccount(account.id, input.joinCode, req.ip);
+      setStudentSessionCookie(res, env, result.token);
+      res.status(201).json({ student: result.student });
+    }),
+  );
+
+  router.post(
+    '/enrollments/:id/select',
+    studentAccountOnly,
+    validateParams(UuidParamSchema),
+    asyncHandler(async (req, res) => {
+      const account = getStudentAccount(req);
+      const result = await studentService.selectEnrollment(account.id, getParamId(req));
+      setStudentSessionCookie(res, env, result.token);
+      res.json(result.state);
     }),
   );
 
@@ -97,12 +137,14 @@ export function createStudentRouter(params: {
   );
 
   router.post('/logout', (_req, res) => {
-    res.clearCookie(STUDENT_SESSION_COOKIE, {
+    const cookieOpts = {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       secure: env.COOKIE_SECURE,
       path: '/',
-    });
+    };
+    res.clearCookie(STUDENT_SESSION_COOKIE, cookieOpts);
+    res.clearCookie(STUDENT_REFRESH_COOKIE, cookieOpts);
     res.json({ ok: true });
   });
 

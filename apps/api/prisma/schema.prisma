@@ -251,8 +251,39 @@ model Cohort {
   @@index([teacherId])
 }
 
+model StudentAccount {
+  id                String    @id @default(uuid()) @db.Uuid
+  email             String    @unique
+  passwordHash      String
+  displayName       String
+  consentAcceptedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  enrollments   Student[]
+  refreshTokens StudentRefreshToken[]
+}
+
+model StudentRefreshToken {
+  id           String    @id @default(uuid()) @db.Uuid
+  accountId    String    @db.Uuid
+  tokenHash    String    @unique
+  familyId     String    @db.Uuid
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?   @db.Uuid
+  createdAt    DateTime  @default(now())
+
+  account StudentAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([familyId])
+}
+
 model Student {
   id                String    @id @default(uuid()) @db.Uuid
+  accountId         String?   @db.Uuid
   cohortId          String    @db.Uuid
   displayName       String
   resumeCode        String    @unique
@@ -261,11 +292,14 @@ model Student {
   updatedAt         DateTime  @updatedAt
   deletedAt         DateTime?
 
-  cohort        Cohort         @relation(fields: [cohortId], references: [id])
+  account       StudentAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  cohort        Cohort          @relation(fields: [cohortId], references: [id])
   attempts      Attempt[]
   videoSessions VideoSession[]
 
+  @@unique([accountId, cohortId])
   @@index([cohortId])
+  @@index([accountId])
 }
 
 model Attempt {

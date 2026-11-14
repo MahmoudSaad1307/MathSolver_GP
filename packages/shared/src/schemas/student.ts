@@ -5,6 +5,8 @@ export const MeStateResponseSchema = z.object({
   step: StudentFlowStepSchema,
   student: z.object({
     id: z.string().uuid(),
+    accountId: z.string().uuid().nullable().optional(),
+    email: z.string().email().nullable().optional(),
     displayName: z.string(),
     cohortId: z.string().uuid(),
     cohortName: z.string(),

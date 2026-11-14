@@ -28,8 +28,8 @@ export function createStudentResultsRouter({
     studentOnly,
     validateParams(UuidParamSchema),
     asyncHandler(async (req, res) => {
-      const { studentId } = getStudentSession(req);
-      const result = await service.getAttemptResults(studentId, getParamId(req));
+      const { studentId, accountId } = getStudentSession(req);
+      const result = await service.getAttemptResults(studentId, getParamId(req), accountId);
       res.json(result);
     }),
   );
@@ -40,9 +40,9 @@ export function createStudentResultsRouter({
     validateParams(UuidParamSchema),
     validateBody(ReportMisreadSchema),
     asyncHandler(async (req, res) => {
-      const { studentId } = getStudentSession(req);
+      const { studentId, accountId } = getStudentSession(req);
       const input = req.body as ReportMisreadInput;
-      const result = await service.reportMisread(studentId, getParamId(req), input, req.ip);
+      const result = await service.reportMisread(studentId, getParamId(req), input, req.ip, accountId);
       res.json(result);
     }),
   );

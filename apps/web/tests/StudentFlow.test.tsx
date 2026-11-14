@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import LandingPage from '../src/pages/LandingPage';
 import StudentConsentPage from '../src/pages/student/StudentConsentPage';
 import StudentExamPage from '../src/pages/student/StudentExamPage';
+import StudentPortalPage from '../src/pages/student/StudentPortalPage';
 import CohortsPage from '../src/pages/teacher/CohortsPage';
 import { applyDocumentDirection } from '../src/store/uiStore';
 import type { StudentExamAttempt } from '../src/types/student';
@@ -340,5 +341,186 @@ describe('Phase 3 Student Exam & Cohorts UI', () => {
 
     expect(await screen.findByText('زياد')).toBeInTheDocument();
     expect(screen.getByText('علي')).toBeInTheDocument();
+  });
+
+  it('supports student account login, entering a quiz code, and displaying saved exams on StudentPortalPage', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.endsWith('/auth/student/login') && init?.method === 'POST') {
+        return new Response(
+          JSON.stringify({
+            account: {
+              id: 'aaaaaaaa-1111-4111-8111-111111111111',
+              email: 'sara@student.mathlens.local',
+              displayName: 'سارة الغامدي',
+              consentAcceptedAt: '2026-11-13T09:00:00.000Z',
+              role: 'STUDENT',
+            },
+            activeEnrollmentId: 'bbbbbbbb-1111-4111-8111-111111111111',
+            enrollments: [
+              {
+                studentId: 'bbbbbbbb-1111-4111-8111-111111111111',
+                cohortId: 'cccccccc-1111-4111-8111-111111111111',
+                cohortName: 'الشعبة أ — المجموعة التجريبية',
+                joinCode: 'EXP234',
+                group: 'TREATMENT',
+                requireVideoBeforePost: true,
+                topicId: 'dddddddd-1111-4111-8111-111111111111',
+                topicTitle: 'تفاضل الدوال الأسية واللوغاريتمية',
+                step: 'PRETEST_IN_PROGRESS',
+                enrolledAt: '2026-11-13T09:00:00.000Z',
+                preTestAttempt: {
+                  id: 'eeeeeeee-1111-4111-8111-111111111111',
+                  examModelId: 'ffffffff-1111-4111-8111-111111111111',
+                  status: 'GRADED',
+                  totalScore: 85,
+                  maxScore: 100,
+                  submittedAt: '2026-11-13T09:40:00.000Z',
+                  deadlineAt: '2026-11-13T10:00:00.000Z',
+                },
+                postTestAttempt: null,
+                videoProgress: {
+                  watchedSeconds: 120,
+                  visitedCount: 1,
+                  requiredCount: 2,
+                  unlockedPostAt: null,
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      if (url.endsWith('/auth/student/me')) {
+        return new Response(
+          JSON.stringify({
+            account: {
+              id: 'aaaaaaaa-1111-4111-8111-111111111111',
+              email: 'sara@student.mathlens.local',
+              displayName: 'سارة الغامدي',
+              consentAcceptedAt: '2026-11-13T09:00:00.000Z',
+              role: 'STUDENT',
+            },
+            activeEnrollmentId: 'bbbbbbbb-1111-4111-8111-111111111111',
+            enrollments: [
+              {
+                studentId: 'bbbbbbbb-1111-4111-8111-111111111111',
+                cohortId: 'cccccccc-1111-4111-8111-111111111111',
+                cohortName: 'الشعبة أ — المجموعة التجريبية',
+                joinCode: 'EXP234',
+                group: 'TREATMENT',
+                requireVideoBeforePost: true,
+                topicId: 'dddddddd-1111-4111-8111-111111111111',
+                topicTitle: 'تفاضل الدوال الأسية واللوغاريتمية',
+                step: 'PRETEST_IN_PROGRESS',
+                enrolledAt: '2026-11-13T09:00:00.000Z',
+                preTestAttempt: {
+                  id: 'eeeeeeee-1111-4111-8111-111111111111',
+                  examModelId: 'ffffffff-1111-4111-8111-111111111111',
+                  status: 'GRADED',
+                  totalScore: 85,
+                  maxScore: 100,
+                  submittedAt: '2026-11-13T09:40:00.000Z',
+                  deadlineAt: '2026-11-13T10:00:00.000Z',
+                },
+                postTestAttempt: null,
+                videoProgress: {
+                  watchedSeconds: 120,
+                  visitedCount: 1,
+                  requiredCount: 2,
+                  unlockedPostAt: null,
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      if (url.endsWith('/student/me/state')) {
+        return new Response(
+          JSON.stringify({
+            step: 'PRETEST_IN_PROGRESS',
+            student: {
+              id: 'bbbbbbbb-1111-4111-8111-111111111111',
+              accountId: 'aaaaaaaa-1111-4111-8111-111111111111',
+              email: 'sara@student.mathlens.local',
+              displayName: 'سارة الغامدي',
+              cohortId: 'cccccccc-1111-4111-8111-111111111111',
+              cohortName: 'الشعبة أ — المجموعة التجريبية',
+              group: 'TREATMENT',
+              requireVideoBeforePost: true,
+              consentAcceptedAt: '2026-11-13T09:00:00.000Z',
+            },
+            topic: {
+              id: 'dddddddd-1111-4111-8111-111111111111',
+              title: 'تفاضل الدوال الأسية واللوغاريتمية',
+            },
+            preTestAttempt: null,
+            postTestAttempt: null,
+            postTestLockReason: null,
+            videoProgress: {
+              watchedSeconds: 0,
+              visitedCount: 0,
+              requiredCount: 0,
+              unlockedPostAt: null,
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      if (url.endsWith('/student/join-quiz') && init?.method === 'POST') {
+        return new Response(
+          JSON.stringify({
+            student: {
+              id: 'bbbbbbbb-1111-4111-8111-111111111111',
+              accountId: 'aaaaaaaa-1111-4111-8111-111111111111',
+              email: 'sara@student.mathlens.local',
+              displayName: 'سارة الغامدي',
+              resumeCode: 'SAR235',
+              cohortId: 'cccccccc-1111-4111-8111-111111111111',
+              cohortName: 'الشعبة أ — المجموعة التجريبية',
+              group: 'TREATMENT',
+            },
+          }),
+          { status: 201, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      return new Response('{}', { status: 404 });
+    });
+
+    render(
+      <QueryClientProvider client={makeQueryClient()}>
+        <MemoryRouter initialEntries={['/']}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/student" element={<StudentPortalPage />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText(/البريد الإلكتروني/), {
+      target: { value: 'sara@student.mathlens.local' },
+    });
+    fireEvent.change(screen.getByLabelText(/كلمة المرور/), {
+      target: { value: 'StudentPass123!' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /دخول إلى الحساب/ }));
+
+    expect(await screen.findByText(/إدخال كود الاختبار/)).toBeInTheDocument();
+    expect(screen.getByText(/اختباراتي وسجل التقدم المحفوظ في الحساب/)).toBeInTheDocument();
+    expect(screen.getByText('85 / 100 (GRADED)')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText(/EXP234/), {
+      target: { value: 'EXP234' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /فتح الاختبار/ }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/student/join-quiz'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
   });
 });

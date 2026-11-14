@@ -891,6 +891,7 @@ export class ReviewService {
 
     const rawStudents = await this.prisma.student.findMany({
       where: { cohortId: { in: cohortIds }, deletedAt: null },
+      include: { account: true },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -899,7 +900,8 @@ export class ReviewService {
       ? rawStudents.filter(
           (s) =>
             s.displayName.toLowerCase().includes(search) ||
-            s.resumeCode.toLowerCase().includes(search),
+            s.resumeCode.toLowerCase().includes(search) ||
+            (s.account?.email?.toLowerCase().includes(search) ?? false),
         )
       : rawStudents;
 
@@ -1002,6 +1004,8 @@ export class ReviewService {
 
       return {
         id: student.id,
+        accountId: student.accountId ?? null,
+        email: student.account?.email ?? null,
         displayName: student.displayName,
         resumeCode: student.resumeCode,
         consentAcceptedAt: student.consentAcceptedAt
@@ -1056,7 +1060,10 @@ export class ReviewService {
   }
 
   async getStudentDetail(teacherId: string, studentId: string) {
-    const student = await this.prisma.student.findUnique({ where: { id: studentId } });
+    const student = await this.prisma.student.findUnique({
+      where: { id: studentId },
+      include: { account: true },
+    });
     if (!student || student.deletedAt !== null) {
       throw new AppError('NOT_FOUND');
     }
@@ -1206,6 +1213,8 @@ export class ReviewService {
     return {
       student: {
         id: student.id,
+        accountId: student.accountId ?? null,
+        email: student.account?.email ?? null,
         displayName: student.displayName,
         resumeCode: student.resumeCode,
         consentAcceptedAt: student.consentAcceptedAt

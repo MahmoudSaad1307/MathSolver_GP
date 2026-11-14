@@ -38,10 +38,179 @@ export class StudentService {
     });
   }
 
+  async joinQuizWithAccount(
+    accountId: string,
+    joinCode: string,
+    ip?: string,
+  ): Promise<{ token: string } & StudentJoinResponse> {
+    const account = await this.prisma.studentAccount.findUnique({
+      where: { id: accountId },
+    });
+    if (!account || account.deletedAt !== null) {
+      throw new AppError('UNAUTHORIZED');
+    }
+
+    const cohort = await this.prisma.cohort.findUnique({
+      where: { joinCode: joinCode.toUpperCase() },
+    });
+    if (!cohort || cohort.deletedAt !== null) {
+      throw new AppError('INVALID_COHORT_CODE');
+    }
+
+    const existing = await this.prisma.student.findFirst({
+      where: {
+        accountId: account.id,
+        cohortId: cohort.id,
+        deletedAt: null,
+      },
+    });
+
+    if (existing) {
+      const updated = await this.prisma.student.update({
+        where: { id: existing.id },
+        data: {
+          consentAcceptedAt: existing.consentAcceptedAt ?? account.consentAcceptedAt ?? new Date(),
+        },
+      });
+
+      const token = signStudentSessionToken(
+        {
+          id: updated.id,
+          cohortId: cohort.id,
+          accountId: account.id,
+          email: account.email,
+        },
+        this.env,
+      );
+
+      return {
+        token,
+        student: {
+          id: updated.id,
+          accountId: account.id,
+          email: account.email,
+          displayName: updated.displayName,
+          resumeCode: updated.resumeCode,
+          cohortId: cohort.id,
+          cohortName: cohort.name,
+          group: cohort.group,
+        },
+      };
+    }
+
+    if (cohort.status !== 'OPEN') {
+      throw new AppError('COHORT_CLOSED');
+    }
+
+    const resumeCode = await this.generateUniqueResumeCode();
+
+    const student = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.student.create({
+        data: {
+          accountId: account.id,
+          cohortId: cohort.id,
+          displayName: account.displayName,
+          resumeCode,
+          consentAcceptedAt: account.consentAcceptedAt ?? new Date(),
+        },
+      });
+
+      await writeAuditLog(tx, this.env, {
+        actorType: 'STUDENT',
+        actorId: created.id,
+        action: 'STUDENT_JOIN',
+        entity: 'Student',
+        entityId: created.id,
+        diff: { cohortId: cohort.id, accountId: account.id },
+        ip,
+      });
+
+      return created;
+    });
+
+    const token = signStudentSessionToken(
+      {
+        id: student.id,
+        cohortId: cohort.id,
+        accountId: account.id,
+        email: account.email,
+      },
+      this.env,
+    );
+
+    return {
+      token,
+      student: {
+        id: student.id,
+        accountId: account.id,
+        email: account.email,
+        displayName: student.displayName,
+        resumeCode: student.resumeCode,
+        cohortId: cohort.id,
+        cohortName: cohort.name,
+        group: cohort.group,
+      },
+    };
+  }
+
+  async selectEnrollment(
+    accountId: string,
+    enrollmentId: string,
+  ): Promise<{ token: string; state: MeStateResponse }> {
+    const student = await this.prisma.student.findFirst({
+      where: {
+        id: enrollmentId,
+        accountId,
+        deletedAt: null,
+      },
+      include: {
+        cohort: true,
+        account: true,
+      },
+    });
+
+    if (!student || student.cohort.deletedAt !== null) {
+      throw new AppError('NOT_FOUND');
+    }
+
+    await this.prisma.student.update({
+      where: { id: student.id },
+      data: {
+        consentAcceptedAt:
+          student.consentAcceptedAt ?? student.account?.consentAcceptedAt ?? null,
+      },
+    });
+
+    const token = signStudentSessionToken(
+      {
+        id: student.id,
+        cohortId: student.cohortId,
+        accountId,
+        email: student.account?.email,
+      },
+      this.env,
+    );
+
+    const state = await this.getState(student.id);
+    return { token, state };
+  }
+
   async join(
     input: StudentJoinInput,
     ip?: string,
+    accountId?: string,
   ): Promise<{ token: string } & StudentJoinResponse> {
+    if (accountId) {
+      return this.joinQuizWithAccount(accountId, input.joinCode, ip);
+    }
+
+    if (!input.displayName || input.displayName.trim().length < 2) {
+      throw new AppError('VALIDATION_ERROR', {
+        messageEn: 'Display name is required when joining without an account.',
+        messageAr: 'الاسم مطلوب عند الانضمام بدون حساب مسجل.',
+      });
+    }
+
     const cohort = await this.prisma.cohort.findUnique({
       where: { joinCode: input.joinCode.toUpperCase() },
     });
@@ -53,12 +222,13 @@ export class StudentService {
     }
 
     const resumeCode = await this.generateUniqueResumeCode();
+    const displayName = input.displayName.trim();
 
     const student = await this.prisma.$transaction(async (tx) => {
       const created = await tx.student.create({
         data: {
           cohortId: cohort.id,
-          displayName: input.displayName.trim(),
+          displayName,
           resumeCode,
         },
       });
@@ -82,6 +252,8 @@ export class StudentService {
       token,
       student: {
         id: student.id,
+        accountId: null,
+        email: null,
         displayName: student.displayName,
         resumeCode: student.resumeCode,
         cohortId: cohort.id,
@@ -97,7 +269,7 @@ export class StudentService {
   ): Promise<{ token: string } & StudentJoinResponse> {
     const student = await this.prisma.student.findUnique({
       where: { resumeCode: input.resumeCode.toUpperCase() },
-      include: { cohort: true },
+      include: { cohort: true, account: true },
     });
 
     if (!student || student.deletedAt !== null || student.cohort.deletedAt !== null) {
@@ -113,12 +285,22 @@ export class StudentService {
       ip,
     });
 
-    const token = signStudentSessionToken({ id: student.id, cohortId: student.cohortId }, this.env);
+    const token = signStudentSessionToken(
+      {
+        id: student.id,
+        cohortId: student.cohortId,
+        accountId: student.accountId ?? undefined,
+        email: student.account?.email ?? undefined,
+      },
+      this.env,
+    );
 
     return {
       token,
       student: {
         id: student.id,
+        accountId: student.accountId ?? null,
+        email: student.account?.email ?? null,
         displayName: student.displayName,
         resumeCode: student.resumeCode,
         cohortId: student.cohort.id,
@@ -131,18 +313,25 @@ export class StudentService {
   async acceptConsent(studentId: string, ip?: string): Promise<MeStateResponse> {
     const student = await this.prisma.student.findFirst({
       where: { id: studentId, deletedAt: null },
-      select: { id: true, consentAcceptedAt: true },
+      select: { id: true, accountId: true, consentAcceptedAt: true },
     });
     if (!student) {
       throw new AppError('NOT_FOUND');
     }
 
     if (!student.consentAcceptedAt) {
+      const now = new Date();
       await this.prisma.$transaction(async (tx) => {
         await tx.student.update({
           where: { id: student.id },
-          data: { consentAcceptedAt: new Date() },
+          data: { consentAcceptedAt: now },
         });
+        if (student.accountId) {
+          await tx.studentAccount.update({
+            where: { id: student.accountId },
+            data: { consentAcceptedAt: now },
+          });
+        }
         await writeAuditLog(tx, this.env, {
           actorType: 'STUDENT',
           actorId: student.id,
@@ -161,6 +350,7 @@ export class StudentService {
     const student = await this.prisma.student.findFirst({
       where: { id: studentId, deletedAt: null },
       include: {
+        account: true,
         cohort: {
           include: {
             topic: {
@@ -191,9 +381,11 @@ export class StudentService {
     const preTestAttempt = student.attempts.find((a) => a.examModel.modelNumber === 1) ?? null;
     const postTestAttempt = student.attempts.find((a) => a.examModel.modelNumber === 2) ?? null;
     const videoSession = student.videoSessions.find((v) => v.topicId === topic.id) ?? null;
+    const effectiveConsent =
+      student.consentAcceptedAt ?? student.account?.consentAcceptedAt ?? null;
 
     const { step, postTestLockReason } = deriveStudentFlowStep({
-      consentAcceptedAt: student.consentAcceptedAt,
+      consentAcceptedAt: effectiveConsent,
       cohort: {
         group: cohort.group,
         requireVideoBeforePost: cohort.requireVideoBeforePost,
@@ -216,14 +408,14 @@ export class StudentService {
       step,
       student: {
         id: student.id,
+        accountId: student.accountId ?? null,
+        email: student.account?.email ?? null,
         displayName: student.displayName,
         cohortId: cohort.id,
         cohortName: cohort.name,
         group: cohort.group,
         requireVideoBeforePost: cohort.requireVideoBeforePost,
-        consentAcceptedAt: student.consentAcceptedAt
-          ? student.consentAcceptedAt.toISOString()
-          : null,
+        consentAcceptedAt: effectiveConsent ? effectiveConsent.toISOString() : null,
       },
       topic: {
         id: topic.id,

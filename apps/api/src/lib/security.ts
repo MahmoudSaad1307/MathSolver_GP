@@ -14,6 +14,8 @@ export interface TeacherAccessClaims {
 export interface StudentSessionClaims {
   sub: string;
   cohortId: string;
+  accountId?: string;
+  email?: string;
   type: 'student_session';
 }
 
@@ -86,12 +88,14 @@ export function verifyTeacherAccessToken(token: string, env: AppEnv): TeacherAcc
 }
 
 export function signStudentSessionToken(
-  student: { id: string; cohortId: string },
+  student: { id: string; cohortId: string; accountId?: string; email?: string },
   env: AppEnv,
 ): string {
   const payload: StudentSessionClaims = {
     sub: student.id,
     cohortId: student.cohortId,
+    ...(student.accountId ? { accountId: student.accountId } : {}),
+    ...(student.email ? { email: student.email } : {}),
     type: 'student_session',
   };
   return jwt.sign(payload, env.STUDENT_JWT_SECRET, { expiresIn: '12h' });

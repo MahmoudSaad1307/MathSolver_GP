@@ -106,16 +106,29 @@ export class StudentResultsService {
     private readonly storage: StorageAdapter,
   ) {}
 
-  async getAttemptResults(studentId: string, attemptId: string) {
-    const attempt = await this.prisma.attempt.findFirst({
+  async getAttemptResults(studentId: string, attemptId: string, accountId?: string) {
+    let attempt = await this.prisma.attempt.findFirst({
       where: { id: attemptId, studentId },
     });
+    if (!attempt && accountId) {
+      const candidate = await this.prisma.attempt.findFirst({
+        where: { id: attemptId },
+      });
+      if (candidate) {
+        const owner = await this.prisma.student.findUnique({
+          where: { id: candidate.studentId },
+        });
+        if (owner && owner.accountId === accountId && owner.deletedAt === null) {
+          attempt = candidate;
+        }
+      }
+    }
     if (!attempt) {
       throw new AppError('NOT_FOUND');
     }
 
     const student = await this.prisma.student.findUnique({
-      where: { id: studentId },
+      where: { id: attempt.studentId },
       include: { cohort: true },
     });
     if (
@@ -415,7 +428,13 @@ export class StudentResultsService {
     };
   }
 
-  async reportMisread(studentId: string, answerId: string, input: ReportMisreadInput, ip?: string) {
+  async reportMisread(
+    studentId: string,
+    answerId: string,
+    input: ReportMisreadInput,
+    ip?: string,
+    accountId?: string,
+  ) {
     const answer = await this.prisma.answer.findFirst({
       where: { id: answerId },
     });
@@ -423,9 +442,22 @@ export class StudentResultsService {
       throw new AppError('NOT_FOUND');
     }
 
-    const attempt = await this.prisma.attempt.findFirst({
+    let attempt = await this.prisma.attempt.findFirst({
       where: { id: answer.attemptId, studentId },
     });
+    if (!attempt && accountId) {
+      const candidate = await this.prisma.attempt.findFirst({
+        where: { id: answer.attemptId },
+      });
+      if (candidate) {
+        const owner = await this.prisma.student.findUnique({
+          where: { id: candidate.studentId },
+        });
+        if (owner && owner.accountId === accountId && owner.deletedAt === null) {
+          attempt = candidate;
+        }
+      }
+    }
     if (!attempt) {
       throw new AppError('NOT_FOUND');
     }
