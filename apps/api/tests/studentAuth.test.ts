@@ -47,7 +47,10 @@ describe('Student Account Auth, Multi-Quiz Enrollment, and Saved Exam History', 
     );
   });
 
-  async function createPublishedTopicAndCohort(title: string, cohortName: string): Promise<{
+  async function createPublishedTopicAndCohort(
+    title: string,
+    cohortName: string,
+  ): Promise<{
     topicId: string;
     cohortId: string;
     joinCode: string;

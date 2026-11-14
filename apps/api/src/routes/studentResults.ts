@@ -42,7 +42,13 @@ export function createStudentResultsRouter({
     asyncHandler(async (req, res) => {
       const { studentId, accountId } = getStudentSession(req);
       const input = req.body as ReportMisreadInput;
-      const result = await service.reportMisread(studentId, getParamId(req), input, req.ip, accountId);
+      const result = await service.reportMisread(
+        studentId,
+        getParamId(req),
+        input,
+        req.ip,
+        accountId,
+      );
       res.json(result);
     }),
   );

@@ -1058,7 +1058,11 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
         }
         return null;
       },
-      findFirst: async ({ where }: { where: { email?: string; id?: string; deletedAt?: null } }) => {
+      findFirst: async ({
+        where,
+      }: {
+        where: { email?: string; id?: string; deletedAt?: null };
+      }) => {
         return (
           studentAccounts.find(
             (a) =>
@@ -1164,12 +1168,10 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       }) => {
         let count = 0;
         for (const row of studentRefreshTokens) {
-          const matchesAccount =
-            where.accountId === undefined || row.accountId === where.accountId;
+          const matchesAccount = where.accountId === undefined || row.accountId === where.accountId;
           const matchesFamily = where.familyId === undefined || row.familyId === where.familyId;
           const matchesHash = where.tokenHash === undefined || row.tokenHash === where.tokenHash;
-          const matchesRevoked =
-            where.revokedAt === undefined || row.revokedAt === where.revokedAt;
+          const matchesRevoked = where.revokedAt === undefined || row.revokedAt === where.revokedAt;
           if (matchesAccount && matchesFamily && matchesHash && matchesRevoked) {
             Object.assign(row, data);
             count += 1;

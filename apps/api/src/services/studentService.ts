@@ -176,8 +176,7 @@ export class StudentService {
     await this.prisma.student.update({
       where: { id: student.id },
       data: {
-        consentAcceptedAt:
-          student.consentAcceptedAt ?? student.account?.consentAcceptedAt ?? null,
+        consentAcceptedAt: student.consentAcceptedAt ?? student.account?.consentAcceptedAt ?? null,
       },
     });
 

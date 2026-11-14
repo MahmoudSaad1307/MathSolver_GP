@@ -480,19 +480,18 @@ export default function StudentPortalPage() {
                             </Button>
                           )}
 
-                          {item.preTestAttempt &&
-                            item.preTestAttempt.status !== 'IN_PROGRESS' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  void navigate(`/student/results/${item.preTestAttempt!.id}`)
-                                }
-                              >
-                                <FileCheck2 className="h-4 w-4" />
-                                <span>{t('student.portal.viewModel1Results')}</span>
-                              </Button>
-                            )}
+                          {item.preTestAttempt && item.preTestAttempt.status !== 'IN_PROGRESS' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                void navigate(`/student/results/${item.preTestAttempt!.id}`)
+                              }
+                            >
+                              <FileCheck2 className="h-4 w-4" />
+                              <span>{t('student.portal.viewModel1Results')}</span>
+                            </Button>
+                          )}
 
                           {item.postTestAttempt &&
                             item.postTestAttempt.status !== 'IN_PROGRESS' && (

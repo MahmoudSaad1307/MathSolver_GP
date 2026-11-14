@@ -41,7 +41,10 @@ export function requireTeacher(env: AppEnv): RequestHandler {
   };
 }
 
-export function tryGetStudentClaims(req: { cookies?: unknown; header?: (name: string) => string | undefined }, env: AppEnv) {
+export function tryGetStudentClaims(
+  req: { cookies?: unknown; header?: (name: string) => string | undefined },
+  env: AppEnv,
+) {
   const cookieToken = getCookieValue(req, STUDENT_SESSION_COOKIE);
   const authHeader = req.header?.('authorization');
   const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
