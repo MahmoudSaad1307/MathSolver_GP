@@ -37,9 +37,11 @@ export function parseRedisConnectionOptions(redisUrl: string): ConnectionOptions
   return {
     host: parsed.hostname || 'localhost',
     port: parsed.port ? Number(parsed.port) : 6379,
+    username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
     password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
     db: Number.isInteger(dbNum) ? dbNum : 0,
     maxRetriesPerRequest: null,
+    ...(parsed.protocol === 'rediss:' ? { tls: {} } : {}),
   };
 }
 
@@ -114,6 +116,8 @@ export function createGradingWorker(params: {
     {
       connection,
       concurrency: env.GRADING_CONCURRENCY,
+      drainDelay: 15,
+      stalledInterval: 300_000,
     },
   );
 
@@ -211,7 +215,12 @@ export async function createRetentionWorker(params: {
       logger.info(summary, 'Nightly retention purge completed');
       return summary;
     },
-    { connection, concurrency: 1 },
+    {
+      connection,
+      concurrency: 1,
+      drainDelay: 30,
+      stalledInterval: 600_000,
+    },
   );
 
   worker.on('failed', (_job, err) => {
