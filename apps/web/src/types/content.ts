@@ -34,6 +34,7 @@ export interface QuestionItem {
   promptLatex: string;
   points: number;
   videoTimestampSeconds: number;
+  solutionUrl?: string | null;
   needsTeacherConfirmation: boolean;
   teacherConfirmedAt: string | null;
   twinQuestionId: string | null;

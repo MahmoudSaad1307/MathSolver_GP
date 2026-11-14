@@ -184,15 +184,45 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
     const q1Res = await request(app)
       .post(`/api/v1/exams/${m1.id}/questions`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send(validEssayPayload('Model 1: Find derivative of $e^{2x}$'));
+      .send({
+        ...validEssayPayload('Model 1: Find derivative of $e^{2x}$'),
+        solutionUrl: 'https://example.com/solutions/m1-q1',
+      });
     expect(q1Res.status).toBe(201);
+    expect(q1Res.body.question.solutionUrl).toBe('https://example.com/solutions/m1-q1');
     const q1Id = q1Res.body.question.id;
+
+    // Unsafe solutionUrl scheme is rejected
+    const badSolutionUrl = await request(app)
+      .patch(`/api/v1/questions/${q1Id}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({
+        ...validEssayPayload('Model 1: Find derivative of $e^{2x}$'),
+        solutionUrl: 'javascript:alert(1)',
+      });
+    expect(badSolutionUrl.status).toBe(400);
+
+    // Clearing solutionUrl via empty string normalizes to null
+    const clearedSolutionRes = await request(app)
+      .patch(`/api/v1/questions/${q1Id}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({
+        ...validEssayPayload('Model 1: Find derivative of $e^{2x}$'),
+        solutionUrl: '',
+      });
+    expect(clearedSolutionRes.status).toBe(200);
+    expect(clearedSolutionRes.body.question.solutionUrl).toBeNull();
+    expect(clearedSolutionRes.body.question.modelAnswer.rubricVersion).toBe(1);
 
     const q2Res = await request(app)
       .post(`/api/v1/exams/${m2.id}/questions`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send(validEssayPayload('Model 2: Find derivative of $e^{5x}$'));
+      .send({
+        ...validEssayPayload('Model 2: Find derivative of $e^{5x}$'),
+        solutionUrl: 'https://example.com/solutions/m2-q1',
+      });
     expect(q2Res.status).toBe(201);
+    expect(q2Res.body.question.solutionUrl).toBe('https://example.com/solutions/m2-q1');
     const q2Id = q2Res.body.question.id;
 
     // Verify twin pairing and recalculated totalPoints
@@ -322,6 +352,7 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
             promptLatex: q.promptLatex,
             points: q.points,
             videoTimestampSeconds: q.orderIndex * 45,
+            solutionUrl: `https://example.com/solutions/m${model.modelNumber}-q${q.orderIndex}`,
             needsTeacherConfirmation: false,
             ...(q.type === 'MCQ'
               ? {
@@ -383,6 +414,10 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
     const exported = SeedTopicBundleSchema.parse(exportRes.body);
     expect(exported.topic.videoUrl).toBe('https://youtu.be/dQw4w9WgXcQ');
     expect(exported.models[0].questions[0].videoTimestampSeconds).toBe(45);
+    expect(exported.models[0].questions[0].solutionUrl).toBe('https://example.com/solutions/m1-q1');
+    expect(exported.models[1].questions[0].solutionUrl).toBe('https://example.com/solutions/m2-q1');
+    expect(exported.models[0].questions[0].solutionUrl).toBe('https://example.com/solutions/m1-q1');
+    expect(exported.models[1].questions[0].solutionUrl).toBe('https://example.com/solutions/m2-q1');
 
     // Seed helper is idempotent
     const svc = new ExamImportExportService(prisma, env);

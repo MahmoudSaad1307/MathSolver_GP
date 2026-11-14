@@ -359,6 +359,7 @@ export class TopicService {
           promptLatex: input.promptLatex,
           points: input.points,
           videoTimestampSeconds: input.videoTimestampSeconds,
+          solutionUrl: input.solutionUrl === undefined ? existing.solutionUrl : input.solutionUrl,
           needsTeacherConfirmation: input.needsTeacherConfirmation,
           teacherConfirmedAt: input.needsTeacherConfirmation
             ? null
@@ -366,12 +367,37 @@ export class TopicService {
         },
       });
 
+      const prevMa = existing.modelAnswer;
+      const nextMa = input.modelAnswer;
+      const prevCriteria = existing.rubricCriteria ?? [];
+      const nextCriteria = input.rubricCriteria ?? [];
+      const rubricUnchanged =
+        Boolean(prevMa && nextMa) &&
+        JSON.stringify(prevMa?.solutionStepsLatex ?? []) ===
+          JSON.stringify(nextMa?.solutionStepsLatex ?? []) &&
+        (prevMa?.finalAnswerLatex ?? '') === (nextMa?.finalAnswerLatex ?? '') &&
+        (prevMa?.finalAnswerSympy ?? null) === (nextMa?.finalAnswerSympy ?? null) &&
+        (prevMa?.commonMistakes ?? '') === (nextMa?.commonMistakes ?? '') &&
+        prevCriteria.length === nextCriteria.length &&
+        prevCriteria.every((c, idx) => {
+          const nc = nextCriteria[idx];
+          return (
+            nc !== undefined &&
+            c.orderIndex === nc.orderIndex &&
+            c.key === nc.key &&
+            c.descriptionEn === nc.descriptionEn &&
+            c.descriptionAr === nc.descriptionAr &&
+            c.maxPoints === nc.maxPoints
+          );
+        });
+
       await softDeleteQuestionSubtree(tx, existing.id, now);
       await populateQuestionChildren(
         tx,
         existing.id,
         input,
         existing.modelAnswer?.rubricVersion ?? null,
+        !rubricUnchanged,
       );
 
       await recalculateExamTotalPoints(tx, existing.examModelId);

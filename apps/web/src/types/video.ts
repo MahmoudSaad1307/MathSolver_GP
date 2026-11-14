@@ -5,6 +5,7 @@ export interface WrongQuestionSegmentView {
   orderIndex: number;
   conceptKey: string;
   timestampSeconds: number;
+  solutionUrl?: string | null;
   score: number;
   maxScore: number;
   visited: boolean;

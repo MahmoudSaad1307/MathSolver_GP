@@ -1,4 +1,9 @@
-import { isRubricSumValid, UpsertQuestionSchema, type QuestionType } from '@mathlens/shared';
+import {
+  isRubricSumValid,
+  isValidHttpUrl,
+  UpsertQuestionSchema,
+  type QuestionType,
+} from '@mathlens/shared';
 import { ArrowDown, ArrowUp, ExternalLink, Plus, Trash2, X } from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +65,7 @@ export function QuestionEditorModal({
   const [mmSs, setMmSs] = React.useState(
     formatSecondsToMmSs(initialQuestion?.videoTimestampSeconds ?? 0),
   );
+  const [solutionUrl, setSolutionUrl] = React.useState(initialQuestion?.solutionUrl ?? '');
   const [promptLatex, setPromptLatex] = React.useState(initialQuestion?.promptLatex ?? '');
   const [needsConfirm, setNeedsConfirm] = React.useState(
     initialQuestion?.needsTeacherConfirmation ?? false,
@@ -123,6 +129,7 @@ export function QuestionEditorModal({
   const rubricValid = type === 'MCQ' || isRubricSumValid(Number(points) || 0, criteria);
   const parsedSec = parseMmSsToSeconds(mmSs) ?? 0;
   const previewVideoUrl = buildYoutubePreviewUrl(topicVideoUrl, parsedSec);
+  const validSolutionUrl = isValidHttpUrl(solutionUrl) ? solutionUrl.trim() : null;
 
   const handleMoveStep = (index: number, delta: -1 | 1) => {
     const target = index + delta;
@@ -155,6 +162,7 @@ export function QuestionEditorModal({
       promptLatex: promptLatex.trim(),
       points: Number(points),
       videoTimestampSeconds,
+      solutionUrl: solutionUrl.trim() ? solutionUrl.trim() : null,
       needsTeacherConfirmation: needsConfirm,
       ...(type === 'MCQ'
         ? {
@@ -315,6 +323,34 @@ export function QuestionEditorModal({
                 )}
               </div>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="q-solution-url">{t('teacher.questionEditor.solutionUrl')}</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="q-solution-url"
+                type="url"
+                value={solutionUrl}
+                onChange={(e) => setSolutionUrl(e.target.value)}
+                placeholder={t('teacher.questionEditor.solutionUrlPlaceholder')}
+                dir="ltr"
+              />
+              {validSolutionUrl && (
+                <a
+                  href={validSolutionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-brand-700 hover:bg-slate-50"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>{t('teacher.questionEditor.testSolutionUrl')}</span>
+                </a>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('teacher.questionEditor.solutionUrlHint')}
+            </p>
           </div>
 
           <div>

@@ -120,6 +120,7 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
         promptLatex: 'Find $\\frac{d}{dx}(e^{3x})$.',
         points: 5,
         videoTimestampSeconds: 45,
+        solutionUrl: 'https://example.com/solutions/q-mcq',
         needsTeacherConfirmation: false,
         teacherConfirmedAt: now,
         twinQuestionId: null,
@@ -395,6 +396,8 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
     expect(res.body.questions[1].modelAnswer).toBeUndefined();
     expect(res.body.questions[0].belowThreshold).toBe(true);
     expect(res.body.questions[0].videoTimestampSeconds).toBe(45);
+    expect(res.body.questions[0].solutionUrl).toBe('https://example.com/solutions/q-mcq');
+    expect(res.body.questions[1].solutionUrl).toBeNull();
     expect(res.body.questions[1].transcribedLines).toHaveLength(2);
     expect(res.body.questions[1].images[0].signedUrl).toContain('/api/v1/storage/local');
 

@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
+  ExternalLink,
   Flag,
   PlayCircle,
   Send,
@@ -235,6 +236,17 @@ export default function StudentResultsPage() {
                             {formatTimestamp(q.videoTimestampSeconds)})
                           </span>
                         </Button>
+                      )}
+                      {q.solutionUrl && (
+                        <a
+                          href={q.solutionUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-slate-50"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span>{t('results.viewSolutionLink')}</span>
+                        </a>
                       )}
                     </div>
                   </div>

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidHttpUrl } from '../domain/youtube.js';
 import {
   CohortGroupSchema,
   CohortStatusSchema,
@@ -42,6 +43,17 @@ export const RubricCriterionInputSchema = z.object({
   maxPoints: z.number().positive().max(100),
 });
 
+export const OptionalSolutionUrlSchema = z
+  .string()
+  .trim()
+  .max(1000)
+  .refine((val) => val === '' || isValidHttpUrl(val), {
+    message: 'Solution URL must be a valid http:// or https:// URL',
+  })
+  .transform((val) => (val === '' ? null : val))
+  .nullable()
+  .optional();
+
 export const UpsertQuestionSchema = z
   .object({
     orderIndex: z.number().int().min(1).max(100),
@@ -50,6 +62,7 @@ export const UpsertQuestionSchema = z
     promptLatex: z.string().trim().min(1).max(5000),
     points: z.number().positive().max(100),
     videoTimestampSeconds: z.number().int().min(0).max(86400).default(0),
+    solutionUrl: OptionalSolutionUrlSchema,
     needsTeacherConfirmation: z.boolean().default(false),
     twinQuestionId: z.string().uuid().nullable().optional(),
     mcqOptions: z.array(McqOptionInputSchema).optional(),

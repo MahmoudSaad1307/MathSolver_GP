@@ -876,6 +876,11 @@ Generated from Zod schemas via `npm run docs:openapi`.
                                     "minimum": 0,
                                     "default": 0
                                   },
+                                  "solutionUrl": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "maxLength": 1000
+                                  },
                                   "needsTeacherConfirmation": {
                                     "type": "boolean",
                                     "default": false
@@ -1221,6 +1226,11 @@ Generated from Zod schemas via `npm run docs:openapi`.
                     "maximum": 86400,
                     "default": 0
                   },
+                  "solutionUrl": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1000
+                  },
                   "needsTeacherConfirmation": {
                     "type": "boolean",
                     "default": false
@@ -1389,6 +1399,11 @@ Generated from Zod schemas via `npm run docs:openapi`.
                     "minimum": 0,
                     "maximum": 86400,
                     "default": 0
+                  },
+                  "solutionUrl": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1000
                   },
                   "needsTeacherConfirmation": {
                     "type": "boolean",

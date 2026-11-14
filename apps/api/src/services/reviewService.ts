@@ -477,6 +477,7 @@ export class ReviewService {
             conceptKey: question.conceptKey,
             promptLatex: question.promptLatex,
             points: question.points,
+            solutionUrl: question.solutionUrl ?? null,
             modelAnswer: modelAnswer
               ? {
                   solutionStepsLatex: modelAnswer.solutionStepsLatex,

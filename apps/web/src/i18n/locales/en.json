@@ -90,6 +90,7 @@
       "twinMatched": "Twin Paired",
       "twinMissing": "Unpaired Twin",
       "jumpVideo": "Preview at {{time}}",
+      "solutionLink": "Solution Link",
       "importOverTopic": "Import Over This Topic"
     },
     "questionEditor": {
@@ -102,6 +103,10 @@
       "essay": "Handwritten Essay",
       "points": "Points",
       "timestampMmSs": "Video Timestamp (mm:ss)",
+      "solutionUrl": "Question Solution Link (optional)",
+      "solutionUrlPlaceholder": "https://...",
+      "solutionUrlHint": "Optional link (video, PDF, or webpage) explaining the solution for this specific question.",
+      "testSolutionUrl": "Open Link",
       "promptLatex": "Question Prompt (English LaTeX with $...$)",
       "livePreview": "Live KaTeX Preview",
       "optionsTitle": "MCQ Options (4 options, 1 correct)",
@@ -238,6 +243,7 @@
     "aiHint": "Hint",
     "teacherNote": "Teacher Note",
     "watchExplanation": "Watch Explanation",
+    "viewSolutionLink": "Question Solution",
     "reportMisreadBtn": "AI misread my handwriting",
     "misreadNotePlaceholder": "Optional: tell your teacher which step was misread...",
     "submitMisread": "Send Misread Report",

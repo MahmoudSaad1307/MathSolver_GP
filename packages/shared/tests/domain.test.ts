@@ -5,11 +5,14 @@ import {
   evaluatePublishChecklist,
   extractYoutubeVideoId,
   isRubricSumValid,
+  isValidHttpUrl,
+  normalizeSolutionUrl,
+  OptionalSolutionUrlSchema,
   SeedTopicBundleSchema,
   StudentJoinSchema,
 } from '../src/index.js';
 
-describe('youtube helper', () => {
+describe('youtube and solution URL helpers', () => {
   it('extracts video ids from supported youtube URLs', () => {
     expect(extractYoutubeVideoId('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(
       'dQw4w9WgXcQ',
@@ -23,6 +26,26 @@ describe('youtube helper', () => {
     expect(extractYoutubeVideoId('https://www.youtube.com/watch?v=REPLACE_ME')).toBeNull();
     expect(extractYoutubeVideoId('javascript:alert(1)')).toBeNull();
     expect(extractYoutubeVideoId('not a url')).toBeNull();
+  });
+
+  it('validates and normalizes optional question solution URLs', () => {
+    expect(isValidHttpUrl('https://example.com/solutions/q1.pdf')).toBe(true);
+    expect(isValidHttpUrl('http://localhost:3000/sol')).toBe(true);
+    expect(isValidHttpUrl('javascript:alert(1)')).toBe(false);
+    expect(isValidHttpUrl('data:text/html,<h1>hi</h1>')).toBe(false);
+    expect(isValidHttpUrl('not-a-url')).toBe(false);
+
+    expect(normalizeSolutionUrl('  https://example.com/sol  ')).toBe('https://example.com/sol');
+    expect(normalizeSolutionUrl('   ')).toBeNull();
+    expect(normalizeSolutionUrl(null)).toBeNull();
+
+    expect(OptionalSolutionUrlSchema.parse('  https://youtu.be/dQw4w9WgXcQ  ')).toBe(
+      'https://youtu.be/dQw4w9WgXcQ',
+    );
+    expect(OptionalSolutionUrlSchema.parse('')).toBeNull();
+    expect(OptionalSolutionUrlSchema.parse(null)).toBeNull();
+    expect(OptionalSolutionUrlSchema.parse(undefined)).toBeUndefined();
+    expect(OptionalSolutionUrlSchema.safeParse('javascript:alert(1)').success).toBe(false);
   });
 });
 

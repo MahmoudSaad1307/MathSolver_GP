@@ -54,3 +54,35 @@ export function extractYoutubeVideoId(rawUrl: string): string | null {
 export function isPlaceholderVideoUrl(rawUrl: string): boolean {
   return !extractYoutubeVideoId(rawUrl);
 }
+
+/**
+ * Validates that a URL is a non-empty http:// or https:// URL within length bounds.
+ * Rejects javascript:, data:, file:, or malformed URLs.
+ */
+export function isValidHttpUrl(rawUrl: string): boolean {
+  const trimmed = rawUrl.trim();
+  if (!trimmed || trimmed.length > 1000) {
+    return false;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return false;
+  }
+
+  return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+}
+
+/**
+ * Normalizes an optional solution URL string by trimming whitespace and
+ * converting empty strings to null.
+ */
+export function normalizeSolutionUrl(rawUrl: string | null | undefined): string | null {
+  if (!rawUrl) {
+    return null;
+  }
+  const trimmed = rawUrl.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}

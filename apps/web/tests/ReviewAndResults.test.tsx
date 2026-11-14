@@ -70,6 +70,7 @@ function buildResultsPayload(
         promptLatex: 'What is $\\frac{d}{dx}(x^3)$?',
         points: 5,
         videoTimestampSeconds: 65,
+        solutionUrl: 'https://example.com/solutions/q-mcq',
         statusChip: 'GRADED',
         score: 0,
         isCorrect: false,
@@ -198,6 +199,10 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
     expect(await screen.findByText(/10 \/ 20/)).toBeInTheDocument();
     expect(screen.getByTestId('first-error-step-2')).toBeInTheDocument();
     expect(screen.getByText(/شاهد الشرح \(1:05\)/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'حل السؤال' })).toHaveAttribute(
+      'href',
+      'https://example.com/solutions/q-mcq',
+    );
     expect(screen.getByText(/أخطأت في الخطوة 2/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /الذكاء الاصطناعي قرأ خطي غلط/ }));

@@ -90,6 +90,7 @@
       "twinMatched": "مربوط مع التوأم",
       "twinMissing": "بدون توأم في النموذج الآخر",
       "jumpVideo": "معاينة الشرح ({{time}})",
+      "solutionLink": "رابط الحل",
       "importOverTopic": "استيراد وتحديث هذا الموضوع"
     },
     "questionEditor": {
@@ -102,6 +103,10 @@
       "essay": "مقالي (خطوات وصورة)",
       "points": "الدرجة",
       "timestampMmSs": "وقت الشرح في الفيديو (د:ث)",
+      "solutionUrl": "رابط حل السؤال (اختياري)",
+      "solutionUrlPlaceholder": "https://...",
+      "solutionUrlHint": "رابط اختياري (فيديو أو ملف أو صفحة) يشرح حل هذا السؤال تحديداً.",
+      "testSolutionUrl": "فتح الرابط",
       "promptLatex": "نص السؤال (LaTeX بالإنجليزية بين $...$)",
       "livePreview": "معاينة فورية",
       "optionsTitle": "خيارات الاختيار من متعدد (4 خيارات، إجابة صحيحة واحدة)",
@@ -238,6 +243,7 @@
     "aiHint": "تلميح للحل",
     "teacherNote": "ملاحظة المعلم",
     "watchExplanation": "شاهد الشرح",
+    "viewSolutionLink": "حل السؤال",
     "reportMisreadBtn": "الذكاء الاصطناعي قرأ خطي غلط",
     "misreadNotePlaceholder": "اختياري: اكتب أي جزء لم يُقرأ بشكل صحيح...",
     "submitMisread": "إرسال للمراجعة",

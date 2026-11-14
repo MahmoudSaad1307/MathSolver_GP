@@ -5,6 +5,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   History,
   Pin,
   RefreshCw,
@@ -531,6 +532,19 @@ export default function ReviewQueuePage() {
                               forceLtr
                             />
                           </div>
+                          {currentItem.question.solutionUrl && (
+                            <div className="pt-1">
+                              <a
+                                href={currentItem.question.solutionUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                <span>{t('teacher.builder.solutionLink')}</span>
+                              </a>
+                            </div>
+                          )}
                         </div>
                       )}
                     </CardContent>

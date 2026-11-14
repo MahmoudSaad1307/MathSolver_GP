@@ -325,7 +325,7 @@ export default function TopicBuilderPage() {
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={q.videoTimestampSeconds > 0 ? 'neutral' : 'warning'} dir="ltr">
                     {timeLabel}
                   </Badge>
@@ -338,6 +338,17 @@ export default function TopicBuilderPage() {
                     >
                       <ExternalLink className="h-3 w-3" />
                       <span>{t('teacher.builder.jumpVideo', { time: timeLabel })}</span>
+                    </a>
+                  )}
+                  {q.solutionUrl && (
+                    <a
+                      href={q.solutionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      <span>{t('teacher.builder.solutionLink')}</span>
                     </a>
                   )}
                 </div>

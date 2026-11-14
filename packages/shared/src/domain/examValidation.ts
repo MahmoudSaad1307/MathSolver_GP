@@ -19,6 +19,7 @@ export interface ValidatableQuestion {
   type: QuestionType;
   points: number;
   videoTimestampSeconds: number;
+  solutionUrl?: string | null;
   needsTeacherConfirmation: boolean;
   mcqOptions?: ValidatableMcqOption[];
   modelAnswer?: {

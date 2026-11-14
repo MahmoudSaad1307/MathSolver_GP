@@ -80,6 +80,7 @@ export interface WrongQuestionSegment {
   orderIndex: number;
   conceptKey: string;
   timestampSeconds: number;
+  solutionUrl: string | null;
   score: number;
   maxScore: number;
   visited: boolean;
@@ -159,6 +160,7 @@ export class VideoService {
       conceptKey: string;
       points: number;
       videoTimestampSeconds: number;
+      solutionUrl?: string | null;
     }>,
     preTestAnswers: Array<{ questionId: string; isCorrect: boolean | null; score: number | null }>,
     threshold: number,
@@ -184,6 +186,7 @@ export class VideoService {
         orderIndex: q.orderIndex,
         conceptKey: q.conceptKey,
         timestampSeconds: q.videoTimestampSeconds,
+        solutionUrl: q.solutionUrl ?? null,
         score: numericScore,
         maxScore: q.points,
         visited,

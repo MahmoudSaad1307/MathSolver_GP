@@ -345,6 +345,7 @@ export class StudentResultsService {
           promptLatex: q.promptLatex,
           points: q.points,
           videoTimestampSeconds: q.videoTimestampSeconds,
+          solutionUrl: q.solutionUrl ?? null,
           statusChip,
           score: displayScore,
           isCorrect: answer?.isCorrect ?? null,

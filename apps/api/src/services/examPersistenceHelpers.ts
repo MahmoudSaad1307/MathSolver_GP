@@ -54,6 +54,7 @@ export function toValidatableQuestion(q: LoadedQuestion): ValidatableQuestion {
     type: q.type,
     points: q.points,
     videoTimestampSeconds: q.videoTimestampSeconds,
+    solutionUrl: q.solutionUrl ?? null,
     needsTeacherConfirmation: q.needsTeacherConfirmation,
     mcqOptions: q.mcqOptions.map((o) => ({
       label: o.label,
@@ -121,6 +122,7 @@ export function serializeTopicWithStatus(topic: LoadedTopicTree) {
     ...model,
     questions: model.questions.map((q) => ({
       ...q,
+      solutionUrl: q.solutionUrl ?? null,
       modelAnswer: q.modelAnswer && q.modelAnswer.deletedAt === null ? q.modelAnswer : null,
     })),
   }));
@@ -247,6 +249,7 @@ export async function populateQuestionChildren(
   questionId: string,
   input: UpsertQuestionInput,
   existingRubricVersion?: number | null,
+  bumpRubricVersion = true,
 ): Promise<void> {
   if (input.type === 'MCQ' && input.mcqOptions) {
     await tx.mcqOption.createMany({
@@ -258,7 +261,11 @@ export async function populateQuestionChildren(
       })),
     });
   } else if (input.type === 'ESSAY' && input.modelAnswer && input.rubricCriteria) {
-    const nextVersion = existingRubricVersion ? existingRubricVersion + 1 : 1;
+    const nextVersion = existingRubricVersion
+      ? bumpRubricVersion
+        ? existingRubricVersion + 1
+        : existingRubricVersion
+      : 1;
     await tx.modelAnswer.upsert({
       where: { questionId },
       create: {
@@ -307,6 +314,7 @@ export async function createQuestionWithChildren(
       promptLatex: input.promptLatex,
       points: input.points,
       videoTimestampSeconds: input.videoTimestampSeconds,
+      solutionUrl: input.solutionUrl ?? null,
       needsTeacherConfirmation: input.needsTeacherConfirmation,
       teacherConfirmedAt: input.needsTeacherConfirmation ? null : new Date(),
     },

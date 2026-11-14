@@ -151,6 +151,7 @@ model Question {
   promptLatex              String
   points                   Float
   videoTimestampSeconds    Int          @default(0)
+  solutionUrl              String?
   needsTeacherConfirmation Boolean      @default(false)
   teacherConfirmedAt       DateTime?
   twinQuestionId           String?      @unique @db.Uuid

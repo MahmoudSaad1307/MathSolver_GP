@@ -72,6 +72,7 @@ export interface FakeQuestionRow {
   promptLatex: string;
   points: number;
   videoTimestampSeconds: number;
+  solutionUrl?: string | null;
   needsTeacherConfirmation: boolean;
   teacherConfirmedAt: Date | null;
   twinQuestionId: string | null;
@@ -693,6 +694,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
           promptLatex: data.promptLatex,
           points: data.points,
           videoTimestampSeconds: data.videoTimestampSeconds ?? 0,
+          solutionUrl: data.solutionUrl ?? null,
           needsTeacherConfirmation: data.needsTeacherConfirmation ?? false,
           teacherConfirmedAt: data.teacherConfirmedAt ?? null,
           twinQuestionId: data.twinQuestionId ?? null,

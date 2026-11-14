@@ -38,6 +38,7 @@ export interface StudentAttemptQuestionResult {
   promptLatex: string;
   points: number;
   videoTimestampSeconds: number;
+  solutionUrl?: string | null;
   statusChip: StudentQuestionStatusChip;
   score: number | null;
   isCorrect: boolean | null;
@@ -136,6 +137,7 @@ export interface ReviewQueueItem {
     conceptKey: string;
     promptLatex: string;
     points: number;
+    solutionUrl?: string | null;
     modelAnswer: {
       solutionStepsLatex: string[];
       finalAnswerLatex: string;

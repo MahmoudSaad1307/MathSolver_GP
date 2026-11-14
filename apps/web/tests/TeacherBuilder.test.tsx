@@ -56,6 +56,7 @@ function buildSampleTopic(overrides: Partial<TopicDetail> = {}): TopicDetail {
             promptLatex: 'Find tangent slope of $y = e^{2x}$ at $x=0$.',
             points: 15,
             videoTimestampSeconds: 95,
+            solutionUrl: 'https://example.com/solutions/m1-q3',
             needsTeacherConfirmation: true,
             teacherConfirmedAt: null,
             twinQuestionId: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
@@ -100,6 +101,7 @@ function buildSampleTopic(overrides: Partial<TopicDetail> = {}): TopicDetail {
             promptLatex: 'Slope of $e^{3x}$ at $x=0$?',
             points: 15,
             videoTimestampSeconds: 120,
+            solutionUrl: 'https://example.com/solutions/m2-q3',
             needsTeacherConfirmation: false,
             teacherConfirmedAt: '2026-11-13T00:00:00.000Z',
             twinQuestionId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
@@ -229,10 +231,21 @@ describe('Teacher Topics & Builder pages', () => {
       'href',
       'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120s',
     );
+    const solutionLinks = screen.getAllByRole('link', { name: 'رابط الحل' });
+    expect(solutionLinks).toHaveLength(2);
+    expect(solutionLinks[0]).toHaveAttribute('href', 'https://example.com/solutions/m1-q3');
+    expect(solutionLinks[1]).toHaveAttribute('href', 'https://example.com/solutions/m2-q3');
 
-    // Opening Add Question modal renders live KaTeX preview & rubric editor
+    // Opening Add Question modal renders live KaTeX preview, solution URL input & rubric editor
     fireEvent.click(screen.getAllByRole('button', { name: 'إضافة سؤال' })[0]!);
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     expect(screen.getByLabelText('ترتيب السؤال')).toBeInTheDocument();
+    const solutionInput = screen.getByLabelText('رابط حل السؤال (اختياري)');
+    expect(solutionInput).toBeInTheDocument();
+    fireEvent.change(solutionInput, { target: { value: 'https://example.com/new-solution' } });
+    expect(screen.getByRole('link', { name: 'فتح الرابط' })).toHaveAttribute(
+      'href',
+      'https://example.com/new-solution',
+    );
   });
 });

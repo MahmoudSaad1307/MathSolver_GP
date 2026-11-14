@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeRedisUrl, parseRedisConnectionOptions } from '../src/services/gradingDispatcher.js';
+import {
+  normalizeRedisUrl,
+  parseRedisConnectionOptions,
+} from '../src/services/gradingDispatcher.js';
 
 describe('parseRedisConnectionOptions', () => {
   it('parses standard redis:// URLs without TLS', () => {

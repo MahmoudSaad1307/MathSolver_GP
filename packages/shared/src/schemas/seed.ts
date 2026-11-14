@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   McqOptionInputSchema,
   ModelAnswerInputSchema,
+  OptionalSolutionUrlSchema,
   RubricCriterionInputSchema,
 } from './teacher.js';
 import { ExamStatusSchema, QuestionTypeSchema } from '../enums.js';
@@ -13,6 +14,7 @@ export const SeedQuestionSchema = z.object({
   promptLatex: z.string().trim().min(1),
   points: z.number().positive(),
   videoTimestampSeconds: z.number().int().min(0).default(0),
+  solutionUrl: OptionalSolutionUrlSchema,
   needsTeacherConfirmation: z.boolean().default(false),
   mcqOptions: z.array(McqOptionInputSchema).optional(),
   modelAnswer: ModelAnswerInputSchema.optional(),

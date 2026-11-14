@@ -68,6 +68,7 @@ function validateBundleQuestions(models: [SeedModelInput, SeedModelInput]): {
         promptLatex: q.promptLatex,
         points: q.points,
         videoTimestampSeconds: q.videoTimestampSeconds,
+        solutionUrl: q.solutionUrl ?? null,
         needsTeacherConfirmation: q.needsTeacherConfirmation,
         mcqOptions: q.mcqOptions,
         modelAnswer: q.modelAnswer ?? null,
@@ -121,6 +122,7 @@ function diffModel(
       prev.promptLatex !== q.promptLatex ||
       prev.points !== q.points ||
       prev.videoTimestampSeconds !== q.videoTimestampSeconds ||
+      (prev.solutionUrl ?? null) !== (q.solutionUrl ?? null) ||
       prev.needsTeacherConfirmation !== q.needsTeacherConfirmation
     ) {
       updatedOrderIndexes.push(q.orderIndex);
@@ -233,6 +235,7 @@ export class ExamImportExportService {
         promptLatex: q.promptLatex,
         points: q.points,
         videoTimestampSeconds: q.videoTimestampSeconds,
+        solutionUrl: q.solutionUrl ?? null,
         needsTeacherConfirmation: q.needsTeacherConfirmation,
         ...(q.type === 'MCQ'
           ? {
@@ -325,134 +328,137 @@ export class ExamImportExportService {
       model2.status === 'PUBLISHED' && checklist.ready ? 'PUBLISHED' : 'DRAFT';
     const videoId = resolveVideoId(bundle.topic.videoUrl);
 
-    const savedTopicId = await this.prisma.$transaction(async (tx) => {
-      let topicId: string;
-      let model1Id: string;
-      let model2Id: string;
-      const now = new Date();
+    const savedTopicId = await this.prisma.$transaction(
+      async (tx) => {
+        let topicId: string;
+        let model1Id: string;
+        let model2Id: string;
+        const now = new Date();
 
-      if (existingTopic) {
-        topicId = existingTopic.id;
-        await tx.topic.update({
-          where: { id: topicId },
-          data: {
-            title: bundle.topic.title,
-            description: bundle.topic.description,
-            videoUrl: bundle.topic.videoUrl,
-            videoId,
-            minWatchSeconds: bundle.topic.minWatchSeconds,
-            correctnessThreshold: bundle.topic.correctnessThreshold,
-          },
-        });
-
-        const existingM1 = existingTopic.examModels.find((m) => m.modelNumber === 1);
-        const existingM2 = existingTopic.examModels.find((m) => m.modelNumber === 2);
-
-        if (!existingM1 || !existingM2) {
-          throw new AppError('CONFLICT', {
-            messageEn: 'Target topic is missing paired Model 1 or Model 2.',
-            messageAr: 'الموضوع المستهدف يفتقد أحد النموذجين 1 أو 2.',
+        if (existingTopic) {
+          topicId = existingTopic.id;
+          await tx.topic.update({
+            where: { id: topicId },
+            data: {
+              title: bundle.topic.title,
+              description: bundle.topic.description,
+              videoUrl: bundle.topic.videoUrl,
+              videoId,
+              minWatchSeconds: bundle.topic.minWatchSeconds,
+              correctnessThreshold: bundle.topic.correctnessThreshold,
+            },
           });
+
+          const existingM1 = existingTopic.examModels.find((m) => m.modelNumber === 1);
+          const existingM2 = existingTopic.examModels.find((m) => m.modelNumber === 2);
+
+          if (!existingM1 || !existingM2) {
+            throw new AppError('CONFLICT', {
+              messageEn: 'Target topic is missing paired Model 1 or Model 2.',
+              messageAr: 'الموضوع المستهدف يفتقد أحد النموذجين 1 أو 2.',
+            });
+          }
+
+          model1Id = existingM1.id;
+          model2Id = existingM2.id;
+
+          for (const existingQ of [...existingM1.questions, ...existingM2.questions]) {
+            await softDeleteQuestionSubtree(tx, existingQ.id, now);
+          }
+
+          await tx.question.updateMany({
+            where: { examModelId: { in: [model1Id, model2Id] }, deletedAt: null },
+            data: { deletedAt: now, twinQuestionId: null },
+          });
+
+          await tx.examModel.update({
+            where: { id: model1Id },
+            data: {
+              title: model1.title,
+              durationMinutes: model1.durationMinutes,
+              status: resolvedStatus1,
+            },
+          });
+
+          await tx.examModel.update({
+            where: { id: model2Id },
+            data: {
+              title: model2.title,
+              durationMinutes: model2.durationMinutes,
+              status: resolvedStatus2,
+            },
+          });
+        } else {
+          const createdTopic = await tx.topic.create({
+            data: {
+              ownerId: teacherId,
+              title: bundle.topic.title,
+              description: bundle.topic.description,
+              videoUrl: bundle.topic.videoUrl,
+              videoId,
+              minWatchSeconds: bundle.topic.minWatchSeconds,
+              correctnessThreshold: bundle.topic.correctnessThreshold,
+            },
+          });
+          topicId = createdTopic.id;
+
+          const createdM1 = await tx.examModel.create({
+            data: {
+              topicId,
+              modelNumber: 1,
+              title: model1.title,
+              durationMinutes: model1.durationMinutes,
+              totalPoints: 0,
+              status: resolvedStatus1,
+            },
+          });
+
+          const createdM2 = await tx.examModel.create({
+            data: {
+              topicId,
+              modelNumber: 2,
+              title: model2.title,
+              durationMinutes: model2.durationMinutes,
+              totalPoints: 0,
+              status: resolvedStatus2,
+              pairedWithId: createdM1.id,
+            },
+          });
+
+          await tx.examModel.update({
+            where: { id: createdM1.id },
+            data: { pairedWithId: createdM2.id },
+          });
+
+          model1Id = createdM1.id;
+          model2Id = createdM2.id;
         }
 
-        model1Id = existingM1.id;
-        model2Id = existingM2.id;
-
-        for (const existingQ of [...existingM1.questions, ...existingM2.questions]) {
-          await softDeleteQuestionSubtree(tx, existingQ.id, now);
+        for (const q of questions1) {
+          await createQuestionWithChildren(tx, model1Id, q);
+        }
+        for (const q of questions2) {
+          await createQuestionWithChildren(tx, model2Id, q);
         }
 
-        await tx.question.updateMany({
-          where: { examModelId: { in: [model1Id, model2Id] }, deletedAt: null },
-          data: { deletedAt: now, twinQuestionId: null },
+        await recalculateExamTotalPoints(tx, model1Id);
+        await recalculateExamTotalPoints(tx, model2Id);
+        await syncTwinQuestionsForTopic(tx, topicId);
+
+        await writeAuditLog(tx, this.env, {
+          actorType: 'TEACHER',
+          actorId: teacherId,
+          action: 'EXAM_BUNDLE_IMPORT',
+          entity: 'Topic',
+          entityId: topicId,
+          diff,
+          ip,
         });
 
-        await tx.examModel.update({
-          where: { id: model1Id },
-          data: {
-            title: model1.title,
-            durationMinutes: model1.durationMinutes,
-            status: resolvedStatus1,
-          },
-        });
-
-        await tx.examModel.update({
-          where: { id: model2Id },
-          data: {
-            title: model2.title,
-            durationMinutes: model2.durationMinutes,
-            status: resolvedStatus2,
-          },
-        });
-      } else {
-        const createdTopic = await tx.topic.create({
-          data: {
-            ownerId: teacherId,
-            title: bundle.topic.title,
-            description: bundle.topic.description,
-            videoUrl: bundle.topic.videoUrl,
-            videoId,
-            minWatchSeconds: bundle.topic.minWatchSeconds,
-            correctnessThreshold: bundle.topic.correctnessThreshold,
-          },
-        });
-        topicId = createdTopic.id;
-
-        const createdM1 = await tx.examModel.create({
-          data: {
-            topicId,
-            modelNumber: 1,
-            title: model1.title,
-            durationMinutes: model1.durationMinutes,
-            totalPoints: 0,
-            status: resolvedStatus1,
-          },
-        });
-
-        const createdM2 = await tx.examModel.create({
-          data: {
-            topicId,
-            modelNumber: 2,
-            title: model2.title,
-            durationMinutes: model2.durationMinutes,
-            totalPoints: 0,
-            status: resolvedStatus2,
-            pairedWithId: createdM1.id,
-          },
-        });
-
-        await tx.examModel.update({
-          where: { id: createdM1.id },
-          data: { pairedWithId: createdM2.id },
-        });
-
-        model1Id = createdM1.id;
-        model2Id = createdM2.id;
-      }
-
-      for (const q of questions1) {
-        await createQuestionWithChildren(tx, model1Id, q);
-      }
-      for (const q of questions2) {
-        await createQuestionWithChildren(tx, model2Id, q);
-      }
-
-      await recalculateExamTotalPoints(tx, model1Id);
-      await recalculateExamTotalPoints(tx, model2Id);
-      await syncTwinQuestionsForTopic(tx, topicId);
-
-      await writeAuditLog(tx, this.env, {
-        actorType: 'TEACHER',
-        actorId: teacherId,
-        action: 'EXAM_BUNDLE_IMPORT',
-        entity: 'Topic',
-        entityId: topicId,
-        diff,
-        ip,
-      });
-
-      return topicId;
-    }, { maxWait: 15000, timeout: 60000 });
+        return topicId;
+      },
+      { maxWait: 15000, timeout: 60000 },
+    );
 
     const loaded = await this.topicService.getTopic(teacherId, savedTopicId);
     return {

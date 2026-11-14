@@ -1,6 +1,13 @@
 import type { VideoHeartbeatInput } from '@mathlens/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowRight, CheckCircle2, Clock, PlayCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  PlayCircle,
+} from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -348,25 +355,37 @@ export default function StudentRemediationPage() {
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               {state.wrongQuestionSegments.map((seg) => (
-                <Button
-                  key={seg.questionId}
-                  size="sm"
-                  variant={seg.visited ? 'outline' : 'primary'}
-                  onClick={() => {
-                    playerRef.current?.seekTo?.(seg.timestampSeconds, true);
-                    sendEvent('QUESTION_LINK_CLICK', seg.timestampSeconds, seg.questionId);
-                  }}
-                >
-                  <PlayCircle className="h-3.5 w-3.5" />
-                  <span>
-                    #{seg.orderIndex} · {seg.conceptKey} ({formatTs(seg.timestampSeconds)})
-                  </span>
-                  <Badge tone={seg.visited ? 'success' : 'warning'} className="ms-1">
-                    {seg.visited
-                      ? t('remediation.segmentVisited')
-                      : t('remediation.segmentPending')}
-                  </Badge>
-                </Button>
+                <div key={seg.questionId} className="inline-flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant={seg.visited ? 'outline' : 'primary'}
+                    onClick={() => {
+                      playerRef.current?.seekTo?.(seg.timestampSeconds, true);
+                      sendEvent('QUESTION_LINK_CLICK', seg.timestampSeconds, seg.questionId);
+                    }}
+                  >
+                    <PlayCircle className="h-3.5 w-3.5" />
+                    <span>
+                      #{seg.orderIndex} · {seg.conceptKey} ({formatTs(seg.timestampSeconds)})
+                    </span>
+                    <Badge tone={seg.visited ? 'success' : 'warning'} className="ms-1">
+                      {seg.visited
+                        ? t('remediation.segmentVisited')
+                        : t('remediation.segmentPending')}
+                    </Badge>
+                  </Button>
+                  {seg.solutionUrl && (
+                    <a
+                      href={seg.solutionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-[36px] items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-brand-700 hover:bg-slate-50"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      <span>{t('results.viewSolutionLink')}</span>
+                    </a>
+                  )}
+                </div>
               ))}
             </CardContent>
           </Card>

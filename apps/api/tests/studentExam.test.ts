@@ -105,6 +105,7 @@ describe('Cohorts, student join/consent/exam flow, image sanitization, and lock 
       promptLatex: 'What is $(e^{2x})^{\\prime}$?',
       points: 10,
       videoTimestampSeconds: 30,
+      solutionUrl: 'https://example.com/solutions/exp-basic',
       mcqOptions: [
         { label: 'A', textLatex: '$e^{2x}$', isCorrect: false },
         { label: 'B', textLatex: '$2e^{2x}$', isCorrect: true },
@@ -315,6 +316,7 @@ describe('Cohorts, student join/consent/exam flow, image sanitization, and lock 
     for (const opt of mcqQ.mcqOptions) {
       expect(opt.isCorrect).toBeUndefined();
     }
+    expect(mcqQ.solutionUrl).toBeUndefined();
     expect(essayQ.modelAnswer).toBeUndefined();
     expect(essayQ.rubricCriteria).toBeUndefined();
 
