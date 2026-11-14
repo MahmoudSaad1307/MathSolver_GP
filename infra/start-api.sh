@@ -7,7 +7,11 @@ export PORT="${API_PORT}"
 cd /app/apps/api
 
 if [ "${SKIP_PRISMA_MIGRATE:-false}" != "true" ]; then
-  npx prisma migrate deploy
+  if [ -x "./node_modules/.bin/prisma" ]; then
+    ./node_modules/.bin/prisma migrate deploy
+  else
+    /app/node_modules/.bin/prisma migrate deploy
+  fi
 fi
 
 if [ "${RUN_WORKER_WITH_API:-false}" = "true" ]; then
