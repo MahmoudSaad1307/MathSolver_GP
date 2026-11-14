@@ -452,7 +452,7 @@ export class ExamImportExportService {
       });
 
       return topicId;
-    });
+    }, { maxWait: 15000, timeout: 60000 });
 
     const loaded = await this.topicService.getTopic(teacherId, savedTopicId);
     return {
