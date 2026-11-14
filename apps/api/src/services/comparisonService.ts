@@ -226,8 +226,6 @@ export class ComparisonService {
       topic: {
         id: topic.id,
         title: topic.title,
-        videoId: topic.videoId,
-        minWatchSeconds: topic.minWatchSeconds,
       },
       preTest: {
         attemptId: preAttempt.id,
@@ -252,13 +250,13 @@ export class ComparisonService {
       concepts,
       twinQuestions,
       videoOfferAfterPost: {
-        available: Boolean(topic.videoId),
+        available: preQ.some((q) => Boolean(q.solutionUrl)),
         watchedSeconds,
-        minWatchSeconds: topic.minWatchSeconds,
         recommendedForControl:
           student.cohort.group === 'CONTROL' &&
-          Boolean(topic.videoId) &&
-          watchedSeconds < topic.minWatchSeconds,
+          preQ.some((q) => Boolean(q.solutionUrl)) &&
+          !videoSession?.unlockedPostAt &&
+          (videoSession?.visitedQuestionIds.length ?? 0) === 0,
       },
     };
   }

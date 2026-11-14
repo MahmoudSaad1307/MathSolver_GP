@@ -15,7 +15,6 @@ import {
   createQuestionWithChildren,
   populateQuestionChildren,
   recalculateExamTotalPoints,
-  resolveVideoId,
   serializeTopicWithStatus,
   softDeleteQuestionSubtree,
   syncTwinQuestionsForTopic,
@@ -140,17 +139,12 @@ export class TopicService {
   }
 
   async createTopic(teacherId: string, input: CreateTopicInput, ip?: string) {
-    const videoId = resolveVideoId(input.videoUrl);
-
     const createdId = await this.prisma.$transaction(async (tx) => {
       const topic = await tx.topic.create({
         data: {
           ownerId: teacherId,
           title: input.title,
           description: input.description ?? '',
-          videoUrl: input.videoUrl,
-          videoId,
-          minWatchSeconds: input.minWatchSeconds,
           correctnessThreshold: input.correctnessThreshold,
         },
       });
@@ -189,7 +183,7 @@ export class TopicService {
         action: 'TOPIC_CREATE',
         entity: 'Topic',
         entityId: topic.id,
-        diff: { title: topic.title, videoId },
+        diff: { title: topic.title },
         ip,
       });
 
@@ -202,19 +196,12 @@ export class TopicService {
   async updateTopic(teacherId: string, topicId: string, input: UpdateTopicInput, ip?: string) {
     await this.prisma.$transaction(async (tx) => {
       const existing = await this.loadOwnedTopicOrThrow(tx, teacherId, topicId);
-      const nextVideoUrl = input.videoUrl ?? existing.videoUrl;
-      const nextVideoId =
-        input.videoUrl !== undefined ? resolveVideoId(input.videoUrl) : existing.videoId;
 
       await tx.topic.update({
         where: { id: existing.id },
         data: {
           ...(input.title !== undefined ? { title: input.title } : {}),
           ...(input.description !== undefined ? { description: input.description } : {}),
-          ...(input.videoUrl !== undefined ? { videoUrl: nextVideoUrl, videoId: nextVideoId } : {}),
-          ...(input.minWatchSeconds !== undefined
-            ? { minWatchSeconds: input.minWatchSeconds }
-            : {}),
           ...(input.correctnessThreshold !== undefined
             ? { correctnessThreshold: input.correctnessThreshold }
             : {}),
@@ -358,7 +345,6 @@ export class TopicService {
           type: input.type,
           promptLatex: input.promptLatex,
           points: input.points,
-          videoTimestampSeconds: input.videoTimestampSeconds,
           solutionUrl: input.solutionUrl === undefined ? existing.solutionUrl : input.solutionUrl,
           needsTeacherConfirmation: input.needsTeacherConfirmation,
           teacherConfirmedAt: input.needsTeacherConfirmation
@@ -534,14 +520,6 @@ export class TopicService {
       if (!metadata.publishChecklist.ready) {
         throw new AppError('PUBLISH_CHECKLIST_FAILED', {
           details: metadata.publishChecklist,
-        });
-      }
-
-      const validVideoId = resolveVideoId(topic.videoUrl);
-      if (validVideoId && topic.videoId !== validVideoId) {
-        await tx.topic.update({
-          where: { id: topic.id },
-          data: { videoId: validVideoId },
         });
       }
 

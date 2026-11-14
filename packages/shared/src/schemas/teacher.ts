@@ -12,8 +12,6 @@ import {
 export const CreateTopicSchema = z.object({
   title: z.string().trim().min(2).max(200),
   description: z.string().trim().max(2000).default(''),
-  videoUrl: z.string().trim().url().max(500),
-  minWatchSeconds: z.number().int().min(10).max(7200).default(300),
   correctnessThreshold: z.number().min(0.1).max(1).default(0.6),
 });
 export type CreateTopicInput = z.infer<typeof CreateTopicSchema>;
@@ -61,7 +59,6 @@ export const UpsertQuestionSchema = z
     type: QuestionTypeSchema,
     promptLatex: z.string().trim().min(1).max(5000),
     points: z.number().positive().max(100),
-    videoTimestampSeconds: z.number().int().min(0).max(86400).default(0),
     solutionUrl: OptionalSolutionUrlSchema,
     needsTeacherConfirmation: z.boolean().default(false),
     twinQuestionId: z.string().uuid().nullable().optional(),
@@ -126,7 +123,6 @@ export const CreateCohortSchema = z.object({
   name: z.string().trim().min(2).max(150),
   group: CohortGroupSchema,
   requireVideoBeforePost: z.boolean().optional(),
-  requireWrongSegmentVisits: z.boolean().default(false),
   showProvisionalScore: z.boolean().default(false),
   postTestOpensAt: z.string().datetime().nullable().optional(),
 });
@@ -136,7 +132,6 @@ export const UpdateCohortSchema = z.object({
   name: z.string().trim().min(2).max(150).optional(),
   group: CohortGroupSchema.optional(),
   requireVideoBeforePost: z.boolean().optional(),
-  requireWrongSegmentVisits: z.boolean().optional(),
   showProvisionalScore: z.boolean().optional(),
   postTestOpensAt: z.string().datetime().nullable().optional(),
   status: CohortStatusSchema.optional(),

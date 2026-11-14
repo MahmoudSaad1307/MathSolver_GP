@@ -40,9 +40,6 @@ export interface FakeTopicRow {
   ownerId: string;
   title: string;
   description: string;
-  videoUrl: string;
-  videoId: string | null;
-  minWatchSeconds: number;
   correctnessThreshold: number;
   createdAt: Date;
   updatedAt: Date;
@@ -71,7 +68,6 @@ export interface FakeQuestionRow {
   type: 'MCQ' | 'ESSAY';
   promptLatex: string;
   points: number;
-  videoTimestampSeconds: number;
   solutionUrl?: string | null;
   needsTeacherConfirmation: boolean;
   teacherConfirmedAt: Date | null;
@@ -126,7 +122,6 @@ export interface FakeCohortRow {
   joinCode: string;
   group: 'TREATMENT' | 'CONTROL';
   requireVideoBeforePost: boolean;
-  requireWrongSegmentVisits: boolean;
   showProvisionalScore: boolean;
   postTestOpensAt: Date | null;
   status: 'OPEN' | 'CLOSED' | 'ARCHIVED';
@@ -196,6 +191,7 @@ export interface FakeVideoSessionRow {
   topicId: string;
   startedAt: Date;
   watchedSeconds: number;
+  visitedQuestionIds?: string[];
   lastPosition: number;
   completedAt: Date | null;
   unlockedPostAt: Date | null;
@@ -479,7 +475,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       create: async ({
         data,
       }: {
-        data: Partial<FakeTopicRow> & { ownerId: string; title: string; videoUrl: string };
+        data: Partial<FakeTopicRow> & { ownerId: string; title: string };
       }) => {
         const now = new Date();
         const row: FakeTopicRow = {
@@ -487,9 +483,6 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
           ownerId: data.ownerId,
           title: data.title,
           description: data.description ?? '',
-          videoUrl: data.videoUrl,
-          videoId: data.videoId ?? null,
-          minWatchSeconds: data.minWatchSeconds ?? 300,
           correctnessThreshold: data.correctnessThreshold ?? 0.6,
           createdAt: now,
           updatedAt: now,
@@ -693,7 +686,6 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
           type: data.type,
           promptLatex: data.promptLatex,
           points: data.points,
-          videoTimestampSeconds: data.videoTimestampSeconds ?? 0,
           solutionUrl: data.solutionUrl ?? null,
           needsTeacherConfirmation: data.needsTeacherConfirmation ?? false,
           teacherConfirmedAt: data.teacherConfirmedAt ?? null,
@@ -965,8 +957,6 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
             ? {
                 id: topic.id,
                 title: topic.title,
-                videoId: topic.videoId,
-                minWatchSeconds: topic.minWatchSeconds,
               }
             : null,
           students: students
@@ -994,7 +984,6 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
           joinCode: data.joinCode,
           group: data.group,
           requireVideoBeforePost: data.requireVideoBeforePost ?? true,
-          requireWrongSegmentVisits: data.requireWrongSegmentVisits ?? false,
           showProvisionalScore: data.showProvisionalScore ?? false,
           postTestOpensAt: data.postTestOpensAt ?? null,
           status: data.status ?? 'OPEN',

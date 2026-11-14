@@ -2,8 +2,6 @@
   "topic": {
     "title": "تفاضل الدوال الأسية واللوغاريتمية",
     "description": "تقييم قبلي وبعدي يقيس إتقان الاشتقاق اللوغاريتمي، ومشتقات الدوال الأسية ذات الأساسات الثابتة والمتغيرة، وتحليل المجال والنقاط الحرجة، ومعادلة المماس، ومقارنة النمو الأسي والخطي.",
-    "videoUrl": "https://www.youtube.com/watch?v=REPLACE_ME",
-    "minWatchSeconds": 300,
     "correctnessThreshold": 0.6
   },
   "models": [
@@ -19,7 +17,6 @@
           "type": "MCQ",
           "promptLatex": "If $y = x^{\\sin x}$, then $\\frac{dy}{dx}$ equals:",
           "points": 5,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "mcqOptions": [
             { "label": "A", "textLatex": "$x^{\\sin x}\\cos x$", "isCorrect": false },
@@ -38,7 +35,6 @@
           "type": "MCQ",
           "promptLatex": "If $y = e^{3}+\\pi^{\\sec x}$, then $\\frac{dy}{dx}$ equals:",
           "points": 5,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "mcqOptions": [
             { "label": "A", "textLatex": "$3e^{2}+\\pi^{\\sec x}$", "isCorrect": false },
@@ -57,7 +53,6 @@
           "type": "MCQ",
           "promptLatex": "A student claims the domain of $f(x)=\\ln(x^{2}-5x+6)$ is all real numbers except $x=2$ and $x=3$. Which statement correctly identifies the student's mistake?",
           "points": 5,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": true,
           "mcqOptions": [
             {
@@ -80,7 +75,6 @@
           "type": "MCQ",
           "promptLatex": "If the rate of change of a population $P(t)$ is proportional to its current size, which differential equation represents this?",
           "points": 5,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "mcqOptions": [
             { "label": "A", "textLatex": "$\\frac{dP}{dt}=k$", "isCorrect": false },
@@ -95,7 +89,6 @@
           "type": "ESSAY",
           "promptLatex": "Using logarithmic differentiation, find the derivative of $y=(\\sec x)^{x}$.",
           "points": 10,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -152,7 +145,6 @@
           "type": "ESSAY",
           "promptLatex": "Find $\\frac{dy}{dx}$ and its value at $x=0$ if $y=e^{2x}\\cos x$.",
           "points": 10,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -208,7 +200,6 @@
           "type": "ESSAY",
           "promptLatex": "Find the equation of the tangent to $y=\\ln(x^{3})$ at $x=1$. Then find the points where the tangent meets the coordinate axes and the distance between them.",
           "points": 20,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -266,7 +257,6 @@
           "type": "ESSAY",
           "promptLatex": "A student differentiates $y=e^{4}+2^{x}$ as $\\frac{dy}{dx}=4e^{3}+2^{x}$. Identify the two errors and find the correct derivative.",
           "points": 10,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -308,7 +298,6 @@
           "type": "ESSAY",
           "promptLatex": "Two populations are modeled by $P(t)=200e^{0.04t}$ and $Q(t)=200+8t$. Find the derivative of each and explain the difference between their growth rates.",
           "points": 15,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -364,7 +353,6 @@
           "type": "ESSAY",
           "promptLatex": "Given $f(x)=\\ln(x^{2}-4x+3)$, a student found $f'(x)=\\frac{2x-4}{x^{2}-4x+3}$, set the numerator to zero and concluded $x=2$ is a critical point. Find the domain and decide whether $x=2$ is valid.",
           "points": 15,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -429,7 +417,6 @@
           "type": "MCQ",
           "promptLatex": "If $y = x^{\\cos x}$, then $\\frac{dy}{dx}$ equals:",
           "points": 5,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "mcqOptions": [
             {
@@ -452,7 +439,6 @@
           "type": "MCQ",
           "promptLatex": "If $y = 5^{2}+3^{\\tan x}$, then $\\frac{dy}{dx}$ equals:",
           "points": 5,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "mcqOptions": [
             { "label": "A", "textLatex": "$10+3^{\\tan x}\\ln 3$", "isCorrect": false },
@@ -471,7 +457,6 @@
           "type": "MCQ",
           "promptLatex": "A student claims the domain of $f(x)=\\ln(x^{2}-4x+3)$ is all real numbers except $x=1$ and $x=3$. Which statement correctly identifies the student's mistake?",
           "points": 5,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": true,
           "mcqOptions": [
             {
@@ -494,7 +479,6 @@
           "type": "MCQ",
           "promptLatex": "A quantity is given by $N(t)=150e^{0.05t}$. Which equation relates its growth rate $N'$ to its current size $N$?",
           "points": 5,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "mcqOptions": [
             { "label": "A", "textLatex": "$N'=150$", "isCorrect": false },
@@ -509,7 +493,6 @@
           "type": "ESSAY",
           "promptLatex": "Using logarithmic differentiation, find the derivative of $y=(\\tan x)^{x}$.",
           "points": 10,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -565,7 +548,6 @@
           "type": "ESSAY",
           "promptLatex": "Find $\\frac{dy}{dx}$ and its value at $x=0$ if $y=e^{3x}\\sin x$.",
           "points": 10,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -620,7 +602,6 @@
           "type": "ESSAY",
           "promptLatex": "Find the equation of the tangent to $y=\\ln(x^{5})$ at $x=1$. Then find the points where the tangent meets the coordinate axes and the distance between them.",
           "points": 20,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -678,7 +659,6 @@
           "type": "ESSAY",
           "promptLatex": "A student differentiates $y=7^{3}+e^{2x}$ as $\\frac{dy}{dx}=3(7)^{2}+2e^{2x}$. Identify the error and find the correct derivative.",
           "points": 10,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -719,7 +699,6 @@
           "type": "ESSAY",
           "promptLatex": "Two quantities are modeled by $A(t)=300e^{0.02t}$ and $B(t)=300+6t$. Find the derivative of each and explain the difference between their growth rates.",
           "points": 15,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [
@@ -775,7 +754,6 @@
           "type": "ESSAY",
           "promptLatex": "Given $f(x)=\\ln(x^{2}-6x+8)$, a student concluded $x=3$ is a critical point by setting the numerator of $f'(x)$ to zero. Find the domain and decide whether $x=3$ is valid.",
           "points": 15,
-          "videoTimestampSeconds": 0,
           "needsTeacherConfirmation": false,
           "modelAnswer": {
             "solutionStepsLatex": [

@@ -56,9 +56,8 @@ describe('rubric and publish checklist validation', () => {
     expect(isRubricSumValid(10, [])).toBe(false);
   });
 
-  it('blocks publishing when placeholders, zero timestamps, or unconfirmed questions remain', () => {
+  it('blocks publishing when question explanation videos or teacher confirmations are missing', () => {
     const res = evaluatePublishChecklist(
-      { videoUrl: 'https://www.youtube.com/watch?v=REPLACE_ME' },
       {
         modelNumber: 1,
         questions: [
@@ -67,7 +66,7 @@ describe('rubric and publish checklist validation', () => {
             conceptKey: 'k1',
             type: 'MCQ',
             points: 5,
-            videoTimestampSeconds: 0,
+            solutionUrl: null,
             needsTeacherConfirmation: true,
             mcqOptions: [
               { label: 'A', textLatex: '1', isCorrect: true },
@@ -86,7 +85,7 @@ describe('rubric and publish checklist validation', () => {
             conceptKey: 'k1',
             type: 'MCQ',
             points: 5,
-            videoTimestampSeconds: 30,
+            solutionUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
             needsTeacherConfirmation: false,
             mcqOptions: [
               { label: 'A', textLatex: '1', isCorrect: true },
@@ -100,11 +99,7 @@ describe('rubric and publish checklist validation', () => {
     );
     expect(res.ready).toBe(false);
     expect(res.issues.map((i) => i.code)).toEqual(
-      expect.arrayContaining([
-        'INVALID_VIDEO_URL',
-        'MISSING_TIMESTAMP',
-        'NEEDS_TEACHER_CONFIRMATION',
-      ]),
+      expect.arrayContaining(['MISSING_QUESTION_VIDEO', 'NEEDS_TEACHER_CONFIRMATION']),
     );
   });
 });
@@ -157,10 +152,10 @@ describe('seed exam bundle', () => {
     expect(m1.questions[2]?.needsTeacherConfirmation).toBe(true);
     expect(m2.questions[2]?.needsTeacherConfirmation).toBe(true);
 
-    // Unfilled seed has placeholder video and 0 timestamps so checklist blocks publishing
-    const checklist = evaluatePublishChecklist(parsed.topic, m1, m2);
+    // Unfilled seed has missing Model 1 question videos and unconfirmed Q3 so checklist blocks publishing
+    const checklist = evaluatePublishChecklist(m1, m2);
     expect(checklist.ready).toBe(false);
-    expect(checklist.issues.some((i) => i.code === 'INVALID_VIDEO_URL')).toBe(true);
+    expect(checklist.issues.some((i) => i.code === 'MISSING_QUESTION_VIDEO')).toBe(true);
     expect(checklist.issues.some((i) => i.code === 'NEEDS_TEACHER_CONFIRMATION')).toBe(true);
   });
 });

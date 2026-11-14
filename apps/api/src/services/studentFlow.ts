@@ -13,9 +13,6 @@ export interface GateEvaluationInput {
     showProvisionalScore: boolean;
     postTestOpensAt: Date | null;
   };
-  topic: {
-    minWatchSeconds: number;
-  };
   preTestAttempt: {
     status: AttemptStatus;
   } | null;
@@ -33,7 +30,7 @@ export function evaluatePostTestGate(input: GateEvaluationInput): {
   unlocked: boolean;
   reason: PostTestLockReason | null;
 } {
-  const { cohort, topic, preTestAttempt, videoSession, now = new Date() } = input;
+  const { cohort, preTestAttempt, videoSession, now = new Date() } = input;
 
   if (!preTestAttempt) {
     return {
@@ -84,27 +81,18 @@ export function evaluatePostTestGate(input: GateEvaluationInput): {
   }
 
   if (cohort.requireVideoBeforePost) {
-    const watched = videoSession?.watchedSeconds ?? 0;
-    if (watched < topic.minWatchSeconds) {
-      return {
-        unlocked: false,
-        reason: {
-          code: 'VIDEO_WATCH_INCOMPLETE',
-          message_ar: `يجب مشاهدة فيديو الشرح لمدة ${topic.minWatchSeconds} ثانية على الأقل لفتح النموذج 2.`,
-          message_en: `Watch at least ${topic.minWatchSeconds} seconds of the remediation video to unlock Model 2.`,
-        },
-      };
+    if (input.wrongSegmentsIncomplete === false) {
+      return { unlocked: true, reason: null };
     }
-    if (input.wrongSegmentsIncomplete) {
-      return {
-        unlocked: false,
-        reason: {
-          code: 'WRONG_SEGMENTS_REQUIRED',
-          message_ar: 'يرجى الانتقال ومشاهدة أجزاء الشرح الخاصة بالأسئلة التي أخطأت فيها.',
-          message_en: 'Please visit the explanation segments for the questions you missed.',
-        },
-      };
-    }
+    return {
+      unlocked: false,
+      reason: {
+        code: 'VIDEO_WATCH_INCOMPLETE',
+        message_ar: 'يرجى مشاهدة فيديوهات شرح الأسئلة التي أخطأت فيها لفتح النموذج 2.',
+        message_en:
+          'Please watch the explanation videos for the questions you missed to unlock Model 2.',
+      },
+    };
   } else if (cohort.postTestOpensAt && now.getTime() < cohort.postTestOpensAt.getTime()) {
     return {
       unlocked: false,

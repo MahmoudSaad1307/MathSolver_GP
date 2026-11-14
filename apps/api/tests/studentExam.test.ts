@@ -91,8 +91,6 @@ describe('Cohorts, student join/consent/exam flow, image sanitization, and lock 
       .set('Authorization', `Bearer ${teacherToken}`)
       .send({
         title: 'الاشتقاق',
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        minWatchSeconds: 180,
       });
     const topic = topicRes.body.topic;
     const m1 = topic.examModels[0];
@@ -104,7 +102,6 @@ describe('Cohorts, student join/consent/exam flow, image sanitization, and lock 
       type: 'MCQ',
       promptLatex: 'What is $(e^{2x})^{\\prime}$?',
       points: 10,
-      videoTimestampSeconds: 30,
       solutionUrl: 'https://example.com/solutions/exp-basic',
       mcqOptions: [
         { label: 'A', textLatex: '$e^{2x}$', isCorrect: false },
@@ -120,7 +117,7 @@ describe('Cohorts, student join/consent/exam flow, image sanitization, and lock 
       type: 'ESSAY',
       promptLatex: 'Differentiate $y = x^x$.',
       points: 20,
-      videoTimestampSeconds: 90,
+      solutionUrl: 'https://example.com/solutions/log-diff',
       modelAnswer: {
         solutionStepsLatex: ['$\\ln y = x\\ln x$', '$y^{\\prime} = x^x(\\ln x + 1)$'],
         finalAnswerLatex: '$x^x(\\ln x + 1)$',

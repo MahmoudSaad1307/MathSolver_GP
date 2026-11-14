@@ -130,32 +130,29 @@ describe('Phase 6: Student Remediation & Comparison', () => {
     vi.restoreAllMocks();
   });
 
-  it('seeks initial timestamp, sends PLAY/HEARTBEAT, pauses on hidden tab, unlocks Model 2, and reports player alert', async () => {
+  it('sends PLAY/HEARTBEAT, pauses on hidden tab, unlocks Model 2, and reports player alert', async () => {
     const initialState: StudentVideoStateResponse = {
       topic: {
         id: 'top-1',
         title: 'Logarithmic Differentiation',
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        videoId: 'dQw4w9WgXcQ',
-        minWatchSeconds: 300,
       },
       cohort: {
         id: 'coh-1',
         group: 'TREATMENT',
         requireVideoBeforePost: true,
-        requireWrongSegmentVisits: true,
       },
       watchedSeconds: 120,
-      minWatchSeconds: 300,
-      remainingSeconds: 180,
       lastPosition: 120,
       visitedQuestionIds: [],
+      visitedCount: 0,
+      requiredCount: 1,
       wrongQuestionSegments: [
         {
           questionId: 'q-2',
           orderIndex: 2,
           conceptKey: 'log-diff',
-          timestampSeconds: 150,
+          solutionUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          videoId: 'dQw4w9WgXcQ',
           score: 1,
           maxScore: 4,
           visited: false,
@@ -171,10 +168,10 @@ describe('Phase 6: Student Remediation & Comparison', () => {
 
     const heartbeatResult: VideoHeartbeatResponse = {
       watchedSeconds: 300,
-      minWatchSeconds: 300,
-      remainingSeconds: 0,
       lastPosition: 155,
       visitedQuestionIds: ['q-2'],
+      visitedCount: 1,
+      requiredCount: 1,
       wrongQuestionSegments: [],
       wrongSegmentsIncomplete: false,
       unlockedPostAt: '2026-11-13T10:00:00Z',
@@ -224,12 +221,9 @@ describe('Phase 6: Student Remediation & Comparison', () => {
       expect(hbCalls.length).toBeGreaterThanOrEqual(1);
     });
 
-    // Click wrong-question jump button to ensure seekTo(150, true) + QUESTION_LINK_CLICK fire
+    // Click wrong-question jump button to ensure QUESTION_LINK_CLICK fires
     const segmentBtn = screen.getByRole('button', { name: /log-diff/i });
     fireEvent.click(segmentBtn);
-    await waitFor(() => {
-      expect(latestPlayer?.seekTo).toHaveBeenCalledWith(150, true);
-    });
 
     // Simulate player state PLAYING then 5s tick
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -294,8 +288,6 @@ describe('Phase 6: Student Remediation & Comparison', () => {
       topic: {
         id: 'top-1',
         title: 'Logarithms',
-        videoId: 'dQw4w9WgXcQ',
-        minWatchSeconds: 300,
       },
       preTest: {
         attemptId: 'att-1',
@@ -356,7 +348,6 @@ describe('Phase 6: Student Remediation & Comparison', () => {
       videoOfferAfterPost: {
         available: true,
         watchedSeconds: 0,
-        minWatchSeconds: 300,
         recommendedForControl: true,
       },
     };

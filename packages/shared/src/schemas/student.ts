@@ -15,8 +15,6 @@ export const MeStateResponseSchema = z.object({
   topic: z.object({
     id: z.string().uuid(),
     title: z.string(),
-    videoId: z.string().nullable(),
-    minWatchSeconds: z.number().int(),
   }),
   preTestAttempt: z
     .object({
@@ -43,7 +41,8 @@ export const MeStateResponseSchema = z.object({
     .nullable(),
   videoProgress: z.object({
     watchedSeconds: z.number().int(),
-    minWatchSeconds: z.number().int(),
+    visitedCount: z.number().int(),
+    requiredCount: z.number().int(),
     unlockedPostAt: z.string().datetime().nullable(),
   }),
 });

@@ -1,8 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import {
   evaluatePublishChecklist,
-  extractYoutubeVideoId,
-  isPlaceholderVideoUrl,
+  hasValidQuestionVideo,
   isRubricSumValid,
   type PublishChecklistResult,
   type UpsertQuestionInput,
@@ -53,7 +52,6 @@ export function toValidatableQuestion(q: LoadedQuestion): ValidatableQuestion {
     conceptKey: q.conceptKey,
     type: q.type,
     points: q.points,
-    videoTimestampSeconds: q.videoTimestampSeconds,
     solutionUrl: q.solutionUrl ?? null,
     needsTeacherConfirmation: q.needsTeacherConfirmation,
     mcqOptions: q.mcqOptions.map((o) => ({
@@ -89,30 +87,27 @@ export function toValidatableModel(
 export interface TopicStatusMetadata {
   publishChecklist: PublishChecklistResult;
   hasPlaceholders: boolean;
-  hasMissingVideo: boolean;
-  zeroTimestampCount: number;
+  missingVideoCount: number;
   unconfirmedCount: number;
 }
 
 export function computeTopicStatusMetadata(topic: LoadedTopicTree): TopicStatusMetadata {
-  const m1 = toValidatableModel(topic.examModels.find((m) => m.modelNumber === 1));
-  const m2 = toValidatableModel(topic.examModels.find((m) => m.modelNumber === 2));
-  const publishChecklist = evaluatePublishChecklist(
-    { videoUrl: topic.videoUrl, videoId: topic.videoId },
-    m1,
-    m2,
-  );
+  const m1Raw = topic.examModels.find((m) => m.modelNumber === 1);
+  const m2Raw = topic.examModels.find((m) => m.modelNumber === 2);
+  const m1 = toValidatableModel(m1Raw);
+  const m2 = toValidatableModel(m2Raw);
+  const publishChecklist = evaluatePublishChecklist(m1, m2);
 
   const allQuestions = topic.examModels.flatMap((m) => m.questions);
-  const zeroTimestampCount = allQuestions.filter((q) => q.videoTimestampSeconds <= 0).length;
+  const missingVideoCount = (m1Raw?.questions ?? []).filter(
+    (q) => !hasValidQuestionVideo(q.solutionUrl),
+  ).length;
   const unconfirmedCount = allQuestions.filter((q) => q.needsTeacherConfirmation).length;
-  const hasMissingVideo = isPlaceholderVideoUrl(topic.videoUrl);
 
   return {
     publishChecklist,
-    hasPlaceholders: hasMissingVideo || zeroTimestampCount > 0 || unconfirmedCount > 0,
-    hasMissingVideo,
-    zeroTimestampCount,
+    hasPlaceholders: missingVideoCount > 0 || unconfirmedCount > 0,
+    missingVideoCount,
     unconfirmedCount,
   };
 }
@@ -313,7 +308,6 @@ export async function createQuestionWithChildren(
       type: input.type,
       promptLatex: input.promptLatex,
       points: input.points,
-      videoTimestampSeconds: input.videoTimestampSeconds,
       solutionUrl: input.solutionUrl ?? null,
       needsTeacherConfirmation: input.needsTeacherConfirmation,
       teacherConfirmedAt: input.needsTeacherConfirmation ? null : new Date(),
@@ -341,8 +335,4 @@ export async function softDeleteQuestionSubtree(
     where: { questionId, deletedAt: null },
     data: { deletedAt },
   });
-}
-
-export function resolveVideoId(videoUrl: string): string | null {
-  return extractYoutubeVideoId(videoUrl);
 }

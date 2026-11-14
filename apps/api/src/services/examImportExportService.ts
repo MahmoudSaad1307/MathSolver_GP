@@ -15,7 +15,6 @@ import { scopedTopicWhere, writeAuditLog } from '../lib/scoping.js';
 import {
   createQuestionWithChildren,
   recalculateExamTotalPoints,
-  resolveVideoId,
   softDeleteQuestionSubtree,
   syncTwinQuestionsForTopic,
   TOPIC_FULL_INCLUDE,
@@ -67,7 +66,6 @@ function validateBundleQuestions(models: [SeedModelInput, SeedModelInput]): {
         type: q.type,
         promptLatex: q.promptLatex,
         points: q.points,
-        videoTimestampSeconds: q.videoTimestampSeconds,
         solutionUrl: q.solutionUrl ?? null,
         needsTeacherConfirmation: q.needsTeacherConfirmation,
         mcqOptions: q.mcqOptions,
@@ -121,7 +119,6 @@ function diffModel(
       prev.type !== q.type ||
       prev.promptLatex !== q.promptLatex ||
       prev.points !== q.points ||
-      prev.videoTimestampSeconds !== q.videoTimestampSeconds ||
       (prev.solutionUrl ?? null) !== (q.solutionUrl ?? null) ||
       prev.needsTeacherConfirmation !== q.needsTeacherConfirmation
     ) {
@@ -158,16 +155,11 @@ function buildImportDiff(
   const topicChanges: BundleImportDiff['topicChanges'] = [];
 
   if (!existingTopic) {
-    topicChanges.push(
-      { field: 'title', before: null, after: bundle.topic.title },
-      { field: 'videoUrl', before: null, after: bundle.topic.videoUrl },
-    );
+    topicChanges.push({ field: 'title', before: null, after: bundle.topic.title });
   } else {
     const fields: Array<keyof typeof bundle.topic> = [
       'title',
       'description',
-      'videoUrl',
-      'minWatchSeconds',
       'correctnessThreshold',
     ];
     for (const field of fields) {
@@ -234,7 +226,6 @@ export class ExamImportExportService {
         type: q.type,
         promptLatex: q.promptLatex,
         points: q.points,
-        videoTimestampSeconds: q.videoTimestampSeconds,
         solutionUrl: q.solutionUrl ?? null,
         needsTeacherConfirmation: q.needsTeacherConfirmation,
         ...(q.type === 'MCQ'
@@ -270,8 +261,6 @@ export class ExamImportExportService {
       topic: {
         title: topic.title,
         description: topic.description,
-        videoUrl: topic.videoUrl,
-        minWatchSeconds: topic.minWatchSeconds,
         correctnessThreshold: topic.correctnessThreshold,
       },
       models: [mapModel(m1, 1), mapModel(m2, 2)],
@@ -318,7 +307,6 @@ export class ExamImportExportService {
     }
 
     const checklist = evaluatePublishChecklist(
-      { videoUrl: bundle.topic.videoUrl },
       { modelNumber: 1, questions: questions1 },
       { modelNumber: 2, questions: questions2 },
     );
@@ -326,7 +314,6 @@ export class ExamImportExportService {
       model1.status === 'PUBLISHED' && checklist.ready ? 'PUBLISHED' : 'DRAFT';
     const resolvedStatus2 =
       model2.status === 'PUBLISHED' && checklist.ready ? 'PUBLISHED' : 'DRAFT';
-    const videoId = resolveVideoId(bundle.topic.videoUrl);
 
     const savedTopicId = await this.prisma.$transaction(
       async (tx) => {
@@ -342,9 +329,6 @@ export class ExamImportExportService {
             data: {
               title: bundle.topic.title,
               description: bundle.topic.description,
-              videoUrl: bundle.topic.videoUrl,
-              videoId,
-              minWatchSeconds: bundle.topic.minWatchSeconds,
               correctnessThreshold: bundle.topic.correctnessThreshold,
             },
           });
@@ -394,9 +378,6 @@ export class ExamImportExportService {
               ownerId: teacherId,
               title: bundle.topic.title,
               description: bundle.topic.description,
-              videoUrl: bundle.topic.videoUrl,
-              videoId,
-              minWatchSeconds: bundle.topic.minWatchSeconds,
               correctnessThreshold: bundle.topic.correctnessThreshold,
             },
           });

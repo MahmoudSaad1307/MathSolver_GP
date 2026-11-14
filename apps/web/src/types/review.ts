@@ -37,7 +37,6 @@ export interface StudentAttemptQuestionResult {
   type: QuestionType;
   promptLatex: string;
   points: number;
-  videoTimestampSeconds: number;
   solutionUrl?: string | null;
   statusChip: StudentQuestionStatusChip;
   score: number | null;
@@ -85,8 +84,6 @@ export interface StudentAttemptResults {
   topic: {
     id: string;
     title: string;
-    videoId: string | null;
-    minWatchSeconds: number;
     correctnessThreshold: number;
   };
   cohort: {
@@ -211,7 +208,6 @@ export interface TeacherStudentRow {
   topic: {
     id: string;
     title: string;
-    minWatchSeconds: number;
   };
   currentStep: StudentFlowStep;
   pendingReviewCount: number;
@@ -234,7 +230,7 @@ export interface TeacherStudentRow {
   } | null;
   videoProgress: {
     watchedSeconds: number;
-    minWatchSeconds: number;
+    visitedCount: number;
     unlockedPostAt: string | null;
     manualUnlocked: boolean;
   };
@@ -257,7 +253,6 @@ export interface TeacherStudentDetailResponse {
   topic: {
     id: string;
     title: string;
-    minWatchSeconds: number;
   };
   videoProgress: {
     watchedSeconds: number;

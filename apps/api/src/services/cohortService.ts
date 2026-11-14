@@ -72,7 +72,7 @@ export class CohortService {
       },
       include: {
         topic: {
-          select: { id: true, title: true, videoId: true, minWatchSeconds: true },
+          select: { id: true, title: true },
         },
         students: {
           where: { deletedAt: null },
@@ -117,7 +117,6 @@ export class CohortService {
           joinCode,
           group: input.group,
           requireVideoBeforePost,
-          requireWrongSegmentVisits: input.requireWrongSegmentVisits,
           showProvisionalScore: input.showProvisionalScore,
           postTestOpensAt: input.postTestOpensAt ? new Date(input.postTestOpensAt) : null,
           status: 'OPEN',
@@ -157,9 +156,6 @@ export class CohortService {
           ...(input.group !== undefined ? { group: input.group } : {}),
           ...(input.requireVideoBeforePost !== undefined
             ? { requireVideoBeforePost: input.requireVideoBeforePost }
-            : {}),
-          ...(input.requireWrongSegmentVisits !== undefined
-            ? { requireWrongSegmentVisits: input.requireWrongSegmentVisits }
             : {}),
           ...(input.showProvisionalScore !== undefined
             ? { showProvisionalScore: input.showProvisionalScore }

@@ -102,9 +102,6 @@ model Topic {
   ownerId              String    @db.Uuid
   title                String
   description          String    @default("")
-  videoUrl             String
-  videoId              String?
-  minWatchSeconds      Int       @default(300)
   correctnessThreshold Float     @default(0.6)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -150,7 +147,6 @@ model Question {
   type                     QuestionType
   promptLatex              String
   points                   Float
-  videoTimestampSeconds    Int          @default(0)
   solutionUrl              String?
   needsTeacherConfirmation Boolean      @default(false)
   teacherConfirmedAt       DateTime?
@@ -227,11 +223,10 @@ model Cohort {
   teacherId                 String       @db.Uuid
   name                      String
   joinCode                  String       @unique
-  group                     CohortGroup
-  requireVideoBeforePost    Boolean      @default(true)
-  requireWrongSegmentVisits Boolean      @default(false)
-  showProvisionalScore      Boolean      @default(false)
-  postTestOpensAt           DateTime?
+  group                  CohortGroup
+  requireVideoBeforePost Boolean      @default(true)
+  showProvisionalScore   Boolean      @default(false)
+  postTestOpensAt        DateTime?
   status                    CohortStatus @default(OPEN)
   createdAt                 DateTime     @default(now())
   updatedAt                 DateTime     @updatedAt

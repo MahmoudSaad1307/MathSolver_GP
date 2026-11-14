@@ -541,17 +541,6 @@ Generated from Zod schemas via `npm run docs:openapi`.
                     "maxLength": 2000,
                     "default": ""
                   },
-                  "videoUrl": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "format": "uri"
-                  },
-                  "minWatchSeconds": {
-                    "type": "integer",
-                    "minimum": 10,
-                    "maximum": 7200,
-                    "default": 300
-                  },
                   "correctnessThreshold": {
                     "type": "number",
                     "minimum": 0.1,
@@ -559,7 +548,7 @@ Generated from Zod schemas via `npm run docs:openapi`.
                     "default": 0.6
                   }
                 },
-                "required": ["title", "videoUrl"]
+                "required": ["title"]
               }
             }
           }
@@ -675,17 +664,6 @@ Generated from Zod schemas via `npm run docs:openapi`.
                     "maxLength": 2000,
                     "default": ""
                   },
-                  "videoUrl": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "format": "uri"
-                  },
-                  "minWatchSeconds": {
-                    "type": "integer",
-                    "minimum": 10,
-                    "maximum": 7200,
-                    "default": 300
-                  },
                   "correctnessThreshold": {
                     "type": "number",
                     "minimum": 0.1,
@@ -796,15 +774,6 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "type": "string",
                             "default": ""
                           },
-                          "videoUrl": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "minWatchSeconds": {
-                            "type": "integer",
-                            "minimum": 10,
-                            "default": 300
-                          },
                           "correctnessThreshold": {
                             "type": "number",
                             "minimum": 0.1,
@@ -812,7 +781,7 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "default": 0.6
                           }
                         },
-                        "required": ["title", "videoUrl"]
+                        "required": ["title"]
                       },
                       "models": {
                         "type": "array",
@@ -870,11 +839,6 @@ Generated from Zod schemas via `npm run docs:openapi`.
                                     "type": "number",
                                     "minimum": 0,
                                     "exclusiveMinimum": true
-                                  },
-                                  "videoTimestampSeconds": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "default": 0
                                   },
                                   "solutionUrl": {
                                     "type": "string",
@@ -1220,12 +1184,6 @@ Generated from Zod schemas via `npm run docs:openapi`.
                     "exclusiveMinimum": true,
                     "maximum": 100
                   },
-                  "videoTimestampSeconds": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 86400,
-                    "default": 0
-                  },
                   "solutionUrl": {
                     "type": "string",
                     "nullable": true,
@@ -1393,12 +1351,6 @@ Generated from Zod schemas via `npm run docs:openapi`.
                     "minimum": 0,
                     "exclusiveMinimum": true,
                     "maximum": 100
-                  },
-                  "videoTimestampSeconds": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 86400,
-                    "default": 0
                   },
                   "solutionUrl": {
                     "type": "string",
@@ -1674,10 +1626,6 @@ Generated from Zod schemas via `npm run docs:openapi`.
                   "requireVideoBeforePost": {
                     "type": "boolean"
                   },
-                  "requireWrongSegmentVisits": {
-                    "type": "boolean",
-                    "default": false
-                  },
                   "showProvisionalScore": {
                     "type": "boolean",
                     "default": false
@@ -1784,9 +1732,6 @@ Generated from Zod schemas via `npm run docs:openapi`.
                     "enum": ["TREATMENT", "CONTROL"]
                   },
                   "requireVideoBeforePost": {
-                    "type": "boolean"
-                  },
-                  "requireWrongSegmentVisits": {
                     "type": "boolean"
                   },
                   "showProvisionalScore": {
@@ -2616,16 +2561,9 @@ Generated from Zod schemas via `npm run docs:openapi`.
                         },
                         "title": {
                           "type": "string"
-                        },
-                        "videoId": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "minWatchSeconds": {
-                          "type": "integer"
                         }
                       },
-                      "required": ["id", "title", "videoId", "minWatchSeconds"]
+                      "required": ["id", "title"]
                     },
                     "preTestAttempt": {
                       "type": "object",
@@ -2709,7 +2647,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                         "watchedSeconds": {
                           "type": "integer"
                         },
-                        "minWatchSeconds": {
+                        "visitedCount": {
+                          "type": "integer"
+                        },
+                        "requiredCount": {
                           "type": "integer"
                         },
                         "unlockedPostAt": {
@@ -2718,7 +2659,12 @@ Generated from Zod schemas via `npm run docs:openapi`.
                           "format": "date-time"
                         }
                       },
-                      "required": ["watchedSeconds", "minWatchSeconds", "unlockedPostAt"]
+                      "required": [
+                        "watchedSeconds",
+                        "visitedCount",
+                        "requiredCount",
+                        "unlockedPostAt"
+                      ]
                     }
                   },
                   "required": [
@@ -3065,7 +3011,7 @@ Generated from Zod schemas via `npm run docs:openapi`.
         ],
         "responses": {
           "200": {
-            "description": "Per-question feedback, timestamps & Arabic error explanations"
+            "description": "Per-question feedback, video explanation URLs & Arabic error explanations"
           }
         }
       }
@@ -3111,7 +3057,7 @@ Generated from Zod schemas via `npm run docs:openapi`.
         "tags": ["Student Video"],
         "responses": {
           "200": {
-            "description": "Video progress, wrong question timestamp shortcuts & unlock status"
+            "description": "Per-question remediation video progress, wrong question list & unlock status"
           }
         }
       }

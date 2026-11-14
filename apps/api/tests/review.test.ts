@@ -87,9 +87,6 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
       ownerId: TEACHER_A,
       title: 'الاشتقاق الأسّي',
       description: 'مراجعة شاملة',
-      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      videoId: 'dQw4w9WgXcQ',
-      minWatchSeconds: 300,
       correctnessThreshold: 0.6,
       createdAt: now,
       updatedAt: now,
@@ -119,7 +116,6 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
         type: 'MCQ',
         promptLatex: 'Find $\\frac{d}{dx}(e^{3x})$.',
         points: 5,
-        videoTimestampSeconds: 45,
         solutionUrl: 'https://example.com/solutions/q-mcq',
         needsTeacherConfirmation: false,
         teacherConfirmedAt: now,
@@ -136,7 +132,6 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
         type: 'ESSAY',
         promptLatex: 'Solve and differentiate $y=\\ln(2x+1)$.',
         points: 15,
-        videoTimestampSeconds: 150,
         needsTeacherConfirmation: false,
         teacherConfirmedAt: now,
         twinQuestionId: null,
@@ -395,7 +390,6 @@ describe('Phase 5 Student Results, Misread Reporting, Teacher Review Queue & Ros
     expect(res.body.questions[0].mcqOptions[0].isCorrect).toBeUndefined();
     expect(res.body.questions[1].modelAnswer).toBeUndefined();
     expect(res.body.questions[0].belowThreshold).toBe(true);
-    expect(res.body.questions[0].videoTimestampSeconds).toBe(45);
     expect(res.body.questions[0].solutionUrl).toBe('https://example.com/solutions/q-mcq');
     expect(res.body.questions[1].solutionUrl).toBeNull();
     expect(res.body.questions[1].transcribedLines).toHaveLength(2);

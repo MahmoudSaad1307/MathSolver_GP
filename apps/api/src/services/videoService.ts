@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
-import type { VideoHeartbeatInput } from '@mathlens/shared';
+import { extractYoutubeVideoId, type VideoHeartbeatInput } from '@mathlens/shared';
 import type { AppEnv } from '../config/env.js';
 import { AppError } from '../lib/errors.js';
 import { writeAuditLog } from '../lib/scoping.js';
@@ -70,17 +70,12 @@ export function mergeWatchSegment(
   return { intervals: next, totalSeconds };
 }
 
-function intervalCoversTimestamp(intervals: WatchInterval[], timestampSec: number): boolean {
-  if (timestampSec <= 0) return true;
-  return intervals.some(([start, end]) => end >= timestampSec && start <= timestampSec + 15);
-}
-
 export interface WrongQuestionSegment {
   questionId: string;
   orderIndex: number;
   conceptKey: string;
-  timestampSeconds: number;
   solutionUrl: string | null;
+  videoId: string | null;
   score: number;
   maxScore: number;
   visited: boolean;
@@ -159,13 +154,11 @@ export class VideoService {
       orderIndex: number;
       conceptKey: string;
       points: number;
-      videoTimestampSeconds: number;
       solutionUrl?: string | null;
     }>,
     preTestAnswers: Array<{ questionId: string; isCorrect: boolean | null; score: number | null }>,
     threshold: number,
     visitedQuestionIds: string[],
-    intervals: WatchInterval[],
   ): WrongQuestionSegment[] {
     const answerByQ = new Map(preTestAnswers.map((a) => [a.questionId, a]));
     const visitedSet = new Set(visitedQuestionIds);
@@ -178,15 +171,16 @@ export class VideoService {
       const isWrong = ans.isCorrect === false || numericScore < q.points * threshold;
       if (!isWrong) continue;
 
-      const visited =
-        visitedSet.has(q.id) || intervalCoversTimestamp(intervals, q.videoTimestampSeconds);
+      const solutionUrl = q.solutionUrl ?? null;
+      const videoId = solutionUrl ? extractYoutubeVideoId(solutionUrl) : null;
+      const visited = !solutionUrl || visitedSet.has(q.id);
 
       segments.push({
         questionId: q.id,
         orderIndex: q.orderIndex,
         conceptKey: q.conceptKey,
-        timestampSeconds: q.videoTimestampSeconds,
-        solutionUrl: q.solutionUrl ?? null,
+        solutionUrl,
+        videoId,
         score: numericScore,
         maxScore: q.points,
         visited,
@@ -197,18 +191,18 @@ export class VideoService {
 
   async getVideoState(studentId: string) {
     const ctx = await this.loadStudentVideoContext(studentId);
-    const intervals = parseIntervals(ctx.videoSession?.watchedIntervals);
     const visitedQuestionIds = ctx.videoSession?.visitedQuestionIds ?? [];
     const wrongQuestionSegments = this.computeWrongSegments(
       ctx.model1Questions,
       ctx.preTestAnswers,
       ctx.topic.correctnessThreshold,
       visitedQuestionIds,
-      intervals,
     );
 
-    const wrongSegmentsIncomplete =
-      ctx.cohort.requireWrongSegmentVisits && wrongQuestionSegments.some((s) => !s.visited);
+    const requiredSegments = wrongQuestionSegments.filter((s) => Boolean(s.solutionUrl));
+    const visitedCount = requiredSegments.filter((s) => s.visited).length;
+    const requiredCount = requiredSegments.length;
+    const wrongSegmentsIncomplete = requiredSegments.some((s) => !s.visited);
 
     const flow = deriveStudentFlowStep({
       cohort: {
@@ -217,7 +211,6 @@ export class VideoService {
         showProvisionalScore: ctx.cohort.showProvisionalScore,
         postTestOpensAt: ctx.cohort.postTestOpensAt,
       },
-      topic: { minWatchSeconds: ctx.topic.minWatchSeconds },
       consentAcceptedAt: ctx.student.consentAcceptedAt,
       preTestAttempt: ctx.preTestAttempt ? { status: ctx.preTestAttempt.status } : null,
       postTestAttempt: ctx.postTestAttempt ? { status: ctx.postTestAttempt.status } : null,
@@ -238,19 +231,15 @@ export class VideoService {
       topic: {
         id: ctx.topic.id,
         title: ctx.topic.title,
-        videoUrl: ctx.topic.videoUrl,
-        videoId: ctx.topic.videoId,
-        minWatchSeconds: ctx.topic.minWatchSeconds,
       },
       cohort: {
         id: ctx.cohort.id,
         group: ctx.cohort.group,
         requireVideoBeforePost: ctx.cohort.requireVideoBeforePost,
-        requireWrongSegmentVisits: ctx.cohort.requireWrongSegmentVisits,
       },
       watchedSeconds,
-      minWatchSeconds: ctx.topic.minWatchSeconds,
-      remainingSeconds: Math.max(0, ctx.topic.minWatchSeconds - watchedSeconds),
+      visitedCount,
+      requiredCount,
       lastPosition: ctx.videoSession?.lastPosition ?? 0,
       visitedQuestionIds,
       wrongQuestionSegments,
@@ -269,10 +258,11 @@ export class VideoService {
 
   async recordHeartbeat(studentId: string, input: VideoHeartbeatInput, now = new Date()) {
     const ctx = await this.loadStudentVideoContext(studentId);
-    if (!ctx.topic.videoId) {
+    const hasAnyQuestionVideo = ctx.model1Questions.some((q) => Boolean(q.solutionUrl));
+    if (!hasAnyQuestionVideo) {
       throw new AppError('CONFLICT', {
-        messageEn: 'This topic has no configured remediation video.',
-        messageAr: 'لا يوجد فيديو شرح مرتبط بهذا الموضوع.',
+        messageEn: 'This topic has no configured question explanation videos.',
+        messageAr: 'لا توجد فيديوهات شرح مرتبطة بأسئلة هذا الموضوع.',
       });
     }
 
@@ -298,11 +288,11 @@ export class VideoService {
     let nextLastHeartbeatAt = session.lastHeartbeatAt;
     let fraudWarning: string | null = null;
 
-    if (input.type === 'QUESTION_LINK_CLICK' && input.questionId) {
-      const validQ = ctx.model1Questions.some((q) => q.id === input.questionId);
-      if (validQ) {
-        visitedSet.add(input.questionId);
-      }
+    const isValidQuestionId =
+      Boolean(input.questionId) && ctx.model1Questions.some((q) => q.id === input.questionId);
+
+    if (input.type === 'QUESTION_LINK_CLICK' && isValidQuestionId && input.questionId) {
+      visitedSet.add(input.questionId);
       nextLastPosition = Math.max(0, input.position);
       nextLastHeartbeatAt = now;
     } else if (input.type === 'SEEK' || input.type === 'PLAY' || input.type === 'PAUSE') {
@@ -336,8 +326,14 @@ export class VideoService {
           const merged = mergeWatchSegment(intervals, prevPos, input.position);
           intervals = merged.intervals;
           watchedSeconds = merged.totalSeconds;
+          if (isValidQuestionId && input.questionId) {
+            visitedSet.add(input.questionId);
+          }
         } else if (deltaPos > maxAllowedDelta) {
           fraudWarning = 'SEEK_JUMP_IGNORED';
+        }
+        if (input.type === 'ENDED' && isValidQuestionId && input.questionId) {
+          visitedSet.add(input.questionId);
         }
         nextLastPosition = Math.max(0, input.position);
         nextLastHeartbeatAt = now;
@@ -350,10 +346,11 @@ export class VideoService {
       ctx.preTestAnswers,
       ctx.topic.correctnessThreshold,
       nextVisitedIds,
-      intervals,
     );
-    const wrongSegmentsIncomplete =
-      ctx.cohort.requireWrongSegmentVisits && wrongQuestionSegments.some((s) => !s.visited);
+    const requiredSegments = wrongQuestionSegments.filter((s) => Boolean(s.solutionUrl));
+    const visitedCount = requiredSegments.filter((s) => s.visited).length;
+    const requiredCount = requiredSegments.length;
+    const wrongSegmentsIncomplete = requiredSegments.some((s) => !s.visited);
 
     const preTestReady =
       ctx.preTestAttempt !== null &&
@@ -365,12 +362,7 @@ export class VideoService {
     let completedAt = session.completedAt;
     let unlockSignature = session.unlockSignature;
 
-    if (
-      !unlockedPostAt &&
-      preTestReady &&
-      watchedSeconds >= ctx.topic.minWatchSeconds &&
-      !wrongSegmentsIncomplete
-    ) {
+    if (!unlockedPostAt && preTestReady && !wrongSegmentsIncomplete) {
       unlockedPostAt = now;
       completedAt = now;
       unlockSignature = signVideoUnlock(
@@ -404,10 +396,7 @@ export class VideoService {
         playbackRate: input.playbackRate,
         clientTs: Number.isNaN(parsedClientTs) ? now : new Date(parsedClientTs),
         serverTs: now,
-        questionId:
-          input.questionId && ctx.model1Questions.some((q) => q.id === input.questionId)
-            ? input.questionId
-            : null,
+        questionId: isValidQuestionId && input.questionId ? input.questionId : null,
         metadata: toJson({
           tabVisible: input.tabVisible,
           fraudWarning,
@@ -417,8 +406,8 @@ export class VideoService {
 
     return {
       watchedSeconds: updatedSession.watchedSeconds,
-      minWatchSeconds: ctx.topic.minWatchSeconds,
-      remainingSeconds: Math.max(0, ctx.topic.minWatchSeconds - updatedSession.watchedSeconds),
+      visitedCount,
+      requiredCount,
       lastPosition: updatedSession.lastPosition,
       visitedQuestionIds: nextVisitedIds,
       wrongQuestionSegments,

@@ -33,7 +33,6 @@ export interface QuestionItem {
   type: QuestionType;
   promptLatex: string;
   points: number;
-  videoTimestampSeconds: number;
   solutionUrl?: string | null;
   needsTeacherConfirmation: boolean;
   teacherConfirmedAt: string | null;
@@ -59,16 +58,12 @@ export interface TopicDetail {
   id: string;
   title: string;
   description: string;
-  videoUrl: string;
-  videoId: string | null;
-  minWatchSeconds: number;
   correctnessThreshold: number;
   cohortCount?: number;
   examModels: ExamModelItem[];
   publishChecklist: PublishChecklistResult;
   hasPlaceholders: boolean;
-  hasMissingVideo: boolean;
-  zeroTimestampCount: number;
+  missingVideoCount: number;
   unconfirmedCount: number;
 }
 

@@ -630,7 +630,9 @@ registry.registerPath({
   tags: ['Student'],
   request: { params: UuidPathParams },
   responses: {
-    200: { description: 'Per-question feedback, timestamps & Arabic error explanations' },
+    200: {
+      description: 'Per-question feedback, video explanation URLs & Arabic error explanations',
+    },
   },
 });
 
@@ -650,7 +652,9 @@ registry.registerPath({
   path: '/api/v1/student/video/state',
   tags: ['Student Video'],
   responses: {
-    200: { description: 'Video progress, wrong question timestamp shortcuts & unlock status' },
+    200: {
+      description: 'Per-question remediation video progress, wrong question list & unlock status',
+    },
   },
 });
 

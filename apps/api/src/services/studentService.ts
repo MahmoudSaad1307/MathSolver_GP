@@ -200,7 +200,6 @@ export class StudentService {
         showProvisionalScore: cohort.showProvisionalScore,
         postTestOpensAt: cohort.postTestOpensAt,
       },
-      topic: { minWatchSeconds: topic.minWatchSeconds },
       preTestAttempt: preTestAttempt ? { status: preTestAttempt.status } : null,
       postTestAttempt: postTestAttempt ? { status: postTestAttempt.status } : null,
       videoSession: videoSession
@@ -229,8 +228,6 @@ export class StudentService {
       topic: {
         id: topic.id,
         title: topic.title,
-        videoId: topic.videoId,
-        minWatchSeconds: topic.minWatchSeconds,
       },
       preTestAttempt: preTestAttempt
         ? {
@@ -251,7 +248,8 @@ export class StudentService {
       postTestLockReason,
       videoProgress: {
         watchedSeconds: videoSession?.watchedSeconds ?? 0,
-        minWatchSeconds: topic.minWatchSeconds,
+        visitedCount: videoSession?.visitedQuestionIds.length ?? 0,
+        requiredCount: 0,
         unlockedPostAt: videoSession?.unlockedPostAt
           ? videoSession.unlockedPostAt.toISOString()
           : null,
@@ -316,7 +314,6 @@ export class StudentService {
           showProvisionalScore: cohort.showProvisionalScore,
           postTestOpensAt: cohort.postTestOpensAt,
         },
-        topic: { minWatchSeconds: topic.minWatchSeconds },
         preTestAttempt: preTestAttempt ? { status: preTestAttempt.status } : null,
         videoSession: videoSession
           ? {

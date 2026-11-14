@@ -13,7 +13,6 @@ export const SeedQuestionSchema = z.object({
   type: QuestionTypeSchema,
   promptLatex: z.string().trim().min(1),
   points: z.number().positive(),
-  videoTimestampSeconds: z.number().int().min(0).default(0),
   solutionUrl: OptionalSolutionUrlSchema,
   needsTeacherConfirmation: z.boolean().default(false),
   mcqOptions: z.array(McqOptionInputSchema).optional(),
@@ -33,8 +32,6 @@ export const SeedTopicBundleSchema = z.object({
   topic: z.object({
     title: z.string().trim().min(2),
     description: z.string().default(''),
-    videoUrl: z.string().trim().min(1),
-    minWatchSeconds: z.number().int().min(10).default(300),
     correctnessThreshold: z.number().min(0.1).max(1).default(0.6),
   }),
   models: z.tuple([SeedExamModelSchema, SeedExamModelSchema]),

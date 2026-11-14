@@ -1,4 +1,4 @@
-import { extractYoutubeVideoId } from './youtube.js';
+import { isValidHttpUrl } from './youtube.js';
 import type { QuestionType } from '../enums.js';
 
 export interface ValidatableMcqOption {
@@ -18,7 +18,6 @@ export interface ValidatableQuestion {
   conceptKey: string;
   type: QuestionType;
   points: number;
-  videoTimestampSeconds: number;
   solutionUrl?: string | null;
   needsTeacherConfirmation: boolean;
   mcqOptions?: ValidatableMcqOption[];
@@ -34,17 +33,11 @@ export interface ValidatableExamModel {
   questions: ValidatableQuestion[];
 }
 
-export interface ValidatableTopic {
-  videoUrl: string;
-  videoId?: string | null;
-}
-
 export interface ChecklistIssue {
   code:
-    | 'INVALID_VIDEO_URL'
     | 'MISSING_MODEL'
     | 'EMPTY_MODEL'
-    | 'MISSING_TIMESTAMP'
+    | 'MISSING_QUESTION_VIDEO'
     | 'NEEDS_TEACHER_CONFIRMATION'
     | 'INVALID_MCQ_OPTIONS'
     | 'MISSING_MODEL_ANSWER'
@@ -78,19 +71,35 @@ export function isRubricSumValid(
   return Math.abs(sum - questionPoints) <= POINTS_EPSILON;
 }
 
+export function hasValidQuestionVideo(rawUrl: string | null | undefined): boolean {
+  if (!rawUrl) {
+    return false;
+  }
+  const trimmed = rawUrl.trim();
+  return !trimmed.includes('REPLACE_ME') && isValidHttpUrl(trimmed);
+}
+
 export function validateQuestionForPublish(
   modelNumber: 1 | 2,
   q: ValidatableQuestion,
 ): ChecklistIssue[] {
   const issues: ChecklistIssue[] = [];
 
-  if (q.videoTimestampSeconds <= 0) {
+  if (modelNumber === 1 && !hasValidQuestionVideo(q.solutionUrl)) {
     issues.push({
-      code: 'MISSING_TIMESTAMP',
+      code: 'MISSING_QUESTION_VIDEO',
       modelNumber,
       questionOrderIndex: q.orderIndex,
-      message_ar: `النموذج ${modelNumber} - السؤال ${q.orderIndex}: يرجى تحديد الطابع الزمني لشرح السؤال في الفيديو.`,
-      message_en: `Model ${modelNumber} Q${q.orderIndex}: videoTimestampSeconds must be greater than 0.`,
+      message_ar: `النموذج ${modelNumber} - السؤال ${q.orderIndex}: يرجى إضافة رابط فيديو شرح صالح للسؤال.`,
+      message_en: `Model ${modelNumber} Q${q.orderIndex}: a valid question explanation video URL is required.`,
+    });
+  } else if (modelNumber === 2 && q.solutionUrl && !hasValidQuestionVideo(q.solutionUrl)) {
+    issues.push({
+      code: 'MISSING_QUESTION_VIDEO',
+      modelNumber,
+      questionOrderIndex: q.orderIndex,
+      message_ar: `النموذج ${modelNumber} - السؤال ${q.orderIndex}: رابط فيديو شرح السؤال غير صالح.`,
+      message_en: `Model ${modelNumber} Q${q.orderIndex}: question explanation video URL is invalid.`,
     });
   }
 
@@ -147,19 +156,10 @@ export function validateQuestionForPublish(
 }
 
 export function evaluatePublishChecklist(
-  topic: ValidatableTopic,
   model1: ValidatableExamModel | null | undefined,
   model2: ValidatableExamModel | null | undefined,
 ): PublishChecklistResult {
   const issues: ChecklistIssue[] = [];
-
-  if (!extractYoutubeVideoId(topic.videoUrl)) {
-    issues.push({
-      code: 'INVALID_VIDEO_URL',
-      message_ar: 'رابط فيديو يوتيوب غير صالح أو لا يزال نصاً مؤقتاً.',
-      message_en: 'Topic YouTube video URL is invalid or still a placeholder.',
-    });
-  }
 
   for (const [num, model] of [
     [1, model1],

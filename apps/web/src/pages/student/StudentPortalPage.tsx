@@ -150,9 +150,11 @@ export default function StudentPortalPage() {
                 </Alert>
               )}
               <div className="text-xs text-slate-600" dir="ltr">
-                {data.videoProgress.watchedSeconds}s / {data.videoProgress.minWatchSeconds}s
+                {data.videoProgress.watchedSeconds}s · {data.videoProgress.visitedCount} /{' '}
+                {data.videoProgress.requiredCount}
               </div>
               {(data.step === 'REMEDIATION' ||
+                data.postTestLockReason?.code === 'VIDEO_WATCH_INCOMPLETE' ||
                 data.postTestLockReason?.code === 'VIDEO_INCOMPLETE' ||
                 data.postTestLockReason?.code === 'WRONG_SEGMENTS_REQUIRED') && (
                 <Button

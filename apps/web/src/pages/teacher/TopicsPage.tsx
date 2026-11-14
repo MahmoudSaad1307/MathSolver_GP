@@ -28,8 +28,6 @@ export default function TopicsPage() {
   const [showImport, setShowImport] = React.useState(false);
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
-  const [videoUrl, setVideoUrl] = React.useState('');
-  const [minWatchSeconds, setMinWatchSeconds] = React.useState(300);
   const [formError, setFormError] = React.useState<string | null>(null);
 
   const topicsQuery = useQuery({
@@ -39,12 +37,7 @@ export default function TopicsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload: {
-      title: string;
-      description: string;
-      videoUrl: string;
-      minWatchSeconds: number;
-    }) =>
+    mutationFn: (payload: { title: string; description: string; correctnessThreshold?: number }) =>
       apiRequest<{ topic: TopicDetail }>('/topics', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -88,8 +81,6 @@ export default function TopicsPage() {
     const parsed = CreateTopicSchema.safeParse({
       title,
       description,
-      videoUrl,
-      minWatchSeconds: Number(minWatchSeconds),
     });
     if (!parsed.success) {
       setFormError(parsed.error.issues[0]?.message ?? t('errors.generic'));
@@ -139,35 +130,11 @@ export default function TopicsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="topic-video">{t('teacher.topics.videoUrl')}</Label>
-                    <Input
-                      id="topic-video"
-                      dir="ltr"
-                      value={videoUrl}
-                      onChange={(e) => setVideoUrl(e.target.value)}
-                      placeholder="https://www.youtube.com/watch?v=..."
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
                     <Label htmlFor="topic-desc">{t('teacher.topics.topicDesc')}</Label>
                     <Input
                       id="topic-desc"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="topic-watch">{t('teacher.topics.minWatchSeconds')}</Label>
-                    <Input
-                      id="topic-watch"
-                      type="number"
-                      min={10}
-                      dir="ltr"
-                      value={minWatchSeconds}
-                      onChange={(e) => setMinWatchSeconds(Number(e.target.value))}
                     />
                   </div>
                 </div>

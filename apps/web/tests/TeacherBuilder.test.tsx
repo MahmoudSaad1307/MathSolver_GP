@@ -2,11 +2,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  buildYoutubePreviewUrl,
-  formatSecondsToMmSs,
-  parseMmSsToSeconds,
-} from '../src/lib/timeFormat';
 import TopicBuilderPage from '../src/pages/teacher/TopicBuilderPage';
 import TopicsPage from '../src/pages/teacher/TopicsPage';
 import type { TopicDetail } from '../src/types/content';
@@ -16,13 +11,9 @@ function buildSampleTopic(overrides: Partial<TopicDetail> = {}): TopicDetail {
     id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     title: 'Derivatives of Exponential & Log Functions',
     description: 'Twin pre/post exam',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    videoId: 'dQw4w9WgXcQ',
-    minWatchSeconds: 300,
     correctnessThreshold: 0.6,
     hasPlaceholders: true,
-    hasMissingVideo: false,
-    zeroTimestampCount: 0,
+    missingVideoCount: 1,
     unconfirmedCount: 1,
     publishChecklist: {
       ready: false,
@@ -55,7 +46,6 @@ function buildSampleTopic(overrides: Partial<TopicDetail> = {}): TopicDetail {
             type: 'ESSAY',
             promptLatex: 'Find tangent slope of $y = e^{2x}$ at $x=0$.',
             points: 15,
-            videoTimestampSeconds: 95,
             solutionUrl: 'https://example.com/solutions/m1-q3',
             needsTeacherConfirmation: true,
             teacherConfirmedAt: null,
@@ -100,7 +90,6 @@ function buildSampleTopic(overrides: Partial<TopicDetail> = {}): TopicDetail {
             type: 'MCQ',
             promptLatex: 'Slope of $e^{3x}$ at $x=0$?',
             points: 15,
-            videoTimestampSeconds: 120,
             solutionUrl: 'https://example.com/solutions/m2-q3',
             needsTeacherConfirmation: false,
             teacherConfirmedAt: '2026-11-13T00:00:00.000Z',
@@ -131,19 +120,6 @@ function renderWithQuery(ui: React.ReactElement, initialEntries: string[]) {
     </QueryClientProvider>,
   );
 }
-
-describe('timeFormat helpers', () => {
-  it('formats and parses mm:ss timestamps cleanly', () => {
-    expect(formatSecondsToMmSs(95)).toBe('01:35');
-    expect(parseMmSsToSeconds('01:35')).toBe(95);
-    expect(parseMmSsToSeconds('120')).toBe(120);
-    expect(parseMmSsToSeconds('bad')).toBeNull();
-    expect(buildYoutubePreviewUrl('https://www.youtube.com/watch?v=REPLACE_ME', 30)).toBeNull();
-    expect(buildYoutubePreviewUrl('https://youtu.be/dQw4w9WgXcQ', 95)).toBe(
-      'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=95s',
-    );
-  });
-});
 
 describe('Teacher Topics & Builder pages', () => {
   afterEach(() => {
@@ -221,16 +197,6 @@ describe('Teacher Topics & Builder pages', () => {
     expect(await screen.findByText('النموذج 1 (القبلي)')).toBeInTheDocument();
     expect(screen.getByText('النموذج 2 (البعدي)')).toBeInTheDocument();
     expect(screen.getByText('تأكيد المعلم لهذا السؤال')).toBeInTheDocument();
-    const previewLinks = screen.getAllByRole('link', { name: /معاينة الشرح/ });
-    expect(previewLinks).toHaveLength(2);
-    expect(previewLinks[0]).toHaveAttribute(
-      'href',
-      'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=95s',
-    );
-    expect(previewLinks[1]).toHaveAttribute(
-      'href',
-      'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120s',
-    );
     const solutionLinks = screen.getAllByRole('link', { name: 'رابط الحل' });
     expect(solutionLinks).toHaveLength(2);
     expect(solutionLinks[0]).toHaveAttribute('href', 'https://example.com/solutions/m1-q3');
@@ -240,7 +206,7 @@ describe('Teacher Topics & Builder pages', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'إضافة سؤال' })[0]!);
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     expect(screen.getByLabelText('ترتيب السؤال')).toBeInTheDocument();
-    const solutionInput = screen.getByLabelText('رابط حل السؤال (اختياري)');
+    const solutionInput = screen.getByLabelText('رابط فيديو شرح السؤال');
     expect(solutionInput).toBeInTheDocument();
     fireEvent.change(solutionInput, { target: { value: 'https://example.com/new-solution' } });
     expect(screen.getByRole('link', { name: 'فتح الرابط' })).toHaveAttribute(

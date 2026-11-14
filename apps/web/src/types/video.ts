@@ -4,8 +4,8 @@ export interface WrongQuestionSegmentView {
   questionId: string;
   orderIndex: number;
   conceptKey: string;
-  timestampSeconds: number;
-  solutionUrl?: string | null;
+  solutionUrl: string | null;
+  videoId: string | null;
   score: number;
   maxScore: number;
   visited: boolean;
@@ -15,22 +15,18 @@ export interface StudentVideoStateResponse {
   topic: {
     id: string;
     title: string;
-    videoUrl: string;
-    videoId: string | null;
-    minWatchSeconds: number;
   };
   cohort: {
     id: string;
     group: CohortGroup;
     requireVideoBeforePost: boolean;
-    requireWrongSegmentVisits: boolean;
   };
   watchedSeconds: number;
-  minWatchSeconds: number;
-  remainingSeconds: number;
   lastPosition: number;
   visitedQuestionIds: string[];
   wrongQuestionSegments: WrongQuestionSegmentView[];
+  visitedCount: number;
+  requiredCount: number;
   wrongSegmentsIncomplete: boolean;
   unlocked: boolean;
   unlockedPostAt: string | null;
@@ -45,11 +41,11 @@ export interface StudentVideoStateResponse {
 
 export interface VideoHeartbeatResponse {
   watchedSeconds: number;
-  minWatchSeconds: number;
-  remainingSeconds: number;
   lastPosition: number;
   visitedQuestionIds: string[];
   wrongQuestionSegments: WrongQuestionSegmentView[];
+  visitedCount: number;
+  requiredCount: number;
   wrongSegmentsIncomplete: boolean;
   unlocked: boolean;
   unlockedPostAt: string | null;
@@ -65,8 +61,6 @@ export interface StudentComparisonResponse {
   topic: {
     id: string;
     title: string;
-    videoId: string | null;
-    minWatchSeconds: number;
   };
   preTest: {
     attemptId: string;
@@ -112,7 +106,6 @@ export interface StudentComparisonResponse {
   videoOfferAfterPost: {
     available: boolean;
     watchedSeconds: number;
-    minWatchSeconds: number;
     recommendedForControl: boolean;
   };
 }

@@ -23,12 +23,6 @@ import { apiRequest, getApiErrorMessage } from '@/lib/api';
 import { useUiStore } from '@/store/uiStore';
 import type { StudentAttemptQuestionResult, StudentAttemptResults } from '@/types/review';
 
-function formatTimestamp(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
-
 function getChipTone(
   chip: StudentAttemptQuestionResult['statusChip'],
 ): 'info' | 'success' | 'warning' | 'neutral' {
@@ -188,7 +182,7 @@ export default function StudentResultsPage() {
               </div>
             )}
 
-            {topic.videoId && (
+            {questions.some((q) => q.belowThreshold && Boolean(q.solutionUrl)) && (
               <Button variant="primary" onClick={() => void navigate('/student/remediation')}>
                 <PlayCircle className="h-4 w-4" />
                 <span>{t('results.watchExplanation')}</span>
@@ -220,21 +214,14 @@ export default function StudentResultsPage() {
                       <span className="font-mono text-sm font-bold text-slate-800" dir="ltr">
                         {q.score !== null ? `${q.score} / ${q.points}` : `— / ${q.points}`}
                       </span>
-                      {q.belowThreshold && topic.videoId && (
+                      {q.belowThreshold && q.solutionUrl && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            void navigate(
-                              `/student/remediation?t=${q.videoTimestampSeconds}&q=${q.questionId}`,
-                            )
-                          }
+                          onClick={() => void navigate(`/student/remediation?q=${q.questionId}`)}
                         >
                           <PlayCircle className="h-3.5 w-3.5" />
-                          <span>
-                            {t('results.watchExplanation')} (
-                            {formatTimestamp(q.videoTimestampSeconds)})
-                          </span>
+                          <span>{t('results.watchExplanation')}</span>
                         </Button>
                       )}
                       {q.solutionUrl && (

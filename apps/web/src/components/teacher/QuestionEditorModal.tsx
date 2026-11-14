@@ -1,4 +1,5 @@
 import {
+  extractYoutubeVideoId,
   isRubricSumValid,
   isValidHttpUrl,
   UpsertQuestionSchema,
@@ -13,13 +14,11 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Label } from '@/components/ui/Input';
 import { apiRequest, getApiErrorMessage } from '@/lib/api';
-import { buildYoutubePreviewUrl, formatSecondsToMmSs, parseMmSsToSeconds } from '@/lib/timeFormat';
 import { useUiStore } from '@/store/uiStore';
 import type { QuestionItem } from '@/types/content';
 
 interface QuestionEditorModalProps {
   examId: string;
-  topicVideoUrl: string;
   nextOrderIndex: number;
   initialQuestion?: QuestionItem | null;
   onClose: () => void;
@@ -48,7 +47,6 @@ const DEFAULT_OPTIONS: EditableOption[] = [
 
 export function QuestionEditorModal({
   examId,
-  topicVideoUrl,
   nextOrderIndex,
   initialQuestion,
   onClose,
@@ -62,9 +60,6 @@ export function QuestionEditorModal({
   const [conceptKey, setConceptKey] = React.useState(initialQuestion?.conceptKey ?? '');
   const [type, setType] = React.useState<QuestionType>(initialQuestion?.type ?? 'MCQ');
   const [points, setPoints] = React.useState(initialQuestion?.points ?? 5);
-  const [mmSs, setMmSs] = React.useState(
-    formatSecondsToMmSs(initialQuestion?.videoTimestampSeconds ?? 0),
-  );
   const [solutionUrl, setSolutionUrl] = React.useState(initialQuestion?.solutionUrl ?? '');
   const [promptLatex, setPromptLatex] = React.useState(initialQuestion?.promptLatex ?? '');
   const [needsConfirm, setNeedsConfirm] = React.useState(
@@ -127,9 +122,8 @@ export function QuestionEditorModal({
 
   const rubricSum = criteria.reduce((acc, c) => acc + (Number(c.maxPoints) || 0), 0);
   const rubricValid = type === 'MCQ' || isRubricSumValid(Number(points) || 0, criteria);
-  const parsedSec = parseMmSsToSeconds(mmSs) ?? 0;
-  const previewVideoUrl = buildYoutubePreviewUrl(topicVideoUrl, parsedSec);
   const validSolutionUrl = isValidHttpUrl(solutionUrl) ? solutionUrl.trim() : null;
+  const detectedYoutubeId = extractYoutubeVideoId(solutionUrl);
 
   const handleMoveStep = (index: number, delta: -1 | 1) => {
     const target = index + delta;
@@ -145,23 +139,12 @@ export function QuestionEditorModal({
     e.preventDefault();
     setErrorMsg(null);
 
-    const videoTimestampSeconds = parseMmSsToSeconds(mmSs);
-    if (videoTimestampSeconds === null) {
-      setErrorMsg(
-        locale === 'ar'
-          ? 'صيغة الوقت غير صالحة. استخدم الصيغة mm:ss مثل 03:45 أو عدداً بالثواني.'
-          : 'Invalid timestamp format. Use mm:ss (e.g. 03:45) or seconds.',
-      );
-      return;
-    }
-
     const payload = {
       orderIndex: Number(orderIndex),
       conceptKey: conceptKey.trim(),
       type,
       promptLatex: promptLatex.trim(),
       points: Number(points),
-      videoTimestampSeconds,
       solutionUrl: solutionUrl.trim() ? solutionUrl.trim() : null,
       needsTeacherConfirmation: needsConfirm,
       ...(type === 'MCQ'
@@ -300,29 +283,6 @@ export function QuestionEditorModal({
                 <option value="ESSAY">{t('teacher.questionEditor.essay')}</option>
               </select>
             </div>
-            <div>
-              <Label htmlFor="q-ts">{t('teacher.questionEditor.timestampMmSs')}</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="q-ts"
-                  value={mmSs}
-                  onChange={(e) => setMmSs(e.target.value)}
-                  placeholder="02:30"
-                  dir="ltr"
-                />
-                {previewVideoUrl && parsedSec > 0 && (
-                  <a
-                    href={previewVideoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-lg border border-slate-300 px-3 text-xs font-semibold text-brand-700 hover:bg-slate-50"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    <span>{t('app.preview')}</span>
-                  </a>
-                )}
-              </div>
-            </div>
           </div>
 
           <div>
@@ -348,6 +308,11 @@ export function QuestionEditorModal({
                 </a>
               )}
             </div>
+            {detectedYoutubeId && (
+              <p className="mt-1 text-xs font-medium text-emerald-700" dir="ltr">
+                {t('teacher.builder.videoIdDetected', { id: detectedYoutubeId })}
+              </p>
+            )}
             <p className="mt-1 text-xs text-slate-500">
               {t('teacher.questionEditor.solutionUrlHint')}
             </p>

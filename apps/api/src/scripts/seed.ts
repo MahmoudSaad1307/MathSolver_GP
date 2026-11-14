@@ -15,8 +15,6 @@ const TOPIC_2_BUNDLE: SeedTopicBundle = {
     title: 'تطبيقات التفاضل: القيم القصوى ومعدلات التغير المرتبطة',
     description:
       'اختبار قبلي وبعدي يتناول إيجاد النقاط الحرجة، واختبار المشتقة الأولى والثانية للقيم القصوى المحلية والمطلقة، ومسائل معدلات التغير المرتبطة بالزمن.',
-    videoUrl: 'https://www.youtube.com/watch?v=1Q1D7B7Y1uQ',
-    minWatchSeconds: 240,
     correctnessThreshold: 0.6,
   },
   models: [
@@ -32,7 +30,7 @@ const TOPIC_2_BUNDLE: SeedTopicBundle = {
           type: 'MCQ',
           promptLatex: 'Find the critical numbers of $f(x) = x^{3} - 6x^{2} + 9x + 2$.',
           points: 10,
-          videoTimestampSeconds: 60,
+          solutionUrl: 'https://www.youtube.com/watch?v=1Q1D7B7Y1uQ',
           needsTeacherConfirmation: false,
           mcqOptions: [
             { label: 'A', textLatex: '$x = 1 \\text{ and } x = 3$', isCorrect: true },
@@ -48,7 +46,7 @@ const TOPIC_2_BUNDLE: SeedTopicBundle = {
           promptLatex:
             'The radius $r$ of a circle is increasing at a rate of $3\\text{ cm/s}$. Find the rate at which the area $A = \\pi r^{2}$ is increasing when $r = 5\\text{ cm}$.',
           points: 15,
-          videoTimestampSeconds: 140,
+          solutionUrl: 'https://www.youtube.com/watch?v=1Q1D7B7Y1uQ',
           needsTeacherConfirmation: true,
           modelAnswer: {
             solutionStepsLatex: [
@@ -92,7 +90,7 @@ const TOPIC_2_BUNDLE: SeedTopicBundle = {
           type: 'MCQ',
           promptLatex: 'Find the critical numbers of $f(x) = x^{3} - 3x^{2} - 9x + 5$.',
           points: 10,
-          videoTimestampSeconds: 60,
+          solutionUrl: 'https://www.youtube.com/watch?v=1Q1D7B7Y1uQ',
           needsTeacherConfirmation: false,
           mcqOptions: [
             { label: 'A', textLatex: '$x = -1 \\text{ and } x = 3$', isCorrect: true },
@@ -108,7 +106,7 @@ const TOPIC_2_BUNDLE: SeedTopicBundle = {
           promptLatex:
             'The radius $r$ of a circle is increasing at a rate of $2\\text{ cm/s}$. Find the rate at which the area $A = \\pi r^{2}$ is increasing when $r = 7\\text{ cm}$.',
           points: 15,
-          videoTimestampSeconds: 140,
+          solutionUrl: 'https://www.youtube.com/watch?v=1Q1D7B7Y1uQ',
           needsTeacherConfirmation: true,
           modelAnswer: {
             solutionStepsLatex: [
@@ -1148,19 +1146,15 @@ async function main() {
   const importService = new ExamImportExportService(prisma, env);
   const seedResult1 = await importService.seedTopicBundleIfMissing(teacher.id, bundle1);
 
-  // Upgrade Topic 1 to have valid YouTube video URL, non-zero timestamps, confirmed Qs, and PUBLISHED models
+  // Upgrade Topic 1 to have confirmed Qs with per-question YouTube solutionUrls and PUBLISHED models
   const now = new Date();
   const primaryVideoUrl = 'https://www.youtube.com/watch?v=WUvTyaaNkzM';
-  const primaryVideoId = 'WUvTyaaNkzM';
 
   await prisma.topic.update({
     where: { id: seedResult1.topicId },
     data: {
       title: bundle1.topic.title,
       description: bundle1.topic.description,
-      videoUrl: primaryVideoUrl,
-      videoId: primaryVideoId,
-      minWatchSeconds: 300,
       correctnessThreshold: 0.6,
     },
   });
@@ -1180,25 +1174,12 @@ async function main() {
     },
   });
 
-  const timestampsByOrder: Record<number, number> = {
-    1: 45,
-    2: 95,
-    3: 150,
-    4: 205,
-    5: 265,
-    6: 330,
-    7: 405,
-    8: 470,
-    9: 540,
-    10: 615,
-  };
-
   for (const model of topic1Models) {
     for (const q of model.questions) {
       await prisma.question.update({
         where: { id: q.id },
         data: {
-          videoTimestampSeconds: timestampsByOrder[q.orderIndex] ?? q.orderIndex * 50,
+          solutionUrl: q.solutionUrl ?? primaryVideoUrl,
           needsTeacherConfirmation: false,
           teacherConfirmedAt: now,
         },
@@ -1292,7 +1273,6 @@ async function main() {
       name: 'الشعبة أ — المجموعة التجريبية (ثالث ثانوي علمي ١)',
       group: 'TREATMENT' as const,
       requireVideoBeforePost: true,
-      requireWrongSegmentVisits: false,
       showProvisionalScore: true,
       postTestOpensAt: null,
     },
@@ -1302,7 +1282,6 @@ async function main() {
       name: 'الشعبة ب — المجموعة الضابطة (ثالث ثانوي علمي ٢)',
       group: 'CONTROL' as const,
       requireVideoBeforePost: false,
-      requireWrongSegmentVisits: false,
       showProvisionalScore: true,
       postTestOpensAt: new Date(Date.now() - 3 * 86_400_000),
     },
@@ -1312,7 +1291,6 @@ async function main() {
       name: 'الشعبة ج — المجموعة التجريبية المسائية (ثالث ثانوي علمي ٣)',
       group: 'TREATMENT' as const,
       requireVideoBeforePost: true,
-      requireWrongSegmentVisits: true,
       showProvisionalScore: false,
       postTestOpensAt: null,
     },
@@ -1328,7 +1306,6 @@ async function main() {
         teacherId: teacher.id,
         group: cs.group,
         requireVideoBeforePost: cs.requireVideoBeforePost,
-        requireWrongSegmentVisits: cs.requireWrongSegmentVisits,
         showProvisionalScore: cs.showProvisionalScore,
         postTestOpensAt: cs.postTestOpensAt,
         status: 'OPEN',
@@ -1341,7 +1318,6 @@ async function main() {
         teacherId: teacher.id,
         group: cs.group,
         requireVideoBeforePost: cs.requireVideoBeforePost,
-        requireWrongSegmentVisits: cs.requireWrongSegmentVisits,
         showProvisionalScore: cs.showProvisionalScore,
         postTestOpensAt: cs.postTestOpensAt,
         status: 'OPEN',
@@ -1632,9 +1608,10 @@ async function main() {
             )
           : null;
 
-      const visitedQIds = m1.questions
+      const allWrongQIds = m1.questions
         .filter((q) => (spec.m1Profile[q.orderIndex] ?? 'partial') !== 'full')
         .map((q) => q.id);
+      const visitedQIds = videoCompleted ? allWrongQIds : allWrongQIds.slice(0, 1);
 
       const vs = await prisma.videoSession.create({
         data: {

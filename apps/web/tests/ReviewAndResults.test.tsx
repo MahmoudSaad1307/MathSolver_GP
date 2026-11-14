@@ -44,8 +44,6 @@ function buildResultsPayload(
     topic: {
       id: 'topic-1',
       title: 'قواعد الاشتقاق',
-      videoId: 'dQw4w9WgXcQ',
-      minWatchSeconds: 300,
       correctnessThreshold: 0.6,
     },
     cohort: {
@@ -69,7 +67,6 @@ function buildResultsPayload(
         type: 'MCQ',
         promptLatex: 'What is $\\frac{d}{dx}(x^3)$?',
         points: 5,
-        videoTimestampSeconds: 65,
         solutionUrl: 'https://example.com/solutions/q-mcq',
         statusChip: 'GRADED',
         score: 0,
@@ -99,7 +96,6 @@ function buildResultsPayload(
         type: 'ESSAY',
         promptLatex: 'Differentiate $y = \\ln(2x+1)$.',
         points: 15,
-        videoTimestampSeconds: 180,
         statusChip: 'GRADED',
         score: 10,
         isCorrect: true,
@@ -198,7 +194,7 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
 
     expect(await screen.findByText(/10 \/ 20/)).toBeInTheDocument();
     expect(screen.getByTestId('first-error-step-2')).toBeInTheDocument();
-    expect(screen.getByText(/شاهد الشرح \(1:05\)/)).toBeInTheDocument();
+    expect(screen.getAllByText(/شاهد الشرح/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('link', { name: 'حل السؤال' })).toHaveAttribute(
       'href',
       'https://example.com/solutions/q-mcq',
@@ -408,7 +404,7 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
         consentAcceptedAt: '2026-11-13T09:00:00.000Z',
         createdAt: '2026-11-13T09:00:00.000Z',
         cohort: { id: 'coh-1', name: 'تجريبي', group: 'TREATMENT', joinCode: 'AB12CD' },
-        topic: { id: 'top-1', title: 'الاشتقاق', minWatchSeconds: 300 },
+        topic: { id: 'top-1', title: 'الاشتقاق' },
         currentStep: 'PRETEST_RESULTS',
         pendingReviewCount: 0,
         scoreGain: 25,
@@ -430,7 +426,7 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
         },
         videoProgress: {
           watchedSeconds: 320,
-          minWatchSeconds: 300,
+          visitedCount: 2,
           unlockedPostAt: '2026-11-13T10:00:00.000Z',
           manualUnlocked: false,
         },
@@ -446,7 +442,7 @@ describe('Phase 5 Student Results, Teacher Review Queue & Roster UI', () => {
         createdAt: '2026-11-13T09:00:00.000Z',
       },
       cohort: { id: 'coh-1', name: 'تجريبي', group: 'TREATMENT', joinCode: 'AB12CD' },
-      topic: { id: 'top-1', title: 'الاشتقاق', minWatchSeconds: 300 },
+      topic: { id: 'top-1', title: 'الاشتقاق' },
       videoProgress: {
         watchedSeconds: 320,
         lastPosition: 320,

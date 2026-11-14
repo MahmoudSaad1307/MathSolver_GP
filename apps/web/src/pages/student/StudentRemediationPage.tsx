@@ -48,12 +48,6 @@ declare global {
   }
 }
 
-function formatTs(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
-
 export default function StudentRemediationPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -61,13 +55,16 @@ export default function StudentRemediationPage() {
   const locale = useUiStore((s) => s.locale);
   const [searchParams] = useSearchParams();
 
-  const initialTs = Number(searchParams.get('t') ?? '0');
   const initialQuestionId = searchParams.get('q') ?? undefined;
 
+  const [selectedQuestionId, setSelectedQuestionId] = React.useState<string | undefined>(
+    initialQuestionId,
+  );
   const [playerErrorCode, setPlayerErrorCode] = React.useState<number | null>(null);
   const [liveProgress, setLiveProgress] = React.useState<{
     watchedSeconds: number;
-    remainingSeconds: number;
+    visitedCount: number;
+    requiredCount: number;
     unlocked: boolean;
     fraudWarning: string | null;
   } | null>(null);
@@ -92,7 +89,8 @@ export default function StudentRemediationPage() {
     onSuccess: async (res) => {
       setLiveProgress({
         watchedSeconds: res.watchedSeconds,
-        remainingSeconds: res.remainingSeconds,
+        visitedCount: res.visitedCount,
+        requiredCount: res.requiredCount,
         unlocked: res.unlocked,
         fraudWarning: res.fraudWarning,
       });
@@ -111,33 +109,47 @@ export default function StudentRemediationPage() {
       }),
   });
 
+  const activeSegment = React.useMemo(() => {
+    const segments = stateQuery.data?.wrongQuestionSegments ?? [];
+    if (selectedQuestionId) {
+      const match = segments.find((s) => s.questionId === selectedQuestionId);
+      if (match) return match;
+    }
+    return segments[0] ?? null;
+  }, [stateQuery.data?.wrongQuestionSegments, selectedQuestionId]);
+
+  const activeQuestionId = activeSegment?.questionId;
+  const activeVideoId = activeSegment?.videoId ?? null;
+
   const sendEvent = React.useCallback(
     (type: VideoHeartbeatInput['type'], position: number, questionId?: string) => {
       const rate = playerRef.current?.getPlaybackRate?.() ?? 1;
+      const targetQId = questionId ?? activeQuestionId;
       heartbeatMutation.mutate({
         type,
         position: Math.max(0, Math.round(position * 10) / 10),
         playbackRate: rate,
         tabVisible: document.visibilityState !== 'hidden',
         clientTs: new Date().toISOString(),
-        ...(questionId ? { questionId } : {}),
+        ...(targetQId ? { questionId: targetQId } : {}),
       });
     },
-    [heartbeatMutation],
+    [heartbeatMutation, activeQuestionId],
   );
 
-  // Record initial deep-link click if student navigated from a result timestamp button
+  // Record initial deep-link click if student navigated from a question result button
   React.useEffect(() => {
-    if (!stateQuery.data?.topic.videoId || initialClickSentRef.current) return;
-    if (initialQuestionId && Number.isFinite(initialTs) && initialTs >= 0) {
+    if (!stateQuery.data || initialClickSentRef.current) return;
+    if (initialQuestionId) {
       initialClickSentRef.current = true;
-      sendEvent('QUESTION_LINK_CLICK', initialTs, initialQuestionId);
+      setSelectedQuestionId(initialQuestionId);
+      sendEvent('QUESTION_LINK_CLICK', 0, initialQuestionId);
     }
-  }, [stateQuery.data?.topic.videoId, initialQuestionId, initialTs, sendEvent]);
+  }, [stateQuery.data, initialQuestionId, sendEvent]);
 
-  // Initialize YouTube IFrame API player
+  // Initialize YouTube IFrame API player for the active question's videoId
   React.useEffect(() => {
-    const videoId = stateQuery.data?.topic.videoId;
+    const videoId = activeVideoId;
     const host = playerHostRef.current;
     if (!videoId || !host) return;
 
@@ -147,7 +159,7 @@ export default function StudentRemediationPage() {
         videoId,
         playerVars: {
           origin: window.location.origin,
-          start: Number.isFinite(initialTs) && initialTs > 0 ? Math.floor(initialTs) : 0,
+          start: 0,
           rel: 0,
           modestbranding: 1,
         },
@@ -223,7 +235,7 @@ export default function StudentRemediationPage() {
       playerRef.current?.destroy?.();
       playerRef.current = null;
     };
-  }, [stateQuery.data?.topic.videoId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeVideoId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (stateQuery.isLoading) {
     return (
@@ -251,13 +263,13 @@ export default function StudentRemediationPage() {
 
   const state = stateQuery.data;
   const watchedSeconds = liveProgress?.watchedSeconds ?? state.watchedSeconds;
-  const remainingSeconds = liveProgress?.remainingSeconds ?? state.remainingSeconds;
+  const visitedCount = liveProgress?.visitedCount ?? state.visitedCount;
+  const requiredCount = liveProgress?.requiredCount ?? state.requiredCount;
+  const remainingQuestions = Math.max(0, requiredCount - visitedCount);
   const unlocked = liveProgress?.unlocked ?? state.unlocked;
   const fraudWarning = liveProgress?.fraudWarning ?? null;
   const pct =
-    state.minWatchSeconds > 0
-      ? Math.min(100, Math.round((watchedSeconds / state.minWatchSeconds) * 100))
-      : 100;
+    requiredCount > 0 ? Math.min(100, Math.round((visitedCount / requiredCount) * 100)) : 100;
 
   return (
     <StudentShell>
@@ -289,7 +301,7 @@ export default function StudentRemediationPage() {
                 <span>{t('remediation.progressLabel')}</span>
               </div>
               <span className="font-mono font-bold text-brand-700" dir="ltr">
-                {watchedSeconds}s / {state.minWatchSeconds}s ({pct}%)
+                {visitedCount} / {requiredCount} ({pct}%) · {watchedSeconds}s
               </span>
             </div>
 
@@ -312,7 +324,7 @@ export default function StudentRemediationPage() {
               </Alert>
             ) : (
               <div className="text-xs text-slate-600">
-                {t('remediation.remainingLabel', { seconds: remainingSeconds })}
+                {t('remediation.remainingQuestionsLabel', { count: remainingQuestions })}
               </div>
             )}
 
@@ -346,7 +358,7 @@ export default function StudentRemediationPage() {
           </CardContent>
         </Card>
 
-        {/* Timestamp Deep-Link Jumps for Wrong Questions */}
+        {/* Per-Question Explanation Videos for Wrong Questions */}
         {state.wrongQuestionSegments.length > 0 && (
           <Card>
             <CardHeader>
@@ -360,13 +372,13 @@ export default function StudentRemediationPage() {
                     size="sm"
                     variant={seg.visited ? 'outline' : 'primary'}
                     onClick={() => {
-                      playerRef.current?.seekTo?.(seg.timestampSeconds, true);
-                      sendEvent('QUESTION_LINK_CLICK', seg.timestampSeconds, seg.questionId);
+                      setSelectedQuestionId(seg.questionId);
+                      sendEvent('QUESTION_LINK_CLICK', 0, seg.questionId);
                     }}
                   >
                     <PlayCircle className="h-3.5 w-3.5" />
                     <span>
-                      #{seg.orderIndex} · {seg.conceptKey} ({formatTs(seg.timestampSeconds)})
+                      #{seg.orderIndex} · {seg.conceptKey}
                     </span>
                     <Badge tone={seg.visited ? 'success' : 'warning'} className="ms-1">
                       {seg.visited
@@ -379,6 +391,10 @@ export default function StudentRemediationPage() {
                       href={seg.solutionUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        setSelectedQuestionId(seg.questionId);
+                        sendEvent('QUESTION_LINK_CLICK', 0, seg.questionId);
+                      }}
                       className="inline-flex min-h-[36px] items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-brand-700 hover:bg-slate-50"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />

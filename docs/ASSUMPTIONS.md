@@ -23,7 +23,7 @@ This document records every design decision and default chosen where the Master 
 
 - **`RefreshToken` table**: Added to Prisma schema (hashed opaque token + `familyId` + `revokedAt` + `replacedById`) to support Section 7 rotating refresh tokens and "logout everywhere" revocation.
 - **`VideoAlert` table**: Added to record YouTube player errors (`100`, `101`, `150`, etc.) reported by students so teachers see actionable alerts in the dashboard (Section 9).
-- **Cohort flags**: Added `requireWrongSegmentVisits` (default `false`) and `showProvisionalScore` (default `false`) to `Cohort` so teachers can toggle optional behaviors described in Sections 8.3 and 9.
+- **Cohort flags**: Added `showProvisionalScore` (default `false`) to `Cohort` alongside `requireVideoBeforePost` so teachers can toggle optional behaviors described in Sections 8.3 and 9. Per-question explanation videos (`Question.solutionUrl`) replace single-topic videos and timestamp offsets.
 - **Topic `correctnessThreshold`**: Added `correctnessThreshold` (Float, default `0.60`) to `Topic` so McNemar per-question pass thresholds are configurable per Section 7.
 - **Image pinning**: Added `pinnedByTeacher` (Boolean, default `false`) to `AnswerImage` so the retention job skips pinned images per Section 11.
 - **Resume & join codes**: 6 characters drawn from the 31-character unambiguous uppercase alphabet `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (excludes `0`, `O`, `1`, `I`, and `L` for handwriting/print clarity; wait — let's verify exact 31 chars: `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` is 8 digits + 23 letters = 31 chars! That leaves out `0, 1, I, O` and `L` or let's verify: 26 letters minus I,O,L = 23 + 8 digits (2..9) = 31!).

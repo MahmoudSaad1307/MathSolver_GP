@@ -67,13 +67,10 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
       .send({
         title: 'الاشتقاق اللوغاريتمي',
         description: 'موضوع تدريبي',
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        minWatchSeconds: 300,
       });
 
     expect(createRes.status).toBe(201);
     const topic = createRes.body.topic;
-    expect(topic.videoId).toBe('dQw4w9WgXcQ');
     expect(topic.examModels).toHaveLength(2);
     expect(topic.examModels[0].pairedWithId).toBe(topic.examModels[1].id);
     expect(topic.examModels[1].pairedWithId).toBe(topic.examModels[0].id);
@@ -98,10 +95,9 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
     const patchA = await request(app)
       .patch(`/api/v1/topics/${topic.id}`)
       .set('Authorization', `Bearer ${tokenA}`)
-      .send({ videoUrl: 'https://www.youtube.com/watch?v=REPLACE_ME' });
+      .send({ description: 'وصف محدث' });
     expect(patchA.status).toBe(200);
-    expect(patchA.body.topic.videoId).toBeNull();
-    expect(patchA.body.topic.hasMissingVideo).toBe(true);
+    expect(patchA.body.topic.description).toBe('وصف محدث');
 
     const delA = await request(app)
       .delete(`/api/v1/topics/${topic.id}`)
@@ -118,7 +114,6 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
       .set('Authorization', `Bearer ${tokenA}`)
       .send({
         title: 'الدوال الأسية',
-        videoUrl: 'https://youtu.be/dQw4w9WgXcQ',
       });
     const [m1, m2] = createRes.body.topic.examModels;
 
@@ -132,7 +127,6 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
         type: 'ESSAY',
         promptLatex: 'Find $y^{\\prime}$ for $y = e^{2x}$.',
         points: 10,
-        videoTimestampSeconds: 45,
         modelAnswer: {
           solutionStepsLatex: ['$y^{\\prime} = 2e^{2x}$'],
           finalAnswerLatex: '$2e^{2x}$',
@@ -157,7 +151,6 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
       type: 'ESSAY',
       promptLatex: prompt,
       points: 10,
-      videoTimestampSeconds: 45,
       modelAnswer: {
         solutionStepsLatex: ['$y^{\\prime} = 2e^{2x}$'],
         finalAnswerLatex: '$2e^{2x}$',
@@ -303,7 +296,7 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
 
     const topic = applyRes.body.topic;
     expect(topic.hasPlaceholders).toBe(true);
-    expect(topic.zeroTimestampCount).toBe(20);
+    expect(topic.missingVideoCount).toBe(10);
     expect(topic.unconfirmedCount).toBe(2);
     expect(topic.examModels[0].totalPoints).toBe(100);
     expect(topic.examModels[1].totalPoints).toBe(100);
@@ -311,7 +304,7 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
     const m1 = topic.examModels[0];
     const m2 = topic.examModels[1];
 
-    // Publishing is blocked while placeholders/unconfirmed Q3 remain
+    // Publishing is blocked while missing videos / unconfirmed Q3 remain
     const blockedPub = await request(app)
       .post(`/api/v1/exams/${m1.id}/publish`)
       .set('Authorization', `Bearer ${tokenA}`);
@@ -326,12 +319,7 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
     expect(blockedPatch.status).toBe(400);
     expect(blockedPatch.body.error.code).toBe('PUBLISH_CHECKLIST_FAILED');
 
-    // Fill real YouTube URL, confirm both Q3s, and set non-zero timestamps
-    await request(app)
-      .patch(`/api/v1/topics/${topic.id}`)
-      .set('Authorization', `Bearer ${tokenA}`)
-      .send({ videoUrl: 'https://youtu.be/dQw4w9WgXcQ' });
-
+    // Confirm both Q3s and set per-question solutionUrls
     for (const model of [m1, m2]) {
       for (const q of model.questions) {
         if (q.needsTeacherConfirmation) {
@@ -351,7 +339,6 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
             type: q.type,
             promptLatex: q.promptLatex,
             points: q.points,
-            videoTimestampSeconds: q.orderIndex * 45,
             solutionUrl: `https://example.com/solutions/m${model.modelNumber}-q${q.orderIndex}`,
             needsTeacherConfirmation: false,
             ...(q.type === 'MCQ'
@@ -412,10 +399,6 @@ describe('Teacher content builder, rubric guard, import/export, and publish chec
     expect(exportRes.status).toBe(200);
     expect(exportRes.headers['content-disposition']).toContain('attachment;');
     const exported = SeedTopicBundleSchema.parse(exportRes.body);
-    expect(exported.topic.videoUrl).toBe('https://youtu.be/dQw4w9WgXcQ');
-    expect(exported.models[0].questions[0].videoTimestampSeconds).toBe(45);
-    expect(exported.models[0].questions[0].solutionUrl).toBe('https://example.com/solutions/m1-q1');
-    expect(exported.models[1].questions[0].solutionUrl).toBe('https://example.com/solutions/m2-q1');
     expect(exported.models[0].questions[0].solutionUrl).toBe('https://example.com/solutions/m1-q1');
     expect(exported.models[1].questions[0].solutionUrl).toBe('https://example.com/solutions/m2-q1');
 

@@ -29,9 +29,9 @@ stateDiagram-v2
   PRETEST_IN_PROGRESS --> PRETEST_SUBMITTED: Idempotent submit
   PRETEST_SUBMITTED --> PRETEST_GRADING: MCQ scored + Essays queued
   PRETEST_GRADING --> PRETEST_RESULTS: Essays reach GRADED / NEEDS_REVIEW / FINAL
-  PRETEST_RESULTS --> REMEDIATION: Treatment cohort required to watch video
+  PRETEST_RESULTS --> REMEDIATION: Treatment cohort required to watch per-question videos
   PRETEST_RESULTS --> POSTTEST_UNLOCKED: Control cohort past postTestOpensAt / teacher opened
-  REMEDIATION --> POSTTEST_UNLOCKED: Server-verified watchedSeconds >= minWatchSeconds
+  REMEDIATION --> POSTTEST_UNLOCKED: All missed Model 1 question videos visited
   POSTTEST_UNLOCKED --> POSTTEST_IN_PROGRESS: Start Model 2
   POSTTEST_IN_PROGRESS --> POSTTEST_GRADING: Submit Model 2
   POSTTEST_GRADING --> COMPARISON: Compute Pre vs Post & Hake <g>

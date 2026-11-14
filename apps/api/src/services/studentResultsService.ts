@@ -344,7 +344,6 @@ export class StudentResultsService {
           type: q.type,
           promptLatex: q.promptLatex,
           points: q.points,
-          videoTimestampSeconds: q.videoTimestampSeconds,
           solutionUrl: q.solutionUrl ?? null,
           statusChip,
           score: displayScore,
@@ -403,8 +402,6 @@ export class StudentResultsService {
       topic: {
         id: topic.id,
         title: topic.title,
-        videoId: topic.videoId,
-        minWatchSeconds: topic.minWatchSeconds,
         correctnessThreshold: topic.correctnessThreshold,
       },
       cohort: {

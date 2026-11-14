@@ -48,7 +48,6 @@ export interface CohortListItem {
   joinCode: string;
   group: CohortGroup;
   requireVideoBeforePost: boolean;
-  requireWrongSegmentVisits: boolean;
   showProvisionalScore: boolean;
   postTestOpensAt: string | null;
   status: CohortStatus;

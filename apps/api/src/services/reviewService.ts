@@ -979,7 +979,6 @@ export class ReviewService {
           showProvisionalScore: cohort.showProvisionalScore,
           postTestOpensAt: cohort.postTestOpensAt,
         },
-        topic: { minWatchSeconds: topic.minWatchSeconds },
         consentAcceptedAt: student.consentAcceptedAt,
         preTestAttempt: preTest ? { status: preTest.status } : null,
         postTestAttempt: postTest ? { status: postTest.status } : null,
@@ -1018,7 +1017,6 @@ export class ReviewService {
         topic: {
           id: topic.id,
           title: topic.title,
-          minWatchSeconds: topic.minWatchSeconds,
         },
         currentStep: flow.step,
         pendingReviewCount,
@@ -1045,7 +1043,7 @@ export class ReviewService {
           : null,
         videoProgress: {
           watchedSeconds: videoSession?.watchedSeconds ?? 0,
-          minWatchSeconds: topic.minWatchSeconds,
+          visitedCount: videoSession?.visitedQuestionIds.length ?? 0,
           unlockedPostAt: videoSession?.unlockedPostAt
             ? videoSession.unlockedPostAt.toISOString()
             : null,
@@ -1224,7 +1222,6 @@ export class ReviewService {
       topic: {
         id: topic.id,
         title: topic.title,
-        minWatchSeconds: topic.minWatchSeconds,
       },
       videoProgress: {
         watchedSeconds: videoSession?.watchedSeconds ?? 0,

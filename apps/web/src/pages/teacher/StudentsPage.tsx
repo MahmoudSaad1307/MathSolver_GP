@@ -150,7 +150,10 @@ export default function StudentsPage() {
                           : '—'}
                       </td>
                       <td className="py-2.5 font-mono text-xs" dir="ltr">
-                        {s.videoProgress.watchedSeconds}s / {s.videoProgress.minWatchSeconds}s
+                        {s.videoProgress.watchedSeconds}s
+                        {s.videoProgress.visitedCount > 0
+                          ? ` (${s.videoProgress.visitedCount} Qs)`
+                          : ''}
                       </td>
                       <td className="py-2.5 font-mono text-xs" dir="ltr">
                         {s.postTest?.percentage !== null && s.postTest?.percentage !== undefined

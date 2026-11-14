@@ -28,7 +28,6 @@ import { Input, Label } from '@/components/ui/Input';
 import { useTeacherAuth } from '@/hooks/useTeacherAuth';
 import { apiRequest, getApiErrorMessage } from '@/lib/api';
 import { downloadTopicJson } from '@/lib/exportBundle';
-import { buildYoutubePreviewUrl, formatSecondsToMmSs } from '@/lib/timeFormat';
 import { useUiStore } from '@/store/uiStore';
 import type { ExamModelItem, QuestionItem, TopicDetail } from '@/types/content';
 
@@ -41,8 +40,6 @@ export default function TopicBuilderPage() {
 
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
-  const [videoUrl, setVideoUrl] = React.useState('');
-  const [minWatchSeconds, setMinWatchSeconds] = React.useState(300);
   const [correctnessThreshold, setCorrectnessThreshold] = React.useState(0.6);
   const [bannerFeedback, setBannerFeedback] = React.useState<{
     tone: 'success' | 'danger';
@@ -69,8 +66,6 @@ export default function TopicBuilderPage() {
     if (topic) {
       setTitle(topic.title);
       setDescription(topic.description);
-      setVideoUrl(topic.videoUrl);
-      setMinWatchSeconds(topic.minWatchSeconds);
       setCorrectnessThreshold(topic.correctnessThreshold);
     }
   }, [topic]);
@@ -168,17 +163,14 @@ export default function TopicBuilderPage() {
   }
 
   const placeholderReasons: string[] = [];
-  if (topic.hasMissingVideo) placeholderReasons.push(t('teacher.builder.missingVideo'));
-  if (topic.zeroTimestampCount > 0) {
+  if (topic.missingVideoCount > 0) {
     placeholderReasons.push(
-      t('teacher.builder.missingTimestamps', { count: topic.zeroTimestampCount }),
+      t('teacher.builder.missingQuestionVideos', { count: topic.missingVideoCount }),
     );
   }
   if (topic.unconfirmedCount > 0) {
     placeholderReasons.push(t('teacher.builder.needsConfirm', { count: topic.unconfirmedCount }));
   }
-
-  const detectedVideoId = extractYoutubeVideoId(videoUrl);
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,8 +178,6 @@ export default function TopicBuilderPage() {
     const parsed = UpdateTopicSchema.safeParse({
       title,
       description,
-      videoUrl,
-      minWatchSeconds: Number(minWatchSeconds),
       correctnessThreshold: Number(correctnessThreshold),
     });
     if (!parsed.success) {
@@ -261,8 +251,7 @@ export default function TopicBuilderPage() {
 
       <CardContent className="space-y-3 pt-4">
         {model.questions.map((q) => {
-          const previewUrl = buildYoutubePreviewUrl(topic.videoUrl, q.videoTimestampSeconds);
-          const timeLabel = formatSecondsToMmSs(q.videoTimestampSeconds);
+          const ytId = extractYoutubeVideoId(q.solutionUrl ?? '');
 
           return (
             <div
@@ -326,20 +315,13 @@ export default function TopicBuilderPage() {
 
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone={q.videoTimestampSeconds > 0 ? 'neutral' : 'warning'} dir="ltr">
-                    {timeLabel}
+                  <Badge tone={q.solutionUrl ? 'success' : 'warning'} dir="ltr">
+                    {ytId
+                      ? `YT: ${ytId}`
+                      : q.solutionUrl
+                        ? t('teacher.builder.openSolutionUrl')
+                        : t('teacher.builder.noQuestionVideo')}
                   </Badge>
-                  {previewUrl && q.videoTimestampSeconds > 0 && (
-                    <a
-                      href={previewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      <span>{t('teacher.builder.jumpVideo', { time: timeLabel })}</span>
-                    </a>
-                  )}
                   {q.solutionUrl && (
                     <a
                       href={q.solutionUrl}
@@ -438,44 +420,6 @@ export default function TopicBuilderPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="builder-video">{t('teacher.topics.videoUrl')}</Label>
-                    <Input
-                      id="builder-video"
-                      dir="ltr"
-                      value={videoUrl}
-                      onChange={(e) => setVideoUrl(e.target.value)}
-                      required
-                    />
-                    {detectedVideoId && (
-                      <p className="mt-1 text-xs font-medium text-emerald-700" dir="ltr">
-                        {t('teacher.builder.videoIdDetected', { id: detectedVideoId })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="builder-desc">{t('teacher.topics.topicDesc')}</Label>
-                  <Input
-                    id="builder-desc"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="builder-watch">{t('teacher.topics.minWatchSeconds')}</Label>
-                    <Input
-                      id="builder-watch"
-                      type="number"
-                      min={10}
-                      dir="ltr"
-                      value={minWatchSeconds}
-                      onChange={(e) => setMinWatchSeconds(Number(e.target.value))}
-                    />
-                  </div>
-                  <div>
                     <Label htmlFor="builder-thresh">
                       {t('teacher.topics.correctnessThreshold')}
                     </Label>
@@ -490,6 +434,15 @@ export default function TopicBuilderPage() {
                       onChange={(e) => setCorrectnessThreshold(Number(e.target.value))}
                     />
                   </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="builder-desc">{t('teacher.topics.topicDesc')}</Label>
+                  <Input
+                    id="builder-desc"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
                 </div>
 
                 <div className="flex justify-end">
@@ -535,7 +488,6 @@ export default function TopicBuilderPage() {
       {editingModalState && (
         <QuestionEditorModal
           examId={editingModalState.examId}
-          topicVideoUrl={topic.videoUrl}
           nextOrderIndex={editingModalState.nextOrderIndex}
           initialQuestion={editingModalState.question}
           onClose={() => setEditingModalState(null)}

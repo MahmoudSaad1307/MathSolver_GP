@@ -380,7 +380,7 @@ describe('Phase 8: Security Hardening, Tenant Matrix & Full E2E Lifecycle', () =
               type: q.type,
               promptLatex: q.promptLatex,
               points: q.points,
-              videoTimestampSeconds: q.orderIndex * 30,
+              solutionUrl: `https://www.youtube.com/watch?v=dQw4w9WgXcQ`,
               needsTeacherConfirmation: false,
               ...(q.type === 'MCQ'
                 ? {
@@ -496,24 +496,25 @@ describe('Phase 8: Security Hardening, Tenant Matrix & Full E2E Lifecycle', () =
         .set('Cookie', [sCookie]);
       expect(preResults.status).toBe(200);
 
-      // 5. Watch video incrementally to unlock Model 2
-      const baseMs = Date.now();
-      vi.useFakeTimers({ toFake: ['Date'] });
-      for (let t = 0; t <= 310; t += 5) {
-        vi.setSystemTime(baseMs + t * 1000);
-        const hb = await request(app)
+      // 5. Visit wrong-question explanation videos to unlock Model 2
+      const videoStateRes = await request(app)
+        .get('/api/v1/student/video/state')
+        .set('Cookie', [sCookie]);
+      expect(videoStateRes.status).toBe(200);
+      for (const seg of videoStateRes.body.wrongQuestionSegments as Array<{ questionId: string }>) {
+        const hbVisit = await request(app)
           .post('/api/v1/student/video/heartbeat')
           .set('Cookie', [sCookie])
           .send({
-            type: t === 0 ? 'PLAY' : t === 310 ? 'ENDED' : 'HEARTBEAT',
-            position: t,
+            type: 'QUESTION_LINK_CLICK',
+            position: 0,
             playbackRate: 1,
             tabVisible: true,
-            clientTs: new Date(baseMs + t * 1000).toISOString(),
+            questionId: seg.questionId,
+            clientTs: new Date().toISOString(),
           });
-        expect(hb.status).toBe(200);
+        expect(hbVisit.status).toBe(200);
       }
-      vi.useRealTimers();
 
       // 6. Start & submit Model 2
       const startPost = await request(app)
