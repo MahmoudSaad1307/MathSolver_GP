@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRedisConnectionOptions } from '../src/services/gradingDispatcher.js';
+import { normalizeRedisUrl, parseRedisConnectionOptions } from '../src/services/gradingDispatcher.js';
 
 describe('parseRedisConnectionOptions', () => {
   it('parses standard redis:// URLs without TLS', () => {
@@ -26,6 +26,17 @@ describe('parseRedisConnectionOptions', () => {
       password: 'secret_token@1',
       db: 0,
       maxRetriesPerRequest: null,
+      tls: {},
+    });
+  });
+
+  it('auto-upgrades redis:// to TLS when pointing at an Upstash host', () => {
+    const url = 'redis://default:token123@eternal-chow-202248.upstash.io:6379';
+    expect(normalizeRedisUrl(url)).toBe(
+      'rediss://default:token123@eternal-chow-202248.upstash.io:6379',
+    );
+    expect(parseRedisConnectionOptions(url)).toMatchObject({
+      host: 'eternal-chow-202248.upstash.io',
       tls: {},
     });
   });

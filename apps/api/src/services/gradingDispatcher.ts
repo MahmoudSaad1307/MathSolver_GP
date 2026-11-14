@@ -30,8 +30,22 @@ export class NoopGradingDispatcher implements GradingDispatcher {
   }
 }
 
+export function normalizeRedisUrl(redisUrl: string): string {
+  try {
+    const parsed = new URL(redisUrl);
+    if (parsed.protocol === 'redis:' && parsed.hostname.endsWith('.upstash.io')) {
+      parsed.protocol = 'rediss:';
+      return parsed.toString();
+    }
+  } catch {
+    // Keep raw URL so caller surfaces normal connection error
+  }
+  return redisUrl;
+}
+
 export function parseRedisConnectionOptions(redisUrl: string): ConnectionOptions {
-  const parsed = new URL(redisUrl);
+  const normalized = normalizeRedisUrl(redisUrl);
+  const parsed = new URL(normalized);
   const dbStr = parsed.pathname.replace(/^\//, '');
   const dbNum = dbStr ? Number(dbStr) : 0;
   return {
