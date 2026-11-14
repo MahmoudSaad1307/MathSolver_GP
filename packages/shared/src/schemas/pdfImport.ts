@@ -75,13 +75,21 @@ export const ExtractedQuestionPreviewSchema = z.object({
         isCorrect: z.boolean(),
       }),
     )
+    .nullable()
+    .transform((v) => v ?? undefined)
     .optional(),
   modelAnswer: z
     .object({
-      solutionStepsLatex: z.array(z.string().trim().max(2000)),
-      finalAnswerLatex: z.string().trim().max(1000),
-      finalAnswerSympy: z.string().trim().max(500).nullable().optional(),
-      commonMistakes: z.string().trim().max(4000).default(''),
+      solutionStepsLatex: z.array(z.string().trim().max(4000)).default([]),
+      finalAnswerLatex: z.string().trim().max(2000).default(''),
+      finalAnswerSympy: z.string().trim().max(1000).nullable().optional(),
+      commonMistakes: z
+        .string()
+        .trim()
+        .max(4000)
+        .nullable()
+        .default('')
+        .transform((v) => v ?? ''),
     })
     .nullable()
     .optional(),
@@ -95,11 +103,17 @@ export const ExtractedQuestionPreviewSchema = z.object({
         maxPoints: z.number().positive().max(100),
       }),
     )
+    .nullable()
+    .transform((v) => v ?? undefined)
     .optional(),
   ocrConfidence: z.number().min(0).max(1).default(1),
   dualOcrAgreed: z.boolean().default(true),
   sympyStatus: PdfSympyVerificationStatusSchema.default('NOT_APPLICABLE'),
-  sympyDetail: z.string().default(''),
+  sympyDetail: z
+    .string()
+    .nullable()
+    .default('')
+    .transform((v) => v ?? ''),
   sourceQuestionPages: z.array(z.number().int().min(1)).default([]),
   sourceAnswerPages: z.array(z.number().int().min(1)).default([]),
   warnings: z.array(ExtractedQuestionWarningSchema).default([]),
@@ -186,9 +200,17 @@ export const StrictApplyQuestionSchema = z.object({
   points: z.number().positive().max(100),
   solutionUrl: OptionalSolutionUrlSchema,
   needsTeacherConfirmation: z.boolean().default(false),
-  mcqOptions: z.array(McqOptionInputSchema).optional(),
+  mcqOptions: z
+    .array(McqOptionInputSchema)
+    .nullable()
+    .transform((v) => v ?? undefined)
+    .optional(),
   modelAnswer: ModelAnswerInputSchema.nullable().optional(),
-  rubricCriteria: z.array(RubricCriterionInputSchema).optional(),
+  rubricCriteria: z
+    .array(RubricCriterionInputSchema)
+    .nullable()
+    .transform((v) => v ?? undefined)
+    .optional(),
 });
 
 export const PdfImportJobResponseSchema = z.object({

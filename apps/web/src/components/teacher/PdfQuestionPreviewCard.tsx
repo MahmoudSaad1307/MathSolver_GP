@@ -371,8 +371,12 @@ export function PdfQuestionPreviewCard({
                   {t('pdfImport.finalAnswerLatexLabel')}:
                 </span>
                 <MathBlock
-                  text={`$$${question.modelAnswer.finalAnswerLatex}$$`}
-                  forceLtr
+                  text={
+                    question.modelAnswer.finalAnswerLatex.includes('$')
+                      ? question.modelAnswer.finalAnswerLatex
+                      : `$$${question.modelAnswer.finalAnswerLatex}$$`
+                  }
+                  forceLtr={!hasArabic(question.modelAnswer.finalAnswerLatex)}
                   className="font-semibold text-brand-800"
                 />
               </div>

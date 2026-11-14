@@ -624,10 +624,7 @@ async def _verify_question_with_sympy(
                     f"Final answer ({expected}) differs mathematically from last solution "
                     f"step ({last_rhs})."
                 ),
-                (
-                    f"الإجابة النهائية ({expected}) تختلف رياضياً عن آخر خطوة في الحل "
-                    f"({last_rhs})."
-                ),
+                (f"الإجابة النهائية ({expected}) تختلف رياضياً عن آخر خطوة في الحل ({last_rhs})."),
             )
         )
         return ("MISMATCH", res.detail, warnings)
@@ -839,17 +836,37 @@ async def _extract_single_model(
             "; ".join(str(item).strip() for item in raw_mistakes if str(item).strip())
             if isinstance(raw_mistakes, list)
             else str(raw_mistakes or "")
+        )[:4000]
+        raw_steps = (
+            [
+                str(s).strip()[:2000]
+                for s in cast(list[Any], raw_ma.get("solutionStepsLatex") or [])
+                if str(s).strip()
+            ]
+            if raw_ma is not None
+            else []
+        )
+        raw_final = (
+            str(raw_ma.get("finalAnswerLatex") or "").strip()[:1000] if raw_ma is not None else ""
+        )
+        if not raw_steps and raw_final:
+            raw_steps = [raw_final]
+        elif not raw_final and raw_steps:
+            raw_final = raw_steps[-1][:1000]
+        raw_sympy_val = raw_ma.get("finalAnswerSympy") if raw_ma is not None else None
+        raw_sympy = (
+            str(raw_sympy_val).strip()[:500]
+            if raw_sympy_val is not None and str(raw_sympy_val).strip()
+            else None
         )
         model_answer = (
             ModelAnswerOut(
-                solutionStepsLatex=[
-                    str(s) for s in cast(list[Any], raw_ma.get("solutionStepsLatex", []))
-                ],
-                finalAnswerLatex=str(raw_ma.get("finalAnswerLatex", "")),
-                finalAnswerSympy=cast(str | None, raw_ma.get("finalAnswerSympy")),
+                solutionStepsLatex=raw_steps,
+                finalAnswerLatex=raw_final,
+                finalAnswerSympy=raw_sympy,
                 commonMistakes=common_mistakes,
             )
-            if raw_ma is not None
+            if raw_ma is not None and (raw_steps or raw_final)
             else None
         )
 
@@ -880,10 +897,10 @@ async def _extract_single_model(
 
         q_out = ExtractedQuestionOut(
             tempId=str(uuid.uuid4()),
-            orderIndex=int(rq.get("orderIndex", idx)),
-            conceptKey=str(rq.get("conceptKey") or f"concept-{idx}")[:100],
+            orderIndex=idx,
+            conceptKey=(str(rq.get("conceptKey") or "").strip() or f"concept-{idx}")[:100],
             type=q_type,
-            promptLatex=str(rq.get("promptLatex", "")).strip() or f"Question {idx}",
+            promptLatex=(str(rq.get("promptLatex") or "").strip() or f"Question {idx}")[:10000],
             points=points,
             solutionUrl=None,
             needsTeacherConfirmation=True,

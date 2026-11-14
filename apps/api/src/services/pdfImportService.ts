@@ -200,6 +200,12 @@ export class PdfImportService {
     const parsedPreview = row.previewJson
       ? PdfImportPreviewPayloadSchema.safeParse(row.previewJson)
       : null;
+    const fallbackPreview =
+      row.previewJson &&
+      typeof row.previewJson === 'object' &&
+      Array.isArray((row.previewJson as { models?: unknown }).models)
+        ? (row.previewJson as PdfImportPreviewPayload)
+        : null;
 
     return {
       id: row.id,
@@ -211,7 +217,7 @@ export class PdfImportService {
       hasPrePdf: Boolean(row.prePdfKey),
       hasPostPdf: Boolean(row.postPdfKey),
       topicMeta: cfg?.topicMeta ?? null,
-      preview: parsedPreview?.success ? parsedPreview.data : null,
+      preview: parsedPreview?.success ? parsedPreview.data : fallbackPreview,
       errorCode: row.errorCode,
       errorMessage: row.errorMessage,
       createdAt: row.createdAt.toISOString(),
@@ -570,9 +576,21 @@ export class PdfImportService {
       modelNumber: m.modelNumber,
       title: m.title,
       durationMinutes: m.durationMinutes,
-      questions: m.questions.map((q) => {
+      questions: m.questions.map((q, idx) => {
+        let normalizedModelAnswer = q.type === 'ESSAY' ? q.modelAnswer : null;
+        if (q.type === 'ESSAY' && normalizedModelAnswer) {
+          const steps = normalizedModelAnswer.solutionStepsLatex
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0);
+          const finalAns = normalizedModelAnswer.finalAnswerLatex.trim();
+          normalizedModelAnswer = {
+            ...normalizedModelAnswer,
+            solutionStepsLatex: steps.length > 0 ? steps : finalAns ? [finalAns] : [],
+            finalAnswerLatex: finalAns || steps[steps.length - 1] || '',
+          };
+        }
         const parsed = StrictApplyQuestionSchema.safeParse({
-          orderIndex: q.orderIndex,
+          orderIndex: idx + 1,
           conceptKey: q.conceptKey,
           type: q.type,
           promptLatex: q.promptLatex,
@@ -580,7 +598,7 @@ export class PdfImportService {
           solutionUrl: q.solutionUrl ?? null,
           needsTeacherConfirmation: q.needsTeacherConfirmation && !q.verifiedByTeacher,
           mcqOptions: q.type === 'MCQ' ? q.mcqOptions : undefined,
-          modelAnswer: q.type === 'ESSAY' ? q.modelAnswer : null,
+          modelAnswer: normalizedModelAnswer,
           rubricCriteria: q.type === 'ESSAY' ? q.rubricCriteria : undefined,
         });
         if (!parsed.success) {

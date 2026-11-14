@@ -29,7 +29,13 @@ export const ModelAnswerInputSchema = z.object({
   solutionStepsLatex: z.array(z.string().trim().min(1).max(2000)).min(1),
   finalAnswerLatex: z.string().trim().min(1).max(1000),
   finalAnswerSympy: z.string().trim().max(500).nullable().optional(),
-  commonMistakes: z.string().trim().max(4000).default(''),
+  commonMistakes: z
+    .string()
+    .trim()
+    .max(4000)
+    .nullable()
+    .default('')
+    .transform((v) => v ?? ''),
 });
 
 export const RubricCriterionInputSchema = z.object({
@@ -62,9 +68,17 @@ export const UpsertQuestionSchema = z
     solutionUrl: OptionalSolutionUrlSchema,
     needsTeacherConfirmation: z.boolean().default(false),
     twinQuestionId: z.string().uuid().nullable().optional(),
-    mcqOptions: z.array(McqOptionInputSchema).optional(),
+    mcqOptions: z
+      .array(McqOptionInputSchema)
+      .nullable()
+      .transform((v) => v ?? undefined)
+      .optional(),
     modelAnswer: ModelAnswerInputSchema.nullable().optional(),
-    rubricCriteria: z.array(RubricCriterionInputSchema).optional(),
+    rubricCriteria: z
+      .array(RubricCriterionInputSchema)
+      .nullable()
+      .transform((v) => v ?? undefined)
+      .optional(),
   })
   .superRefine((val, ctx) => {
     if (val.type === 'MCQ') {

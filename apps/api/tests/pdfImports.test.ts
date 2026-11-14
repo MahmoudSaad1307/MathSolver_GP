@@ -81,6 +81,7 @@ function createFakeAiClient(): { client: AiServiceClient; calls: AiExtractExamPd
                 { label: 'D', textLatex: '$9$', isCorrect: false },
               ],
               modelAnswer: null,
+              rubricCriteria: null as unknown as undefined,
               ocrConfidence: 0.97,
               dualOcrAgreed: true,
               sympyStatus: 'VERIFIED',
@@ -99,6 +100,7 @@ function createFakeAiClient(): { client: AiServiceClient; calls: AiExtractExamPd
               points: 5,
               solutionUrl: null,
               needsTeacherConfirmation: true,
+              mcqOptions: null as unknown as undefined,
               modelAnswer: {
                 solutionStepsLatex: ['$2x + 3$'],
                 finalAnswerLatex: '2x + 3',
@@ -180,6 +182,7 @@ function createFakeAiClient(): { client: AiServiceClient; calls: AiExtractExamPd
                 { label: 'D', textLatex: '$8$', isCorrect: false },
               ],
               modelAnswer: null,
+              rubricCriteria: null as unknown as undefined,
               ocrConfidence: 0.98,
               dualOcrAgreed: true,
               sympyStatus: 'VERIFIED',

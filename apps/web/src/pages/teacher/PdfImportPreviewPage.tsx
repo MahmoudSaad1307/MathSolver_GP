@@ -263,6 +263,19 @@ export default function PdfImportPreviewPage() {
           </Alert>
         )}
 
+        {jobQuery.isError && (
+          <Alert tone="danger">
+            {getApiErrorMessage(jobQuery.error, locale, t('errors.generic'))}
+          </Alert>
+        )}
+
+        {job &&
+          job.status === 'READY_FOR_REVIEW' &&
+          modelsState.length === 0 &&
+          !job.preview?.models.length && (
+            <Alert tone="warning">{t('pdfImport.noQuestionsFilter')}</Alert>
+          )}
+
         {actionError && <Alert tone="danger">{actionError}</Alert>}
         {actionSuccess && <Alert tone="success">{actionSuccess}</Alert>}
 
