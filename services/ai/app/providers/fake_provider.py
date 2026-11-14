@@ -458,3 +458,202 @@ class FakeProvider(LLMProvider):
             model_name="fake-grader-v1",
             schema_retry_used=False,
         )
+
+    async def extract_json_with_images(
+        self,
+        *,
+        processed_images: list[tuple[str, str]],
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int = 4096,
+        timeout_seconds: float | None = None,
+        hint_tag: str | None = None,
+    ) -> RawProviderCall:
+        del processed_images, system_prompt, max_tokens, timeout_seconds
+        tag = (hint_tag or "").lower()
+        payload = _fake_pdf_stage_payload(tag=tag, user_prompt=user_prompt)
+        raw_text = json.dumps(payload, ensure_ascii=False)
+        return RawProviderCall(
+            raw_text=raw_text,
+            parsed_json=payload,
+            input_tokens=420,
+            output_tokens=310,
+            cost_usd=0.0,
+            latency_ms=18,
+            model_name="fake-pdf-extractor-v1",
+            schema_retry_used=False,
+        )
+
+
+def _extract_page_sections(user_prompt: str) -> list[tuple[int, str]]:
+    matches = list(re.finditer(r"\[PAGE\s+(\d+)\]\s*(.*?)(?=\[PAGE\s+\d+\]|\Z)", user_prompt, re.S))
+    return [(int(m.group(1)), m.group(2).strip()) for m in matches]
+
+
+def _classify_fake_page(text: str) -> tuple[str, list[int], list[int]]:
+    lower = text.lower()
+    q_nums = [
+        int(n) for n in re.findall(r"(?:^|\n)\s*(?:Q|Question|س)\s*(\d+)\s*[:.)\-]", text, re.I)
+    ]
+    a_nums = [
+        int(n)
+        for n in re.findall(
+            r"(?:^|\n)\s*(?:Ans|Answer|Sol|Model Answer|الإجابة)\s*(\d+)\s*[:.)\-]", text, re.I
+        )
+    ]
+    has_q_hdr = "questions" in lower or "part i" in lower or bool(q_nums)
+    has_a_hdr = "model answer" in lower or "answer key" in lower or bool(a_nums)
+    if not text.strip():
+        return ("COVER_BLANK", [], [])
+    if has_q_hdr and has_a_hdr:
+        return ("MIXED", q_nums, a_nums)
+    if has_a_hdr:
+        return ("MODEL_ANSWERS", [], a_nums)
+    if has_q_hdr:
+        return ("QUESTIONS", q_nums, [])
+    return ("COVER_BLANK", [], [])
+
+
+def _fake_pdf_stage_payload(*, tag: str, user_prompt: str) -> dict[str, object]:
+    pages = _extract_page_sections(user_prompt)
+    if tag.startswith("pdf_segment"):
+        page_entries: list[dict[str, object]] = []
+        all_q: list[int] = []
+        all_a: list[int] = []
+        for pno, ptext in pages:
+            role, qn, an = _classify_fake_page(ptext)
+            all_q.extend(qn)
+            all_a.extend(an)
+            page_entries.append(
+                {
+                    "pageNumber": pno,
+                    "role": role,
+                    "questionNumbers": qn,
+                    "answerNumbers": an,
+                }
+            )
+        return {
+            "pages": page_entries,
+            "questionNumbersFound": sorted(set(all_q)),
+            "answerNumbersFound": sorted(set(all_a)),
+        }
+
+    if tag.startswith("pdf_ocr"):
+        blocks: list[dict[str, object]] = []
+        for pno, ptext in pages:
+            role, qn, an = _classify_fake_page(ptext)
+            if role == "COVER_BLANK":
+                continue
+            conf = 0.65 if "[LOW_CONF]" in ptext else 0.96
+            blocks.append(
+                {
+                    "pageNumber": pno,
+                    "role": role,
+                    "questionNumbers": qn,
+                    "answerNumbers": an,
+                    "text": ptext,
+                    "confidence": conf,
+                }
+            )
+        return {"blocks": blocks}
+
+    # pdf_structure_pair fallback: parse Qn: and Ans n: lines
+    questions = _parse_fake_structured_questions(user_prompt)
+    return {
+        "questions": questions,
+        "unmatchedQuestionNumbers": [],
+        "unmatchedAnswerNumbers": [],
+    }
+
+
+def _parse_fake_structured_questions(user_prompt: str) -> list[dict[str, object]]:
+    q_blocks = list(
+        re.finditer(
+            r"(?:^|\n)\s*Q(\d+)\s*[:.)\-]\s*(.*?)(?=\n\s*(?:Q\d+|Ans\s*\d+|Answer\s*\d+)\s*[:.)\-]|\Z)",
+            user_prompt,
+            re.S | re.I,
+        )
+    )
+    a_blocks = {
+        int(m.group(1)): m.group(2).strip()
+        for m in re.finditer(
+            r"(?:^|\n)\s*(?:Ans|Answer)\s*(\d+)\s*[:.)\-]\s*(.*?)(?=\n\s*(?:Q\d+|Ans\s*\d+|Answer\s*\d+)\s*[:.)\-]|\Z)",
+            user_prompt,
+            re.S | re.I,
+        )
+    }
+    out: list[dict[str, object]] = []
+    for idx, m in enumerate(q_blocks, start=1):
+        num = int(m.group(1))
+        body = m.group(2).strip()
+        ans_body = a_blocks.get(num, "")
+        opts = re.findall(r"([A-D])\)\s*([^\n]+)", body)
+        pts_m = re.search(r"\[(\d+(?:\.\d+)?)\s*(?:pts?|marks?)\]", body, re.I)
+        pts = float(pts_m.group(1)) if pts_m else (2.0 if opts else 5.0)
+        prompt_line = body.split("\n")[0].strip()
+        if len(opts) == 4:
+            corr_m = re.search(r"\b([A-D])\b", ans_body)
+            corr = corr_m.group(1) if corr_m else "A"
+            out.append(
+                {
+                    "orderIndex": idx,
+                    "questionNumber": num,
+                    "conceptKey": f"concept-{num}",
+                    "type": "MCQ",
+                    "promptLatex": prompt_line,
+                    "points": pts,
+                    "pointsWereInferred": pts_m is None,
+                    "ocrConfidence": 0.96,
+                    "sourceQuestionPages": [1],
+                    "sourceAnswerPages": [2] if ans_body else [],
+                    "mcqOptions": [
+                        {"label": lbl, "textLatex": txt.strip(), "isCorrect": lbl == corr}
+                        for lbl, txt in opts
+                    ],
+                    "modelAnswer": None,
+                    "rubricCriteria": [],
+                }
+            )
+        else:
+            steps = [line.strip() for line in ans_body.splitlines() if line.strip()]
+            final_ans = steps[-1] if steps else "0"
+            if "=" in final_ans:
+                final_ans = final_ans.split("=")[-1].strip()
+            out.append(
+                {
+                    "orderIndex": idx,
+                    "questionNumber": num,
+                    "conceptKey": f"concept-{num}",
+                    "type": "ESSAY",
+                    "promptLatex": prompt_line,
+                    "points": pts,
+                    "pointsWereInferred": pts_m is None,
+                    "ocrConfidence": 0.95,
+                    "sourceQuestionPages": [1],
+                    "sourceAnswerPages": [2] if ans_body else [],
+                    "mcqOptions": [],
+                    "modelAnswer": {
+                        "solutionStepsLatex": steps or ["No steps found"],
+                        "finalAnswerLatex": final_ans,
+                        "finalAnswerSympy": final_ans,
+                        "commonMistakes": "",
+                    },
+                    "rubricCriteria": [
+                        {
+                            "orderIndex": 1,
+                            "key": "method",
+                            "descriptionEn": "Correct method and steps",
+                            "descriptionAr": "خطوات الحل الصحيحة",
+                            "maxPoints": round(pts * 0.6, 2),
+                        },
+                        {
+                            "orderIndex": 2,
+                            "key": "final_answer",
+                            "descriptionEn": "Accurate final answer",
+                            "descriptionAr": "الإجابة النهائية الصحيحة",
+                            "maxPoints": round(pts - round(pts * 0.6, 2), 2),
+                        },
+                    ],
+                }
+            )
+    return out

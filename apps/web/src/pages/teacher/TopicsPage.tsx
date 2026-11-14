@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { TeacherShell } from '@/components/layouts/TeacherShell';
 import { ImportBundleModal } from '@/components/teacher/ImportBundleModal';
+import { PdfImportUploadModal } from '@/components/teacher/PdfImportUploadModal';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -26,6 +27,7 @@ export default function TopicsPage() {
 
   const [showCreate, setShowCreate] = React.useState(false);
   const [showImport, setShowImport] = React.useState(false);
+  const [showPdfImport, setShowPdfImport] = React.useState(false);
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [formError, setFormError] = React.useState<string | null>(null);
@@ -100,6 +102,10 @@ export default function TopicsPage() {
             <p className="mt-1 text-sm text-slate-600">{t('teacher.topics.subtitle')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setShowPdfImport(true)}>
+              <FileUp className="h-4 w-4" />
+              <span>{t('teacher.topics.importPdf')}</span>
+            </Button>
             <Button variant="outline" onClick={() => setShowImport(true)}>
               <FileUp className="h-4 w-4" />
               <span>{t('teacher.topics.importJson')}</span>
@@ -252,6 +258,16 @@ export default function TopicsPage() {
             if (res.topicId) {
               void navigate(`/teacher/topics/${res.topicId}`);
             }
+          }}
+        />
+      )}
+
+      {showPdfImport && (
+        <PdfImportUploadModal
+          onClose={() => setShowPdfImport(false)}
+          onJobCreated={(jobId) => {
+            setShowPdfImport(false);
+            void navigate(`/teacher/pdf-imports/${jobId}`);
           }}
         />
       )}

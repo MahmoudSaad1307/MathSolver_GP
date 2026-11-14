@@ -88,6 +88,21 @@ class RawProviderCall:
 class LLMProvider(ABC):
     provider_name: str
 
+    async def extract_json_with_images(
+        self,
+        *,
+        processed_images: list[tuple[str, str]],
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int = 4096,
+        timeout_seconds: float | None = None,
+        hint_tag: str | None = None,
+    ) -> RawProviderCall:
+        """Vision+text call returning JSON output with configurable token & timeout budgets."""
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement extract_json_with_images"
+        )
+
     @abstractmethod
     async def transcribe(
         self,

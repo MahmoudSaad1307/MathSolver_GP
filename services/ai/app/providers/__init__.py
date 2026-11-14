@@ -27,6 +27,49 @@ def create_provider(settings: Settings) -> LLMProvider:
     )
 
 
+def create_secondary_provider(settings: Settings) -> LLMProvider | None:
+    """Return secondary cross-check provider when both Anthropic and Groq keys exist."""
+    if settings.ai_provider == "anthropic" and settings.groq_api_key:
+        return GroqProvider(
+            api_key=settings.groq_api_key,
+            vision_model=settings.groq_vision_model,
+            grade_model=settings.groq_grade_model,
+            timeout_seconds=settings.ai_request_timeout_seconds,
+        )
+    if settings.ai_provider == "groq" and settings.anthropic_api_key:
+        return AnthropicProvider(
+            api_key=settings.anthropic_api_key,
+            transcribe_model=settings.ai_model_transcribe,
+            grade_model=settings.ai_model_grade,
+            timeout_seconds=settings.ai_request_timeout_seconds,
+        )
+    return None
+
+
+@lru_cache(maxsize=1)
+def get_secondary_provider_cached(
+    ai_provider: str,
+    anthropic_key: str,
+    groq_key: str,
+    transcribe_model: str,
+    grade_model: str,
+    groq_vision_model: str,
+    groq_grade_model: str,
+    timeout_seconds: float,
+) -> LLMProvider | None:
+    settings = Settings(
+        ai_provider=ai_provider,  # type: ignore[arg-type]
+        anthropic_api_key=anthropic_key,
+        groq_api_key=groq_key,
+        ai_model_transcribe=transcribe_model,
+        ai_model_grade=grade_model,
+        groq_vision_model=groq_vision_model,
+        groq_grade_model=groq_grade_model,
+        ai_request_timeout_seconds=timeout_seconds,
+    )
+    return create_secondary_provider(settings)
+
+
 @lru_cache(maxsize=1)
 def get_provider_cached(
     ai_provider: str,

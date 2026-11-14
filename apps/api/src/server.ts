@@ -5,6 +5,7 @@ import { createLogger } from './lib/logger.js';
 import { getPrisma } from './lib/prisma.js';
 import { createRedisClient } from './lib/redis.js';
 import { BullMqGradingDispatcher } from './services/gradingDispatcher.js';
+import { BullMqPdfImportDispatcher } from './services/pdfImportDispatcher.js';
 
 async function main() {
   const env = loadEnv();
@@ -23,7 +24,8 @@ async function main() {
   });
 
   const gradingDispatcher = new BullMqGradingDispatcher(env.REDIS_URL, logger);
-  const app = createApp({ env, prisma, logger, redis, gradingDispatcher });
+  const pdfImportDispatcher = new BullMqPdfImportDispatcher(env.REDIS_URL, logger);
+  const app = createApp({ env, prisma, logger, redis, gradingDispatcher, pdfImportDispatcher });
 
   const server = app.listen(env.API_PORT, () => {
     logger.info({ port: env.API_PORT }, 'MathLens API listening');
@@ -34,6 +36,7 @@ async function main() {
     server.close(() => {
       void (async () => {
         await gradingDispatcher.close?.().catch(() => undefined);
+        await pdfImportDispatcher.close?.().catch(() => undefined);
         await redis.quit().catch(() => undefined);
         await prisma.$disconnect();
         process.exit(0);

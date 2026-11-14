@@ -140,6 +140,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -236,6 +240,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -337,6 +345,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -433,6 +445,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -498,6 +514,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -610,6 +630,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -1092,6 +1116,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -2423,6 +2451,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -2756,6 +2788,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -2927,6 +2963,10 @@ Generated from Zod schemas via `npm run docs:openapi`.
                             "IMAGE_REJECTED_QUALITY",
                             "RUBRIC_SUM_MISMATCH",
                             "PUBLISH_CHECKLIST_FAILED",
+                            "PDF_INVALID",
+                            "PDF_TOO_LARGE",
+                            "PDF_TOO_MANY_PAGES",
+                            "PDF_EXTRACTION_FAILED",
                             "AI_UNAVAILABLE",
                             "AI_CAP_EXCEEDED",
                             "INTERNAL_ERROR"
@@ -3155,6 +3195,2925 @@ Generated from Zod schemas via `npm run docs:openapi`.
         "responses": {
           "200": {
             "description": "Pre vs Post comparison with Hake normalized gain & concept breakdown"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf-imports": {
+      "post": {
+        "tags": ["PDF Import"],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prePdf": {
+                    "type": "string"
+                  },
+                  "postPdf": {
+                    "type": "string"
+                  },
+                  "topicId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "preTitle": {
+                    "type": "string"
+                  },
+                  "postTitle": {
+                    "type": "string"
+                  },
+                  "topicMeta": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "PDF import job queued for background OCR + AI extraction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "topicId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "appliedTopicId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["QUEUED", "PROCESSING", "READY_FOR_REVIEW", "APPLIED", "FAILED"]
+                        },
+                        "currentStage": {
+                          "type": "string"
+                        },
+                        "progressPct": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "hasPrePdf": {
+                          "type": "boolean"
+                        },
+                        "hasPostPdf": {
+                          "type": "boolean"
+                        },
+                        "topicMeta": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "minLength": 2,
+                              "maxLength": 200
+                            },
+                            "description": {
+                              "type": "string",
+                              "maxLength": 2000,
+                              "default": ""
+                            },
+                            "correctnessThreshold": {
+                              "type": "number",
+                              "minimum": 0.1,
+                              "maximum": 1,
+                              "default": 0.6
+                            }
+                          },
+                          "required": ["title"]
+                        },
+                        "preview": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "models": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "modelNumber": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "enum": [1]
+                                      },
+                                      {
+                                        "type": "number",
+                                        "enum": [2]
+                                      }
+                                    ]
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 200
+                                  },
+                                  "durationMinutes": {
+                                    "type": "integer",
+                                    "minimum": 5,
+                                    "maximum": 300,
+                                    "default": 60
+                                  },
+                                  "pageCount": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "pages": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "pageNumber": {
+                                          "type": "integer",
+                                          "minimum": 1
+                                        },
+                                        "role": {
+                                          "type": "string",
+                                          "enum": [
+                                            "QUESTIONS",
+                                            "MODEL_ANSWERS",
+                                            "MIXED",
+                                            "COVER_BLANK"
+                                          ]
+                                        },
+                                        "hasTextLayer": {
+                                          "type": "boolean"
+                                        },
+                                        "isBlank": {
+                                          "type": "boolean"
+                                        },
+                                        "imageUrl": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": ["pageNumber", "role", "hasTextLayer", "isBlank"]
+                                    }
+                                  },
+                                  "questionsFoundCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "answersFoundCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "matchedCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "unmatchedQuestionNumbers": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer"
+                                    },
+                                    "default": []
+                                  },
+                                  "unmatchedAnswerNumbers": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer"
+                                    },
+                                    "default": []
+                                  },
+                                  "reportWarnings": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "code": {
+                                          "type": "string",
+                                          "enum": [
+                                            "OCR_LOW_CONFIDENCE",
+                                            "OCR_DISAGREEMENT",
+                                            "TEXT_LAYER_DISAGREEMENT",
+                                            "SYMPY_UNPARSABLE",
+                                            "ANSWER_STEP_MISMATCH",
+                                            "MCQ_ANSWER_CONFLICT",
+                                            "DUPLICATE_MCQ_OPTIONS",
+                                            "UNMATCHED_QUESTION",
+                                            "UNMATCHED_ANSWER",
+                                            "COUNT_MISMATCH",
+                                            "DEFAULT_POINTS_ASSIGNED",
+                                            "INVALID_MCQ_OPTIONS",
+                                            "ARABIC_LABELS_MAPPED"
+                                          ]
+                                        },
+                                        "severity": {
+                                          "type": "string",
+                                          "enum": ["info", "warning", "error"]
+                                        },
+                                        "messageEn": {
+                                          "type": "string"
+                                        },
+                                        "messageAr": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": ["code", "severity", "messageEn", "messageAr"]
+                                    },
+                                    "default": []
+                                  },
+                                  "questions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "tempId": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        },
+                                        "orderIndex": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 200
+                                        },
+                                        "conceptKey": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": ["MCQ", "ESSAY"]
+                                        },
+                                        "promptLatex": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 10000
+                                        },
+                                        "points": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "exclusiveMinimum": true,
+                                          "maximum": 100
+                                        },
+                                        "solutionUrl": {
+                                          "type": "string",
+                                          "nullable": true,
+                                          "maxLength": 1000
+                                        },
+                                        "needsTeacherConfirmation": {
+                                          "type": "boolean",
+                                          "default": true
+                                        },
+                                        "mcqOptions": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "label": {
+                                                "type": "string",
+                                                "enum": ["A", "B", "C", "D"]
+                                              },
+                                              "textLatex": {
+                                                "type": "string",
+                                                "maxLength": 2000
+                                              },
+                                              "isCorrect": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": ["label", "textLatex", "isCorrect"]
+                                          }
+                                        },
+                                        "modelAnswer": {
+                                          "type": "object",
+                                          "nullable": true,
+                                          "properties": {
+                                            "solutionStepsLatex": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string",
+                                                "maxLength": 2000
+                                              }
+                                            },
+                                            "finalAnswerLatex": {
+                                              "type": "string",
+                                              "maxLength": 1000
+                                            },
+                                            "finalAnswerSympy": {
+                                              "type": "string",
+                                              "nullable": true,
+                                              "maxLength": 500
+                                            },
+                                            "commonMistakes": {
+                                              "type": "string",
+                                              "maxLength": 4000,
+                                              "default": ""
+                                            }
+                                          },
+                                          "required": ["solutionStepsLatex", "finalAnswerLatex"]
+                                        },
+                                        "rubricCriteria": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "orderIndex": {
+                                                "type": "integer",
+                                                "minimum": 1
+                                              },
+                                              "key": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 100
+                                              },
+                                              "descriptionEn": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "descriptionAr": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "maxPoints": {
+                                                "type": "number",
+                                                "minimum": 0,
+                                                "exclusiveMinimum": true,
+                                                "maximum": 100
+                                              }
+                                            },
+                                            "required": [
+                                              "orderIndex",
+                                              "key",
+                                              "descriptionEn",
+                                              "descriptionAr",
+                                              "maxPoints"
+                                            ]
+                                          }
+                                        },
+                                        "ocrConfidence": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 1,
+                                          "default": 1
+                                        },
+                                        "dualOcrAgreed": {
+                                          "type": "boolean",
+                                          "default": true
+                                        },
+                                        "sympyStatus": {
+                                          "type": "string",
+                                          "enum": [
+                                            "VERIFIED",
+                                            "MISMATCH",
+                                            "UNPARSABLE",
+                                            "NOT_APPLICABLE"
+                                          ],
+                                          "default": "NOT_APPLICABLE"
+                                        },
+                                        "sympyDetail": {
+                                          "type": "string",
+                                          "default": ""
+                                        },
+                                        "sourceQuestionPages": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                          },
+                                          "default": []
+                                        },
+                                        "sourceAnswerPages": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                          },
+                                          "default": []
+                                        },
+                                        "warnings": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "code": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "OCR_LOW_CONFIDENCE",
+                                                  "OCR_DISAGREEMENT",
+                                                  "TEXT_LAYER_DISAGREEMENT",
+                                                  "SYMPY_UNPARSABLE",
+                                                  "ANSWER_STEP_MISMATCH",
+                                                  "MCQ_ANSWER_CONFLICT",
+                                                  "DUPLICATE_MCQ_OPTIONS",
+                                                  "UNMATCHED_QUESTION",
+                                                  "UNMATCHED_ANSWER",
+                                                  "COUNT_MISMATCH",
+                                                  "DEFAULT_POINTS_ASSIGNED",
+                                                  "INVALID_MCQ_OPTIONS",
+                                                  "ARABIC_LABELS_MAPPED"
+                                                ]
+                                              },
+                                              "severity": {
+                                                "type": "string",
+                                                "enum": ["info", "warning", "error"]
+                                              },
+                                              "messageEn": {
+                                                "type": "string"
+                                              },
+                                              "messageAr": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "code",
+                                              "severity",
+                                              "messageEn",
+                                              "messageAr"
+                                            ]
+                                          },
+                                          "default": []
+                                        },
+                                        "verifiedByTeacher": {
+                                          "type": "boolean",
+                                          "default": false
+                                        }
+                                      },
+                                      "required": [
+                                        "tempId",
+                                        "orderIndex",
+                                        "conceptKey",
+                                        "type",
+                                        "promptLatex",
+                                        "points"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "modelNumber",
+                                  "title",
+                                  "pageCount",
+                                  "pages",
+                                  "questionsFoundCount",
+                                  "answersFoundCount",
+                                  "matchedCount",
+                                  "questions"
+                                ]
+                              },
+                              "minItems": 1,
+                              "maxItems": 2
+                            },
+                            "twinSummary": {
+                              "type": "object",
+                              "properties": {
+                                "matchedConceptKeys": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "onlyInModel1": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "onlyInModel2": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "required": ["matchedConceptKeys", "onlyInModel1", "onlyInModel2"]
+                            },
+                            "telemetry": {
+                              "type": "object",
+                              "properties": {
+                                "provider": {
+                                  "type": "string"
+                                },
+                                "secondaryProvider": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "default": null
+                                },
+                                "totalInputTokens": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "totalOutputTokens": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "totalCostUsd": {
+                                  "type": "number",
+                                  "minimum": 0
+                                },
+                                "latencyMs": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                }
+                              },
+                              "required": [
+                                "provider",
+                                "totalInputTokens",
+                                "totalOutputTokens",
+                                "totalCostUsd",
+                                "latencyMs"
+                              ]
+                            }
+                          },
+                          "required": ["models", "twinSummary", "telemetry"]
+                        },
+                        "errorCode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "topicId",
+                        "appliedTopicId",
+                        "status",
+                        "currentStage",
+                        "progressPct",
+                        "hasPrePdf",
+                        "hasPostPdf",
+                        "topicMeta",
+                        "preview",
+                        "errorCode",
+                        "errorMessage",
+                        "createdAt",
+                        "updatedAt",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": ["job"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["PDF Import"],
+        "responses": {
+          "200": {
+            "description": "List recent PDF import jobs for the authenticated teacher",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "topicId": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "uuid"
+                          },
+                          "appliedTopicId": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "uuid"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "QUEUED",
+                              "PROCESSING",
+                              "READY_FOR_REVIEW",
+                              "APPLIED",
+                              "FAILED"
+                            ]
+                          },
+                          "currentStage": {
+                            "type": "string"
+                          },
+                          "progressPct": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 100
+                          },
+                          "hasPrePdf": {
+                            "type": "boolean"
+                          },
+                          "hasPostPdf": {
+                            "type": "boolean"
+                          },
+                          "topicMeta": {
+                            "type": "object",
+                            "nullable": true,
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 2,
+                                "maxLength": 200
+                              },
+                              "description": {
+                                "type": "string",
+                                "maxLength": 2000,
+                                "default": ""
+                              },
+                              "correctnessThreshold": {
+                                "type": "number",
+                                "minimum": 0.1,
+                                "maximum": 1,
+                                "default": 0.6
+                              }
+                            },
+                            "required": ["title"]
+                          },
+                          "preview": {
+                            "type": "object",
+                            "nullable": true,
+                            "properties": {
+                              "models": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "modelNumber": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number",
+                                          "enum": [1]
+                                        },
+                                        {
+                                          "type": "number",
+                                          "enum": [2]
+                                        }
+                                      ]
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 200
+                                    },
+                                    "durationMinutes": {
+                                      "type": "integer",
+                                      "minimum": 5,
+                                      "maximum": 300,
+                                      "default": 60
+                                    },
+                                    "pageCount": {
+                                      "type": "integer",
+                                      "minimum": 1
+                                    },
+                                    "pages": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "pageNumber": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                          },
+                                          "role": {
+                                            "type": "string",
+                                            "enum": [
+                                              "QUESTIONS",
+                                              "MODEL_ANSWERS",
+                                              "MIXED",
+                                              "COVER_BLANK"
+                                            ]
+                                          },
+                                          "hasTextLayer": {
+                                            "type": "boolean"
+                                          },
+                                          "isBlank": {
+                                            "type": "boolean"
+                                          },
+                                          "imageUrl": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "pageNumber",
+                                          "role",
+                                          "hasTextLayer",
+                                          "isBlank"
+                                        ]
+                                      }
+                                    },
+                                    "questionsFoundCount": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "answersFoundCount": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "matchedCount": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    },
+                                    "unmatchedQuestionNumbers": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer"
+                                      },
+                                      "default": []
+                                    },
+                                    "unmatchedAnswerNumbers": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer"
+                                      },
+                                      "default": []
+                                    },
+                                    "reportWarnings": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "code": {
+                                            "type": "string",
+                                            "enum": [
+                                              "OCR_LOW_CONFIDENCE",
+                                              "OCR_DISAGREEMENT",
+                                              "TEXT_LAYER_DISAGREEMENT",
+                                              "SYMPY_UNPARSABLE",
+                                              "ANSWER_STEP_MISMATCH",
+                                              "MCQ_ANSWER_CONFLICT",
+                                              "DUPLICATE_MCQ_OPTIONS",
+                                              "UNMATCHED_QUESTION",
+                                              "UNMATCHED_ANSWER",
+                                              "COUNT_MISMATCH",
+                                              "DEFAULT_POINTS_ASSIGNED",
+                                              "INVALID_MCQ_OPTIONS",
+                                              "ARABIC_LABELS_MAPPED"
+                                            ]
+                                          },
+                                          "severity": {
+                                            "type": "string",
+                                            "enum": ["info", "warning", "error"]
+                                          },
+                                          "messageEn": {
+                                            "type": "string"
+                                          },
+                                          "messageAr": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": ["code", "severity", "messageEn", "messageAr"]
+                                      },
+                                      "default": []
+                                    },
+                                    "questions": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "tempId": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 100
+                                          },
+                                          "orderIndex": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 200
+                                          },
+                                          "conceptKey": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 100
+                                          },
+                                          "type": {
+                                            "type": "string",
+                                            "enum": ["MCQ", "ESSAY"]
+                                          },
+                                          "promptLatex": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 10000
+                                          },
+                                          "points": {
+                                            "type": "number",
+                                            "minimum": 0,
+                                            "exclusiveMinimum": true,
+                                            "maximum": 100
+                                          },
+                                          "solutionUrl": {
+                                            "type": "string",
+                                            "nullable": true,
+                                            "maxLength": 1000
+                                          },
+                                          "needsTeacherConfirmation": {
+                                            "type": "boolean",
+                                            "default": true
+                                          },
+                                          "mcqOptions": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "label": {
+                                                  "type": "string",
+                                                  "enum": ["A", "B", "C", "D"]
+                                                },
+                                                "textLatex": {
+                                                  "type": "string",
+                                                  "maxLength": 2000
+                                                },
+                                                "isCorrect": {
+                                                  "type": "boolean"
+                                                }
+                                              },
+                                              "required": ["label", "textLatex", "isCorrect"]
+                                            }
+                                          },
+                                          "modelAnswer": {
+                                            "type": "object",
+                                            "nullable": true,
+                                            "properties": {
+                                              "solutionStepsLatex": {
+                                                "type": "array",
+                                                "items": {
+                                                  "type": "string",
+                                                  "maxLength": 2000
+                                                }
+                                              },
+                                              "finalAnswerLatex": {
+                                                "type": "string",
+                                                "maxLength": 1000
+                                              },
+                                              "finalAnswerSympy": {
+                                                "type": "string",
+                                                "nullable": true,
+                                                "maxLength": 500
+                                              },
+                                              "commonMistakes": {
+                                                "type": "string",
+                                                "maxLength": 4000,
+                                                "default": ""
+                                              }
+                                            },
+                                            "required": ["solutionStepsLatex", "finalAnswerLatex"]
+                                          },
+                                          "rubricCriteria": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "orderIndex": {
+                                                  "type": "integer",
+                                                  "minimum": 1
+                                                },
+                                                "key": {
+                                                  "type": "string",
+                                                  "minLength": 1,
+                                                  "maxLength": 100
+                                                },
+                                                "descriptionEn": {
+                                                  "type": "string",
+                                                  "minLength": 1,
+                                                  "maxLength": 1000
+                                                },
+                                                "descriptionAr": {
+                                                  "type": "string",
+                                                  "minLength": 1,
+                                                  "maxLength": 1000
+                                                },
+                                                "maxPoints": {
+                                                  "type": "number",
+                                                  "minimum": 0,
+                                                  "exclusiveMinimum": true,
+                                                  "maximum": 100
+                                                }
+                                              },
+                                              "required": [
+                                                "orderIndex",
+                                                "key",
+                                                "descriptionEn",
+                                                "descriptionAr",
+                                                "maxPoints"
+                                              ]
+                                            }
+                                          },
+                                          "ocrConfidence": {
+                                            "type": "number",
+                                            "minimum": 0,
+                                            "maximum": 1,
+                                            "default": 1
+                                          },
+                                          "dualOcrAgreed": {
+                                            "type": "boolean",
+                                            "default": true
+                                          },
+                                          "sympyStatus": {
+                                            "type": "string",
+                                            "enum": [
+                                              "VERIFIED",
+                                              "MISMATCH",
+                                              "UNPARSABLE",
+                                              "NOT_APPLICABLE"
+                                            ],
+                                            "default": "NOT_APPLICABLE"
+                                          },
+                                          "sympyDetail": {
+                                            "type": "string",
+                                            "default": ""
+                                          },
+                                          "sourceQuestionPages": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "integer",
+                                              "minimum": 1
+                                            },
+                                            "default": []
+                                          },
+                                          "sourceAnswerPages": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "integer",
+                                              "minimum": 1
+                                            },
+                                            "default": []
+                                          },
+                                          "warnings": {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "object",
+                                              "properties": {
+                                                "code": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "OCR_LOW_CONFIDENCE",
+                                                    "OCR_DISAGREEMENT",
+                                                    "TEXT_LAYER_DISAGREEMENT",
+                                                    "SYMPY_UNPARSABLE",
+                                                    "ANSWER_STEP_MISMATCH",
+                                                    "MCQ_ANSWER_CONFLICT",
+                                                    "DUPLICATE_MCQ_OPTIONS",
+                                                    "UNMATCHED_QUESTION",
+                                                    "UNMATCHED_ANSWER",
+                                                    "COUNT_MISMATCH",
+                                                    "DEFAULT_POINTS_ASSIGNED",
+                                                    "INVALID_MCQ_OPTIONS",
+                                                    "ARABIC_LABELS_MAPPED"
+                                                  ]
+                                                },
+                                                "severity": {
+                                                  "type": "string",
+                                                  "enum": ["info", "warning", "error"]
+                                                },
+                                                "messageEn": {
+                                                  "type": "string"
+                                                },
+                                                "messageAr": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "code",
+                                                "severity",
+                                                "messageEn",
+                                                "messageAr"
+                                              ]
+                                            },
+                                            "default": []
+                                          },
+                                          "verifiedByTeacher": {
+                                            "type": "boolean",
+                                            "default": false
+                                          }
+                                        },
+                                        "required": [
+                                          "tempId",
+                                          "orderIndex",
+                                          "conceptKey",
+                                          "type",
+                                          "promptLatex",
+                                          "points"
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "modelNumber",
+                                    "title",
+                                    "pageCount",
+                                    "pages",
+                                    "questionsFoundCount",
+                                    "answersFoundCount",
+                                    "matchedCount",
+                                    "questions"
+                                  ]
+                                },
+                                "minItems": 1,
+                                "maxItems": 2
+                              },
+                              "twinSummary": {
+                                "type": "object",
+                                "properties": {
+                                  "matchedConceptKeys": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "onlyInModel1": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "onlyInModel2": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": ["matchedConceptKeys", "onlyInModel1", "onlyInModel2"]
+                              },
+                              "telemetry": {
+                                "type": "object",
+                                "properties": {
+                                  "provider": {
+                                    "type": "string"
+                                  },
+                                  "secondaryProvider": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "default": null
+                                  },
+                                  "totalInputTokens": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "totalOutputTokens": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "totalCostUsd": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latencyMs": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "provider",
+                                  "totalInputTokens",
+                                  "totalOutputTokens",
+                                  "totalCostUsd",
+                                  "latencyMs"
+                                ]
+                              }
+                            },
+                            "required": ["models", "twinSummary", "telemetry"]
+                          },
+                          "errorCode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "errorMessage": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "topicId",
+                          "appliedTopicId",
+                          "status",
+                          "currentStage",
+                          "progressPct",
+                          "hasPrePdf",
+                          "hasPostPdf",
+                          "topicMeta",
+                          "preview",
+                          "errorCode",
+                          "errorMessage",
+                          "createdAt",
+                          "updatedAt",
+                          "expiresAt"
+                        ]
+                      }
+                    }
+                  },
+                  "required": ["jobs"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pdf-imports/{id}": {
+      "get": {
+        "tags": ["PDF Import"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Poll PDF import job status, warnings, and interactive preview payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "topicId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "appliedTopicId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["QUEUED", "PROCESSING", "READY_FOR_REVIEW", "APPLIED", "FAILED"]
+                        },
+                        "currentStage": {
+                          "type": "string"
+                        },
+                        "progressPct": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "hasPrePdf": {
+                          "type": "boolean"
+                        },
+                        "hasPostPdf": {
+                          "type": "boolean"
+                        },
+                        "topicMeta": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "minLength": 2,
+                              "maxLength": 200
+                            },
+                            "description": {
+                              "type": "string",
+                              "maxLength": 2000,
+                              "default": ""
+                            },
+                            "correctnessThreshold": {
+                              "type": "number",
+                              "minimum": 0.1,
+                              "maximum": 1,
+                              "default": 0.6
+                            }
+                          },
+                          "required": ["title"]
+                        },
+                        "preview": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "models": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "modelNumber": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "enum": [1]
+                                      },
+                                      {
+                                        "type": "number",
+                                        "enum": [2]
+                                      }
+                                    ]
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 200
+                                  },
+                                  "durationMinutes": {
+                                    "type": "integer",
+                                    "minimum": 5,
+                                    "maximum": 300,
+                                    "default": 60
+                                  },
+                                  "pageCount": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "pages": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "pageNumber": {
+                                          "type": "integer",
+                                          "minimum": 1
+                                        },
+                                        "role": {
+                                          "type": "string",
+                                          "enum": [
+                                            "QUESTIONS",
+                                            "MODEL_ANSWERS",
+                                            "MIXED",
+                                            "COVER_BLANK"
+                                          ]
+                                        },
+                                        "hasTextLayer": {
+                                          "type": "boolean"
+                                        },
+                                        "isBlank": {
+                                          "type": "boolean"
+                                        },
+                                        "imageUrl": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": ["pageNumber", "role", "hasTextLayer", "isBlank"]
+                                    }
+                                  },
+                                  "questionsFoundCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "answersFoundCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "matchedCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "unmatchedQuestionNumbers": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer"
+                                    },
+                                    "default": []
+                                  },
+                                  "unmatchedAnswerNumbers": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer"
+                                    },
+                                    "default": []
+                                  },
+                                  "reportWarnings": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "code": {
+                                          "type": "string",
+                                          "enum": [
+                                            "OCR_LOW_CONFIDENCE",
+                                            "OCR_DISAGREEMENT",
+                                            "TEXT_LAYER_DISAGREEMENT",
+                                            "SYMPY_UNPARSABLE",
+                                            "ANSWER_STEP_MISMATCH",
+                                            "MCQ_ANSWER_CONFLICT",
+                                            "DUPLICATE_MCQ_OPTIONS",
+                                            "UNMATCHED_QUESTION",
+                                            "UNMATCHED_ANSWER",
+                                            "COUNT_MISMATCH",
+                                            "DEFAULT_POINTS_ASSIGNED",
+                                            "INVALID_MCQ_OPTIONS",
+                                            "ARABIC_LABELS_MAPPED"
+                                          ]
+                                        },
+                                        "severity": {
+                                          "type": "string",
+                                          "enum": ["info", "warning", "error"]
+                                        },
+                                        "messageEn": {
+                                          "type": "string"
+                                        },
+                                        "messageAr": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": ["code", "severity", "messageEn", "messageAr"]
+                                    },
+                                    "default": []
+                                  },
+                                  "questions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "tempId": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        },
+                                        "orderIndex": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 200
+                                        },
+                                        "conceptKey": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": ["MCQ", "ESSAY"]
+                                        },
+                                        "promptLatex": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 10000
+                                        },
+                                        "points": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "exclusiveMinimum": true,
+                                          "maximum": 100
+                                        },
+                                        "solutionUrl": {
+                                          "type": "string",
+                                          "nullable": true,
+                                          "maxLength": 1000
+                                        },
+                                        "needsTeacherConfirmation": {
+                                          "type": "boolean",
+                                          "default": true
+                                        },
+                                        "mcqOptions": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "label": {
+                                                "type": "string",
+                                                "enum": ["A", "B", "C", "D"]
+                                              },
+                                              "textLatex": {
+                                                "type": "string",
+                                                "maxLength": 2000
+                                              },
+                                              "isCorrect": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": ["label", "textLatex", "isCorrect"]
+                                          }
+                                        },
+                                        "modelAnswer": {
+                                          "type": "object",
+                                          "nullable": true,
+                                          "properties": {
+                                            "solutionStepsLatex": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string",
+                                                "maxLength": 2000
+                                              }
+                                            },
+                                            "finalAnswerLatex": {
+                                              "type": "string",
+                                              "maxLength": 1000
+                                            },
+                                            "finalAnswerSympy": {
+                                              "type": "string",
+                                              "nullable": true,
+                                              "maxLength": 500
+                                            },
+                                            "commonMistakes": {
+                                              "type": "string",
+                                              "maxLength": 4000,
+                                              "default": ""
+                                            }
+                                          },
+                                          "required": ["solutionStepsLatex", "finalAnswerLatex"]
+                                        },
+                                        "rubricCriteria": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "orderIndex": {
+                                                "type": "integer",
+                                                "minimum": 1
+                                              },
+                                              "key": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 100
+                                              },
+                                              "descriptionEn": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "descriptionAr": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "maxPoints": {
+                                                "type": "number",
+                                                "minimum": 0,
+                                                "exclusiveMinimum": true,
+                                                "maximum": 100
+                                              }
+                                            },
+                                            "required": [
+                                              "orderIndex",
+                                              "key",
+                                              "descriptionEn",
+                                              "descriptionAr",
+                                              "maxPoints"
+                                            ]
+                                          }
+                                        },
+                                        "ocrConfidence": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 1,
+                                          "default": 1
+                                        },
+                                        "dualOcrAgreed": {
+                                          "type": "boolean",
+                                          "default": true
+                                        },
+                                        "sympyStatus": {
+                                          "type": "string",
+                                          "enum": [
+                                            "VERIFIED",
+                                            "MISMATCH",
+                                            "UNPARSABLE",
+                                            "NOT_APPLICABLE"
+                                          ],
+                                          "default": "NOT_APPLICABLE"
+                                        },
+                                        "sympyDetail": {
+                                          "type": "string",
+                                          "default": ""
+                                        },
+                                        "sourceQuestionPages": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                          },
+                                          "default": []
+                                        },
+                                        "sourceAnswerPages": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                          },
+                                          "default": []
+                                        },
+                                        "warnings": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "code": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "OCR_LOW_CONFIDENCE",
+                                                  "OCR_DISAGREEMENT",
+                                                  "TEXT_LAYER_DISAGREEMENT",
+                                                  "SYMPY_UNPARSABLE",
+                                                  "ANSWER_STEP_MISMATCH",
+                                                  "MCQ_ANSWER_CONFLICT",
+                                                  "DUPLICATE_MCQ_OPTIONS",
+                                                  "UNMATCHED_QUESTION",
+                                                  "UNMATCHED_ANSWER",
+                                                  "COUNT_MISMATCH",
+                                                  "DEFAULT_POINTS_ASSIGNED",
+                                                  "INVALID_MCQ_OPTIONS",
+                                                  "ARABIC_LABELS_MAPPED"
+                                                ]
+                                              },
+                                              "severity": {
+                                                "type": "string",
+                                                "enum": ["info", "warning", "error"]
+                                              },
+                                              "messageEn": {
+                                                "type": "string"
+                                              },
+                                              "messageAr": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "code",
+                                              "severity",
+                                              "messageEn",
+                                              "messageAr"
+                                            ]
+                                          },
+                                          "default": []
+                                        },
+                                        "verifiedByTeacher": {
+                                          "type": "boolean",
+                                          "default": false
+                                        }
+                                      },
+                                      "required": [
+                                        "tempId",
+                                        "orderIndex",
+                                        "conceptKey",
+                                        "type",
+                                        "promptLatex",
+                                        "points"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "modelNumber",
+                                  "title",
+                                  "pageCount",
+                                  "pages",
+                                  "questionsFoundCount",
+                                  "answersFoundCount",
+                                  "matchedCount",
+                                  "questions"
+                                ]
+                              },
+                              "minItems": 1,
+                              "maxItems": 2
+                            },
+                            "twinSummary": {
+                              "type": "object",
+                              "properties": {
+                                "matchedConceptKeys": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "onlyInModel1": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "onlyInModel2": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "required": ["matchedConceptKeys", "onlyInModel1", "onlyInModel2"]
+                            },
+                            "telemetry": {
+                              "type": "object",
+                              "properties": {
+                                "provider": {
+                                  "type": "string"
+                                },
+                                "secondaryProvider": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "default": null
+                                },
+                                "totalInputTokens": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "totalOutputTokens": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "totalCostUsd": {
+                                  "type": "number",
+                                  "minimum": 0
+                                },
+                                "latencyMs": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                }
+                              },
+                              "required": [
+                                "provider",
+                                "totalInputTokens",
+                                "totalOutputTokens",
+                                "totalCostUsd",
+                                "latencyMs"
+                              ]
+                            }
+                          },
+                          "required": ["models", "twinSummary", "telemetry"]
+                        },
+                        "errorCode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "topicId",
+                        "appliedTopicId",
+                        "status",
+                        "currentStage",
+                        "progressPct",
+                        "hasPrePdf",
+                        "hasPostPdf",
+                        "topicMeta",
+                        "preview",
+                        "errorCode",
+                        "errorMessage",
+                        "createdAt",
+                        "updatedAt",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": ["job"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pdf-imports/{id}/pages/{modelNumber}/{pageNumber}": {
+      "get": {
+        "tags": ["PDF Import"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["1", "2"]
+            },
+            "required": true,
+            "name": "modelNumber",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "pageNumber",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rendered 200-DPI JPEG preview of source PDF page"
+          }
+        }
+      }
+    },
+    "/api/v1/pdf-imports/{id}/draft": {
+      "put": {
+        "tags": ["PDF Import"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "topicMeta": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 200
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "default": ""
+                      },
+                      "correctnessThreshold": {
+                        "type": "number",
+                        "minimum": 0.1,
+                        "maximum": 1,
+                        "default": 0.6
+                      }
+                    },
+                    "required": ["title"]
+                  },
+                  "models": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "modelNumber": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "enum": [1]
+                            },
+                            {
+                              "type": "number",
+                              "enum": [2]
+                            }
+                          ]
+                        },
+                        "title": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 200
+                        },
+                        "durationMinutes": {
+                          "type": "integer",
+                          "minimum": 5,
+                          "maximum": 300,
+                          "default": 60
+                        },
+                        "questions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tempId": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              },
+                              "orderIndex": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 200
+                              },
+                              "conceptKey": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["MCQ", "ESSAY"]
+                              },
+                              "promptLatex": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 10000
+                              },
+                              "points": {
+                                "type": "number",
+                                "minimum": 0,
+                                "exclusiveMinimum": true,
+                                "maximum": 100
+                              },
+                              "solutionUrl": {
+                                "type": "string",
+                                "nullable": true,
+                                "maxLength": 1000
+                              },
+                              "needsTeacherConfirmation": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "mcqOptions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "label": {
+                                      "type": "string",
+                                      "enum": ["A", "B", "C", "D"]
+                                    },
+                                    "textLatex": {
+                                      "type": "string",
+                                      "maxLength": 2000
+                                    },
+                                    "isCorrect": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "required": ["label", "textLatex", "isCorrect"]
+                                }
+                              },
+                              "modelAnswer": {
+                                "type": "object",
+                                "nullable": true,
+                                "properties": {
+                                  "solutionStepsLatex": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "maxLength": 2000
+                                    }
+                                  },
+                                  "finalAnswerLatex": {
+                                    "type": "string",
+                                    "maxLength": 1000
+                                  },
+                                  "finalAnswerSympy": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "maxLength": 500
+                                  },
+                                  "commonMistakes": {
+                                    "type": "string",
+                                    "maxLength": 4000,
+                                    "default": ""
+                                  }
+                                },
+                                "required": ["solutionStepsLatex", "finalAnswerLatex"]
+                              },
+                              "rubricCriteria": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "orderIndex": {
+                                      "type": "integer",
+                                      "minimum": 1
+                                    },
+                                    "key": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 100
+                                    },
+                                    "descriptionEn": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 1000
+                                    },
+                                    "descriptionAr": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 1000
+                                    },
+                                    "maxPoints": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "exclusiveMinimum": true,
+                                      "maximum": 100
+                                    }
+                                  },
+                                  "required": [
+                                    "orderIndex",
+                                    "key",
+                                    "descriptionEn",
+                                    "descriptionAr",
+                                    "maxPoints"
+                                  ]
+                                }
+                              },
+                              "ocrConfidence": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                                "default": 1
+                              },
+                              "dualOcrAgreed": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "sympyStatus": {
+                                "type": "string",
+                                "enum": ["VERIFIED", "MISMATCH", "UNPARSABLE", "NOT_APPLICABLE"],
+                                "default": "NOT_APPLICABLE"
+                              },
+                              "sympyDetail": {
+                                "type": "string",
+                                "default": ""
+                              },
+                              "sourceQuestionPages": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "default": []
+                              },
+                              "sourceAnswerPages": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "default": []
+                              },
+                              "warnings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "code": {
+                                      "type": "string",
+                                      "enum": [
+                                        "OCR_LOW_CONFIDENCE",
+                                        "OCR_DISAGREEMENT",
+                                        "TEXT_LAYER_DISAGREEMENT",
+                                        "SYMPY_UNPARSABLE",
+                                        "ANSWER_STEP_MISMATCH",
+                                        "MCQ_ANSWER_CONFLICT",
+                                        "DUPLICATE_MCQ_OPTIONS",
+                                        "UNMATCHED_QUESTION",
+                                        "UNMATCHED_ANSWER",
+                                        "COUNT_MISMATCH",
+                                        "DEFAULT_POINTS_ASSIGNED",
+                                        "INVALID_MCQ_OPTIONS",
+                                        "ARABIC_LABELS_MAPPED"
+                                      ]
+                                    },
+                                    "severity": {
+                                      "type": "string",
+                                      "enum": ["info", "warning", "error"]
+                                    },
+                                    "messageEn": {
+                                      "type": "string"
+                                    },
+                                    "messageAr": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": ["code", "severity", "messageEn", "messageAr"]
+                                },
+                                "default": []
+                              },
+                              "verifiedByTeacher": {
+                                "type": "boolean",
+                                "default": false
+                              }
+                            },
+                            "required": [
+                              "tempId",
+                              "orderIndex",
+                              "conceptKey",
+                              "type",
+                              "promptLatex",
+                              "points"
+                            ]
+                          }
+                        }
+                      },
+                      "required": ["modelNumber", "title", "questions"]
+                    },
+                    "minItems": 1,
+                    "maxItems": 2
+                  }
+                },
+                "required": ["models"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Save teacher edits and verification flags on extracted draft preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "topicId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "appliedTopicId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["QUEUED", "PROCESSING", "READY_FOR_REVIEW", "APPLIED", "FAILED"]
+                        },
+                        "currentStage": {
+                          "type": "string"
+                        },
+                        "progressPct": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "hasPrePdf": {
+                          "type": "boolean"
+                        },
+                        "hasPostPdf": {
+                          "type": "boolean"
+                        },
+                        "topicMeta": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "minLength": 2,
+                              "maxLength": 200
+                            },
+                            "description": {
+                              "type": "string",
+                              "maxLength": 2000,
+                              "default": ""
+                            },
+                            "correctnessThreshold": {
+                              "type": "number",
+                              "minimum": 0.1,
+                              "maximum": 1,
+                              "default": 0.6
+                            }
+                          },
+                          "required": ["title"]
+                        },
+                        "preview": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "models": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "modelNumber": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "enum": [1]
+                                      },
+                                      {
+                                        "type": "number",
+                                        "enum": [2]
+                                      }
+                                    ]
+                                  },
+                                  "title": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 200
+                                  },
+                                  "durationMinutes": {
+                                    "type": "integer",
+                                    "minimum": 5,
+                                    "maximum": 300,
+                                    "default": 60
+                                  },
+                                  "pageCount": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                  },
+                                  "pages": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "pageNumber": {
+                                          "type": "integer",
+                                          "minimum": 1
+                                        },
+                                        "role": {
+                                          "type": "string",
+                                          "enum": [
+                                            "QUESTIONS",
+                                            "MODEL_ANSWERS",
+                                            "MIXED",
+                                            "COVER_BLANK"
+                                          ]
+                                        },
+                                        "hasTextLayer": {
+                                          "type": "boolean"
+                                        },
+                                        "isBlank": {
+                                          "type": "boolean"
+                                        },
+                                        "imageUrl": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": ["pageNumber", "role", "hasTextLayer", "isBlank"]
+                                    }
+                                  },
+                                  "questionsFoundCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "answersFoundCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "matchedCount": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                  },
+                                  "unmatchedQuestionNumbers": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer"
+                                    },
+                                    "default": []
+                                  },
+                                  "unmatchedAnswerNumbers": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer"
+                                    },
+                                    "default": []
+                                  },
+                                  "reportWarnings": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "code": {
+                                          "type": "string",
+                                          "enum": [
+                                            "OCR_LOW_CONFIDENCE",
+                                            "OCR_DISAGREEMENT",
+                                            "TEXT_LAYER_DISAGREEMENT",
+                                            "SYMPY_UNPARSABLE",
+                                            "ANSWER_STEP_MISMATCH",
+                                            "MCQ_ANSWER_CONFLICT",
+                                            "DUPLICATE_MCQ_OPTIONS",
+                                            "UNMATCHED_QUESTION",
+                                            "UNMATCHED_ANSWER",
+                                            "COUNT_MISMATCH",
+                                            "DEFAULT_POINTS_ASSIGNED",
+                                            "INVALID_MCQ_OPTIONS",
+                                            "ARABIC_LABELS_MAPPED"
+                                          ]
+                                        },
+                                        "severity": {
+                                          "type": "string",
+                                          "enum": ["info", "warning", "error"]
+                                        },
+                                        "messageEn": {
+                                          "type": "string"
+                                        },
+                                        "messageAr": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": ["code", "severity", "messageEn", "messageAr"]
+                                    },
+                                    "default": []
+                                  },
+                                  "questions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "tempId": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        },
+                                        "orderIndex": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 200
+                                        },
+                                        "conceptKey": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 100
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": ["MCQ", "ESSAY"]
+                                        },
+                                        "promptLatex": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 10000
+                                        },
+                                        "points": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "exclusiveMinimum": true,
+                                          "maximum": 100
+                                        },
+                                        "solutionUrl": {
+                                          "type": "string",
+                                          "nullable": true,
+                                          "maxLength": 1000
+                                        },
+                                        "needsTeacherConfirmation": {
+                                          "type": "boolean",
+                                          "default": true
+                                        },
+                                        "mcqOptions": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "label": {
+                                                "type": "string",
+                                                "enum": ["A", "B", "C", "D"]
+                                              },
+                                              "textLatex": {
+                                                "type": "string",
+                                                "maxLength": 2000
+                                              },
+                                              "isCorrect": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": ["label", "textLatex", "isCorrect"]
+                                          }
+                                        },
+                                        "modelAnswer": {
+                                          "type": "object",
+                                          "nullable": true,
+                                          "properties": {
+                                            "solutionStepsLatex": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string",
+                                                "maxLength": 2000
+                                              }
+                                            },
+                                            "finalAnswerLatex": {
+                                              "type": "string",
+                                              "maxLength": 1000
+                                            },
+                                            "finalAnswerSympy": {
+                                              "type": "string",
+                                              "nullable": true,
+                                              "maxLength": 500
+                                            },
+                                            "commonMistakes": {
+                                              "type": "string",
+                                              "maxLength": 4000,
+                                              "default": ""
+                                            }
+                                          },
+                                          "required": ["solutionStepsLatex", "finalAnswerLatex"]
+                                        },
+                                        "rubricCriteria": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "orderIndex": {
+                                                "type": "integer",
+                                                "minimum": 1
+                                              },
+                                              "key": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 100
+                                              },
+                                              "descriptionEn": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "descriptionAr": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "maxPoints": {
+                                                "type": "number",
+                                                "minimum": 0,
+                                                "exclusiveMinimum": true,
+                                                "maximum": 100
+                                              }
+                                            },
+                                            "required": [
+                                              "orderIndex",
+                                              "key",
+                                              "descriptionEn",
+                                              "descriptionAr",
+                                              "maxPoints"
+                                            ]
+                                          }
+                                        },
+                                        "ocrConfidence": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 1,
+                                          "default": 1
+                                        },
+                                        "dualOcrAgreed": {
+                                          "type": "boolean",
+                                          "default": true
+                                        },
+                                        "sympyStatus": {
+                                          "type": "string",
+                                          "enum": [
+                                            "VERIFIED",
+                                            "MISMATCH",
+                                            "UNPARSABLE",
+                                            "NOT_APPLICABLE"
+                                          ],
+                                          "default": "NOT_APPLICABLE"
+                                        },
+                                        "sympyDetail": {
+                                          "type": "string",
+                                          "default": ""
+                                        },
+                                        "sourceQuestionPages": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                          },
+                                          "default": []
+                                        },
+                                        "sourceAnswerPages": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "integer",
+                                            "minimum": 1
+                                          },
+                                          "default": []
+                                        },
+                                        "warnings": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "code": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "OCR_LOW_CONFIDENCE",
+                                                  "OCR_DISAGREEMENT",
+                                                  "TEXT_LAYER_DISAGREEMENT",
+                                                  "SYMPY_UNPARSABLE",
+                                                  "ANSWER_STEP_MISMATCH",
+                                                  "MCQ_ANSWER_CONFLICT",
+                                                  "DUPLICATE_MCQ_OPTIONS",
+                                                  "UNMATCHED_QUESTION",
+                                                  "UNMATCHED_ANSWER",
+                                                  "COUNT_MISMATCH",
+                                                  "DEFAULT_POINTS_ASSIGNED",
+                                                  "INVALID_MCQ_OPTIONS",
+                                                  "ARABIC_LABELS_MAPPED"
+                                                ]
+                                              },
+                                              "severity": {
+                                                "type": "string",
+                                                "enum": ["info", "warning", "error"]
+                                              },
+                                              "messageEn": {
+                                                "type": "string"
+                                              },
+                                              "messageAr": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "code",
+                                              "severity",
+                                              "messageEn",
+                                              "messageAr"
+                                            ]
+                                          },
+                                          "default": []
+                                        },
+                                        "verifiedByTeacher": {
+                                          "type": "boolean",
+                                          "default": false
+                                        }
+                                      },
+                                      "required": [
+                                        "tempId",
+                                        "orderIndex",
+                                        "conceptKey",
+                                        "type",
+                                        "promptLatex",
+                                        "points"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "modelNumber",
+                                  "title",
+                                  "pageCount",
+                                  "pages",
+                                  "questionsFoundCount",
+                                  "answersFoundCount",
+                                  "matchedCount",
+                                  "questions"
+                                ]
+                              },
+                              "minItems": 1,
+                              "maxItems": 2
+                            },
+                            "twinSummary": {
+                              "type": "object",
+                              "properties": {
+                                "matchedConceptKeys": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "onlyInModel1": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "onlyInModel2": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              },
+                              "required": ["matchedConceptKeys", "onlyInModel1", "onlyInModel2"]
+                            },
+                            "telemetry": {
+                              "type": "object",
+                              "properties": {
+                                "provider": {
+                                  "type": "string"
+                                },
+                                "secondaryProvider": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "default": null
+                                },
+                                "totalInputTokens": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "totalOutputTokens": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "totalCostUsd": {
+                                  "type": "number",
+                                  "minimum": 0
+                                },
+                                "latencyMs": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                }
+                              },
+                              "required": [
+                                "provider",
+                                "totalInputTokens",
+                                "totalOutputTokens",
+                                "totalCostUsd",
+                                "latencyMs"
+                              ]
+                            }
+                          },
+                          "required": ["models", "twinSummary", "telemetry"]
+                        },
+                        "errorCode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "topicId",
+                        "appliedTopicId",
+                        "status",
+                        "currentStage",
+                        "progressPct",
+                        "hasPrePdf",
+                        "hasPostPdf",
+                        "topicMeta",
+                        "preview",
+                        "errorCode",
+                        "errorMessage",
+                        "createdAt",
+                        "updatedAt",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": ["job"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pdf-imports/{id}/apply": {
+      "post": {
+        "tags": ["PDF Import"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetTopicId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "topicMeta": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 200
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "default": ""
+                      },
+                      "correctnessThreshold": {
+                        "type": "number",
+                        "minimum": 0.1,
+                        "maximum": 1,
+                        "default": 0.6
+                      }
+                    },
+                    "required": ["title"]
+                  },
+                  "confirmAllReviewed": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "models": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "modelNumber": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "enum": [1]
+                            },
+                            {
+                              "type": "number",
+                              "enum": [2]
+                            }
+                          ]
+                        },
+                        "title": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 200
+                        },
+                        "durationMinutes": {
+                          "type": "integer",
+                          "minimum": 5,
+                          "maximum": 300,
+                          "default": 60
+                        },
+                        "questions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tempId": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              },
+                              "orderIndex": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 200
+                              },
+                              "conceptKey": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["MCQ", "ESSAY"]
+                              },
+                              "promptLatex": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 10000
+                              },
+                              "points": {
+                                "type": "number",
+                                "minimum": 0,
+                                "exclusiveMinimum": true,
+                                "maximum": 100
+                              },
+                              "solutionUrl": {
+                                "type": "string",
+                                "nullable": true,
+                                "maxLength": 1000
+                              },
+                              "needsTeacherConfirmation": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "mcqOptions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "label": {
+                                      "type": "string",
+                                      "enum": ["A", "B", "C", "D"]
+                                    },
+                                    "textLatex": {
+                                      "type": "string",
+                                      "maxLength": 2000
+                                    },
+                                    "isCorrect": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "required": ["label", "textLatex", "isCorrect"]
+                                }
+                              },
+                              "modelAnswer": {
+                                "type": "object",
+                                "nullable": true,
+                                "properties": {
+                                  "solutionStepsLatex": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "maxLength": 2000
+                                    }
+                                  },
+                                  "finalAnswerLatex": {
+                                    "type": "string",
+                                    "maxLength": 1000
+                                  },
+                                  "finalAnswerSympy": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "maxLength": 500
+                                  },
+                                  "commonMistakes": {
+                                    "type": "string",
+                                    "maxLength": 4000,
+                                    "default": ""
+                                  }
+                                },
+                                "required": ["solutionStepsLatex", "finalAnswerLatex"]
+                              },
+                              "rubricCriteria": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "orderIndex": {
+                                      "type": "integer",
+                                      "minimum": 1
+                                    },
+                                    "key": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 100
+                                    },
+                                    "descriptionEn": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 1000
+                                    },
+                                    "descriptionAr": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 1000
+                                    },
+                                    "maxPoints": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "exclusiveMinimum": true,
+                                      "maximum": 100
+                                    }
+                                  },
+                                  "required": [
+                                    "orderIndex",
+                                    "key",
+                                    "descriptionEn",
+                                    "descriptionAr",
+                                    "maxPoints"
+                                  ]
+                                }
+                              },
+                              "ocrConfidence": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                                "default": 1
+                              },
+                              "dualOcrAgreed": {
+                                "type": "boolean",
+                                "default": true
+                              },
+                              "sympyStatus": {
+                                "type": "string",
+                                "enum": ["VERIFIED", "MISMATCH", "UNPARSABLE", "NOT_APPLICABLE"],
+                                "default": "NOT_APPLICABLE"
+                              },
+                              "sympyDetail": {
+                                "type": "string",
+                                "default": ""
+                              },
+                              "sourceQuestionPages": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "default": []
+                              },
+                              "sourceAnswerPages": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 1
+                                },
+                                "default": []
+                              },
+                              "warnings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "code": {
+                                      "type": "string",
+                                      "enum": [
+                                        "OCR_LOW_CONFIDENCE",
+                                        "OCR_DISAGREEMENT",
+                                        "TEXT_LAYER_DISAGREEMENT",
+                                        "SYMPY_UNPARSABLE",
+                                        "ANSWER_STEP_MISMATCH",
+                                        "MCQ_ANSWER_CONFLICT",
+                                        "DUPLICATE_MCQ_OPTIONS",
+                                        "UNMATCHED_QUESTION",
+                                        "UNMATCHED_ANSWER",
+                                        "COUNT_MISMATCH",
+                                        "DEFAULT_POINTS_ASSIGNED",
+                                        "INVALID_MCQ_OPTIONS",
+                                        "ARABIC_LABELS_MAPPED"
+                                      ]
+                                    },
+                                    "severity": {
+                                      "type": "string",
+                                      "enum": ["info", "warning", "error"]
+                                    },
+                                    "messageEn": {
+                                      "type": "string"
+                                    },
+                                    "messageAr": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": ["code", "severity", "messageEn", "messageAr"]
+                                },
+                                "default": []
+                              },
+                              "verifiedByTeacher": {
+                                "type": "boolean",
+                                "default": false
+                              }
+                            },
+                            "required": [
+                              "tempId",
+                              "orderIndex",
+                              "conceptKey",
+                              "type",
+                              "promptLatex",
+                              "points"
+                            ]
+                          }
+                        }
+                      },
+                      "required": ["modelNumber", "title", "questions"]
+                    },
+                    "minItems": 1,
+                    "maxItems": 2
+                  }
+                },
+                "required": ["models"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Persist verified extracted exams into Topic and ExamModels atomically"
           }
         }
       }

@@ -15,10 +15,11 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { TeacherShell } from '@/components/layouts/TeacherShell';
 import { MathBlock } from '@/components/MathBlock';
 import { ImportBundleModal } from '@/components/teacher/ImportBundleModal';
+import { PdfImportUploadModal } from '@/components/teacher/PdfImportUploadModal';
 import { QuestionEditorModal } from '@/components/teacher/QuestionEditorModal';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -52,6 +53,8 @@ export default function TopicBuilderPage() {
     question?: QuestionItem | null;
   } | null>(null);
   const [showImport, setShowImport] = React.useState(false);
+  const [showPdfImport, setShowPdfImport] = React.useState(false);
+  const navigate = useNavigate();
 
   const topicQuery = useQuery({
     queryKey: ['teacher', 'topic', topicId],
@@ -373,6 +376,10 @@ export default function TopicBuilderPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setShowPdfImport(true)}>
+              <FileUp className="h-4 w-4" />
+              <span>{t('teacher.builder.importPdf')}</span>
+            </Button>
             <Button variant="outline" onClick={() => setShowImport(true)}>
               <FileUp className="h-4 w-4" />
               <span>{t('teacher.builder.importOverTopic')}</span>
@@ -505,6 +512,17 @@ export default function TopicBuilderPage() {
           onImported={() => {
             setShowImport(false);
             refreshTopic();
+          }}
+        />
+      )}
+
+      {showPdfImport && (
+        <PdfImportUploadModal
+          targetTopic={{ id: topic.id, title: topic.title }}
+          onClose={() => setShowPdfImport(false)}
+          onJobCreated={(jobId) => {
+            setShowPdfImport(false);
+            void navigate(`/teacher/pdf-imports/${jobId}`);
           }}
         />
       )}

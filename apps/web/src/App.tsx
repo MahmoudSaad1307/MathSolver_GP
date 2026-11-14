@@ -14,6 +14,7 @@ const TeacherLoginPage = React.lazy(() => import('@/pages/teacher/TeacherLoginPa
 const TeacherDashboardHome = React.lazy(() => import('@/pages/teacher/TeacherDashboardHome'));
 const TopicsPage = React.lazy(() => import('@/pages/teacher/TopicsPage'));
 const TopicBuilderPage = React.lazy(() => import('@/pages/teacher/TopicBuilderPage'));
+const PdfImportPreviewPage = React.lazy(() => import('@/pages/teacher/PdfImportPreviewPage'));
 const CohortsPage = React.lazy(() => import('@/pages/teacher/CohortsPage'));
 const ReviewQueuePage = React.lazy(() => import('@/pages/teacher/ReviewQueuePage'));
 const StudentsPage = React.lazy(() => import('@/pages/teacher/StudentsPage'));
@@ -58,6 +59,7 @@ export function App() {
             <Route path="/teacher" element={<TeacherDashboardHome />} />
             <Route path="/teacher/topics" element={<TopicsPage />} />
             <Route path="/teacher/topics/:topicId" element={<TopicBuilderPage />} />
+            <Route path="/teacher/pdf-imports/:jobId" element={<PdfImportPreviewPage />} />
             <Route path="/teacher/cohorts" element={<CohortsPage />} />
             <Route path="/teacher/review" element={<ReviewQueuePage />} />
             <Route path="/teacher/students" element={<StudentsPage />} />

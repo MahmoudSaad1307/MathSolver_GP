@@ -20,6 +20,10 @@ export const ErrorCodeSchema = z.enum([
   'IMAGE_REJECTED_QUALITY',
   'RUBRIC_SUM_MISMATCH',
   'PUBLISH_CHECKLIST_FAILED',
+  'PDF_INVALID',
+  'PDF_TOO_LARGE',
+  'PDF_TOO_MANY_PAGES',
+  'PDF_EXTRACTION_FAILED',
   'AI_UNAVAILABLE',
   'AI_CAP_EXCEEDED',
   'INTERNAL_ERROR',
@@ -125,6 +129,26 @@ export const ERROR_CATALOG: Record<
     status: 400,
     message_ar: 'النموذج غير مكتمل ولا يمكن نشره بعد. راجع قائمة التحقق.',
     message_en: 'Exam failed publish checklist requirements.',
+  },
+  PDF_INVALID: {
+    status: 400,
+    message_ar: 'الملف المرفوع ليس ملف PDF صالحاً.',
+    message_en: 'Uploaded file is not a valid PDF.',
+  },
+  PDF_TOO_LARGE: {
+    status: 413,
+    message_ar: 'حجم ملف PDF يتجاوز الحد المسموح به.',
+    message_en: 'PDF file exceeds maximum allowed size.',
+  },
+  PDF_TOO_MANY_PAGES: {
+    status: 422,
+    message_ar: 'عدد صفحات ملف PDF يتجاوز الحد الأقصى المسموح به.',
+    message_en: 'PDF page count exceeds maximum allowed pages.',
+  },
+  PDF_EXTRACTION_FAILED: {
+    status: 502,
+    message_ar: 'تعذر استخراج الأسئلة من ملف PDF. يرجى التحقق من وضوح الملف والمحاولة مجدداً.',
+    message_en: 'Failed to extract questions and answers from PDF.',
   },
   AI_UNAVAILABLE: {
     status: 503,

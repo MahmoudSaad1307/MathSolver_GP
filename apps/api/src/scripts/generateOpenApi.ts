@@ -9,10 +9,13 @@ import { z } from 'zod';
 import {
   AnalyticsQuerySchema,
   ApiErrorSchema,
+  ApplyPdfImportSchema,
   CreateCohortSchema,
   CreateTopicSchema,
   ImportExamBundleSchema,
   ManualGradeSchema,
+  PdfImportJobResponseSchema,
+  SavePdfDraftSchema,
   McqAutosaveSchema,
   MeStateResponseSchema,
   PinImageSchema,
@@ -682,6 +685,113 @@ registry.registerPath({
   tags: ['Student Video'],
   responses: {
     200: { description: 'Pre vs Post comparison with Hake normalized gain & concept breakdown' },
+  },
+});
+
+// --- PDF Exam Extraction & Preview ---
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/pdf-imports',
+  tags: ['PDF Import'],
+  request: {
+    body: {
+      content: {
+        'multipart/form-data': {
+          schema: z.object({
+            prePdf: z.string().optional(),
+            postPdf: z.string().optional(),
+            topicId: z.string().uuid().optional(),
+            preTitle: z.string().optional(),
+            postTitle: z.string().optional(),
+            topicMeta: z.string().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    202: {
+      description: 'PDF import job queued for background OCR + AI extraction',
+      content: {
+        'application/json': { schema: z.object({ job: PdfImportJobResponseSchema }) },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/pdf-imports',
+  tags: ['PDF Import'],
+  responses: {
+    200: {
+      description: 'List recent PDF import jobs for the authenticated teacher',
+      content: {
+        'application/json': { schema: z.object({ jobs: z.array(PdfImportJobResponseSchema) }) },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/pdf-imports/{id}',
+  tags: ['PDF Import'],
+  request: { params: UuidPathParams },
+  responses: {
+    200: {
+      description: 'Poll PDF import job status, warnings, and interactive preview payload',
+      content: {
+        'application/json': { schema: z.object({ job: PdfImportJobResponseSchema }) },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/pdf-imports/{id}/pages/{modelNumber}/{pageNumber}',
+  tags: ['PDF Import'],
+  request: {
+    params: z.object({
+      id: z.string().uuid(),
+      modelNumber: z.enum(['1', '2']),
+      pageNumber: z.string(),
+    }),
+  },
+  responses: {
+    200: { description: 'Rendered 200-DPI JPEG preview of source PDF page' },
+  },
+});
+
+registry.registerPath({
+  method: 'put',
+  path: '/api/v1/pdf-imports/{id}/draft',
+  tags: ['PDF Import'],
+  request: {
+    params: UuidPathParams,
+    body: { content: { 'application/json': { schema: SavePdfDraftSchema } } },
+  },
+  responses: {
+    200: {
+      description: 'Save teacher edits and verification flags on extracted draft preview',
+      content: {
+        'application/json': { schema: z.object({ job: PdfImportJobResponseSchema }) },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/pdf-imports/{id}/apply',
+  tags: ['PDF Import'],
+  request: {
+    params: UuidPathParams,
+    body: { content: { 'application/json': { schema: ApplyPdfImportSchema } } },
+  },
+  responses: {
+    200: { description: 'Persist verified extracted exams into Topic and ExamModels atomically' },
   },
 });
 

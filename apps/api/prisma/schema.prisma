@@ -64,6 +64,14 @@ enum ActorType {
   SYSTEM
 }
 
+enum PdfImportStatus {
+  QUEUED
+  PROCESSING
+  READY_FOR_REVIEW
+  APPLIED
+  FAILED
+}
+
 model User {
   id           String    @id @default(uuid()) @db.Uuid
   email        String    @unique
@@ -79,6 +87,7 @@ model User {
   overrides     TeacherOverride[]
   refreshTokens RefreshToken[]
   manualUnlocks VideoSession[]    @relation("ManualUnlockTeacher")
+  pdfImportJobs PdfImportJob[]
 }
 
 model RefreshToken {
@@ -112,6 +121,7 @@ model Topic {
   cohorts       Cohort[]
   videoSessions VideoSession[]
   videoAlerts   VideoAlert[]
+  pdfImportJobs PdfImportJob[]
 
   @@index([ownerId])
 }
@@ -473,4 +483,31 @@ model AiUsage {
 
   @@index([answerId])
   @@index([createdAt])
+}
+
+model PdfImportJob {
+  id             String          @id @default(uuid()) @db.Uuid
+  ownerId        String          @db.Uuid
+  topicId        String?         @db.Uuid
+  appliedTopicId String?         @db.Uuid
+  status         PdfImportStatus @default(QUEUED)
+  currentStage   String          @default("QUEUED")
+  progressPct    Int             @default(0)
+  prePdfKey      String?
+  postPdfKey     String?
+  pageImageKeys  Json?
+  topicMetaJson  Json?
+  previewJson    Json?
+  errorCode      String?
+  errorMessage   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  expiresAt      DateTime
+
+  owner User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId, createdAt])
+  @@index([topicId])
+  @@index([expiresAt])
 }

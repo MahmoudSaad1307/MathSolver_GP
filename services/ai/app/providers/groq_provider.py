@@ -44,9 +44,16 @@ class GroqProvider(LLMProvider):
         *,
         model: str,
         system_prompt: str,
-        content_parts: list[dict[str, Any]],
+        content_parts: list[dict[str, Any]] | str,
+        max_tokens: int = 1800,
+        timeout_seconds: float | None = None,
     ) -> tuple[str, int, int]:
         self._breaker.before_call()
+        client = (
+            self._client.with_options(timeout=timeout_seconds)
+            if timeout_seconds is not None
+            else self._client
+        )
         try:
             messages_payload = cast(
                 Any,
@@ -55,10 +62,10 @@ class GroqProvider(LLMProvider):
                     {"role": "user", "content": content_parts},
                 ],
             )
-            response = await self._client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=model,
                 temperature=0.0,
-                max_tokens=1800,
+                max_tokens=max_tokens,
                 messages=messages_payload,
             )
             self._breaker.record_success()
@@ -117,6 +124,50 @@ class GroqProvider(LLMProvider):
                 model=self._vision_model,
                 system_prompt=system_prompt,
                 content_parts=[{"type": "text", "text": prompt}],
+            ),
+        )
+
+    async def extract_json_with_images(
+        self,
+        *,
+        processed_images: list[tuple[str, str]],
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int = 4096,
+        timeout_seconds: float | None = None,
+        hint_tag: str | None = None,
+    ) -> RawProviderCall:
+        del hint_tag
+        model_name = self._vision_model if processed_images else self._grade_model
+        user_content: list[dict[str, Any]] | str
+        if processed_images:
+            parts: list[dict[str, Any]] = [
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:{mime};base64,{b64}"},
+                }
+                for b64, mime in processed_images
+            ]
+            parts.append({"type": "text", "text": user_prompt})
+            user_content = parts
+        else:
+            user_content = user_prompt
+
+        return await execute_with_json_repair(
+            model_name=model_name,
+            initial_call=lambda: self._call_chat(
+                model=model_name,
+                system_prompt=system_prompt,
+                content_parts=user_content,
+                max_tokens=max_tokens,
+                timeout_seconds=timeout_seconds,
+            ),
+            repair_call=lambda prompt: self._call_chat(
+                model=model_name,
+                system_prompt=system_prompt,
+                content_parts=prompt,
+                max_tokens=max_tokens,
+                timeout_seconds=timeout_seconds,
             ),
         )
 

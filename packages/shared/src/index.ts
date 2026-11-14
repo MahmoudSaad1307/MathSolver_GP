@@ -6,3 +6,4 @@ export * from './schemas/auth.js';
 export * from './schemas/teacher.js';
 export * from './schemas/student.js';
 export * from './schemas/seed.js';
+export * from './schemas/pdfImport.js';

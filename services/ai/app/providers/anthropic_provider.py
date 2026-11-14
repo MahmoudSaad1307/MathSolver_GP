@@ -46,20 +46,25 @@ class AnthropicProvider(LLMProvider):
         model: str,
         system_prompt: str,
         content_blocks: list[dict[str, Any]],
+        max_tokens: int = 1800,
+        timeout_seconds: float | None = None,
     ) -> tuple[str, int, int]:
         self._breaker.before_call()
+        client = (
+            self._client.with_options(timeout=timeout_seconds)
+            if timeout_seconds is not None
+            else self._client
+        )
         try:
-            response = await self._client.messages.create(
+            response = await client.messages.create(
                 model=model,
-                max_tokens=1800,
+                max_tokens=max_tokens,
                 temperature=0.0,
                 system=system_prompt,
                 messages=cast(Any, [{"role": "user", "content": content_blocks}]),
             )
             self._breaker.record_success()
-            text_parts = [
-                block.text for block in response.content if isinstance(block, TextBlock)
-            ]
+            text_parts = [block.text for block in response.content if isinstance(block, TextBlock)]
             usage = getattr(response, "usage", None)
             in_tokens = int(getattr(usage, "input_tokens", 0) or 0)
             out_tokens = int(getattr(usage, "output_tokens", 0) or 0)
@@ -114,6 +119,44 @@ class AnthropicProvider(LLMProvider):
                 model=self._transcribe_model,
                 system_prompt=system_prompt,
                 content_blocks=[{"type": "text", "text": prompt}],
+            ),
+        )
+
+    async def extract_json_with_images(
+        self,
+        *,
+        processed_images: list[tuple[str, str]],
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int = 4096,
+        timeout_seconds: float | None = None,
+        hint_tag: str | None = None,
+    ) -> RawProviderCall:
+        del hint_tag
+        model_name = self._transcribe_model if processed_images else self._grade_model
+        blocks: list[dict[str, Any]] = [
+            {
+                "type": "image",
+                "source": {"type": "base64", "media_type": mime, "data": b64},
+            }
+            for b64, mime in processed_images
+        ]
+        blocks.append({"type": "text", "text": user_prompt})
+        return await execute_with_json_repair(
+            model_name=model_name,
+            initial_call=lambda: self._call_messages(
+                model=model_name,
+                system_prompt=system_prompt,
+                content_blocks=blocks,
+                max_tokens=max_tokens,
+                timeout_seconds=timeout_seconds,
+            ),
+            repair_call=lambda prompt: self._call_messages(
+                model=model_name,
+                system_prompt=system_prompt,
+                content_blocks=[{"type": "text", "text": prompt}],
+                max_tokens=max_tokens,
+                timeout_seconds=timeout_seconds,
             ),
         )
 

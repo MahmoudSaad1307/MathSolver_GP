@@ -1,4 +1,29 @@
-import type { PublishChecklistResult, QuestionType, ExamStatus } from '@mathlens/shared';
+import type {
+  ApplyPdfImportInput,
+  ExamStatus,
+  ExtractedModelPreview,
+  ExtractedQuestionPreview,
+  ExtractedQuestionWarning,
+  PdfImportJobResponse,
+  PdfImportPreviewPayload,
+  PdfImportTopicMeta,
+  PdfSympyVerificationStatus,
+  PublishChecklistResult,
+  QuestionType,
+  SavePdfDraftInput,
+} from '@mathlens/shared';
+
+export type {
+  ApplyPdfImportInput,
+  ExtractedModelPreview,
+  ExtractedQuestionPreview,
+  ExtractedQuestionWarning,
+  PdfImportJobResponse,
+  PdfImportPreviewPayload,
+  PdfImportTopicMeta,
+  PdfSympyVerificationStatus,
+  SavePdfDraftInput,
+};
 
 export interface McqOptionItem {
   id: string;

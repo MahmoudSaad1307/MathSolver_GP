@@ -275,6 +275,25 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
   const gradingResults: FakeGradingResultRow[] = [];
   const teacherOverrides: FakeTeacherOverrideRow[] = [];
   const aiUsages: FakeAiUsageRow[] = [];
+  const pdfImportJobs: Array<{
+    id: string;
+    ownerId: string;
+    topicId: string | null;
+    appliedTopicId: string | null;
+    status: 'QUEUED' | 'PROCESSING' | 'READY_FOR_REVIEW' | 'APPLIED' | 'FAILED';
+    currentStage: string;
+    progressPct: number;
+    prePdfKey: string | null;
+    postPdfKey: string | null;
+    pageImageKeys: unknown;
+    topicMetaJson: unknown;
+    previewJson: unknown;
+    errorCode: string | null;
+    errorMessage: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    expiresAt: Date;
+  }> = [];
 
   const hydrateQuestion = (q: FakeQuestionRow, include?: Record<string, unknown>) => {
     const out: Record<string, unknown> = { ...q };
@@ -349,6 +368,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       gradingResults,
       teacherOverrides,
       aiUsages,
+      pdfImportJobs,
     },
     $queryRaw: async () => [{ '?column?': 1 }],
     $transaction: async <T>(
@@ -1753,6 +1773,84 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       ),
   };
 
+  mutableMock.pdfImportJob = {
+    create: async ({ data }: { data: Record<string, unknown> }) => {
+      const now = new Date();
+      const row = {
+        id: (data.id as string | undefined) ?? crypto.randomUUID(),
+        ownerId: String(data.ownerId),
+        topicId: (data.topicId as string | null | undefined) ?? null,
+        appliedTopicId: (data.appliedTopicId as string | null | undefined) ?? null,
+        status:
+          (data.status as
+            'QUEUED' | 'PROCESSING' | 'READY_FOR_REVIEW' | 'APPLIED' | 'FAILED' | undefined) ??
+          'QUEUED',
+        currentStage: String(data.currentStage ?? 'QUEUED'),
+        progressPct: Number(data.progressPct ?? 0),
+        prePdfKey: (data.prePdfKey as string | null | undefined) ?? null,
+        postPdfKey: (data.postPdfKey as string | null | undefined) ?? null,
+        pageImageKeys: data.pageImageKeys ?? null,
+        topicMetaJson: data.topicMetaJson ?? null,
+        previewJson: data.previewJson ?? null,
+        errorCode: (data.errorCode as string | null | undefined) ?? null,
+        errorMessage: (data.errorMessage as string | null | undefined) ?? null,
+        createdAt: now,
+        updatedAt: now,
+        expiresAt: (data.expiresAt as Date | undefined) ?? new Date(now.getTime() + 86_400_000),
+      };
+      pdfImportJobs.push(row);
+      return row;
+    },
+    findUnique: async ({ where }: { where: { id: string } }) =>
+      pdfImportJobs.find((j) => j.id === where.id) ?? null,
+    findFirst: async ({ where }: { where?: { id?: string; ownerId?: string } } = {}) =>
+      pdfImportJobs.find(
+        (j) =>
+          (where?.id === undefined || j.id === where.id) &&
+          (where?.ownerId === undefined || j.ownerId === where.ownerId),
+      ) ?? null,
+    findMany: async ({
+      where,
+      orderBy,
+      take,
+    }: {
+      where?: { ownerId?: string; expiresAt?: { lt?: Date } };
+      orderBy?: { createdAt?: 'asc' | 'desc' };
+      take?: number;
+    } = {}) => {
+      let rows = pdfImportJobs.filter((j) => {
+        if (where?.ownerId !== undefined && j.ownerId !== where.ownerId) return false;
+        if (where?.expiresAt?.lt !== undefined && !(j.expiresAt < where.expiresAt.lt)) return false;
+        return true;
+      });
+      if (orderBy?.createdAt === 'desc') {
+        rows = [...rows].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      } else if (orderBy?.createdAt === 'asc') {
+        rows = [...rows].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      }
+      return typeof take === 'number' ? rows.slice(0, take) : rows;
+    },
+    update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+      const row = pdfImportJobs.find((j) => j.id === where.id);
+      if (!row) throw new Error('PdfImportJob not found');
+      Object.assign(row, data, { updatedAt: new Date() });
+      return row;
+    },
+    deleteMany: async ({ where }: { where?: { id?: string; ownerId?: string } } = {}) => {
+      const before = pdfImportJobs.length;
+      for (let i = pdfImportJobs.length - 1; i >= 0; i -= 1) {
+        const j = pdfImportJobs[i]!;
+        if (
+          (where?.id === undefined || j.id === where.id) &&
+          (where?.ownerId === undefined || j.ownerId === where.ownerId)
+        ) {
+          pdfImportJobs.splice(i, 1);
+        }
+      }
+      return { count: before - pdfImportJobs.length };
+    },
+  };
+
   Object.assign(mock.aiUsage, {
     findMany: async ({
       where,
@@ -1799,6 +1897,7 @@ export function createInMemoryPrisma(seedUsers: FakeUserRow[] = []) {
       gradingResults: FakeGradingResultRow[];
       teacherOverrides: FakeTeacherOverrideRow[];
       aiUsages: FakeAiUsageRow[];
+      pdfImportJobs: typeof pdfImportJobs;
     };
   };
 }

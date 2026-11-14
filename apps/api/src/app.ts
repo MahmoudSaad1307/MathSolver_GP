@@ -21,7 +21,16 @@ import { createStudentResultsRouter } from './routes/studentResults.js';
 import { createStudentVideoRouter } from './routes/studentVideo.js';
 import { createTeacherAuthRouter } from './routes/teacherAuth.js';
 import { createTeacherContentRouter } from './routes/topics.js';
-import { HttpAiServiceClient, type StatsServiceClient } from './services/aiClient.js';
+import { createPdfImportsRouter } from './routes/pdfImports.js';
+import {
+  HttpAiServiceClient,
+  type AiServiceClient,
+  type StatsServiceClient,
+} from './services/aiClient.js';
+import {
+  NoopPdfImportDispatcher,
+  type PdfImportDispatcher,
+} from './services/pdfImportDispatcher.js';
 import { NoopGradingDispatcher, type GradingDispatcher } from './services/gradingDispatcher.js';
 import {
   createStorageAdapter,
@@ -38,6 +47,8 @@ export interface CreateAppDeps {
   storage?: StorageAdapter;
   virusScanner?: VirusScanner;
   gradingDispatcher?: GradingDispatcher;
+  pdfImportDispatcher?: PdfImportDispatcher;
+  aiClient?: AiServiceClient;
   statsClient?: StatsServiceClient;
 }
 
@@ -49,6 +60,8 @@ export function createApp({
   storage = createStorageAdapter(env),
   virusScanner = createVirusScanner(env),
   gradingDispatcher = new NoopGradingDispatcher(),
+  pdfImportDispatcher = new NoopPdfImportDispatcher(),
+  aiClient = new HttpAiServiceClient(env),
   statsClient = new HttpAiServiceClient(env),
 }: CreateAppDeps): Express {
   const app = express();
@@ -128,6 +141,17 @@ export function createApp({
   v1.use('/student', createStudentResultsRouter({ prisma, env, storage }));
   v1.use('/student', createStudentVideoRouter({ prisma, env }));
   v1.use('/storage', createStorageRouter(storage, env));
+  v1.use(
+    '/pdf-imports',
+    createPdfImportsRouter({
+      prisma,
+      env,
+      storage,
+      virusScanner,
+      aiClient,
+      pdfImportDispatcher,
+    }),
+  );
   v1.use('/', createTeacherContentRouter(prisma, env));
   v1.use('/', createReviewRouter({ prisma, env, storage, gradingDispatcher }));
   v1.use('/', createAnalyticsRouter({ prisma, env, statsClient }));

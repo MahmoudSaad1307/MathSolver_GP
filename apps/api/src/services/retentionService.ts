@@ -4,6 +4,7 @@ import { AppError } from '../lib/errors.js';
 import type { Logger } from '../lib/logger.js';
 import { scopedCohortWhere } from '../lib/scoping.js';
 import { hashIp } from '../lib/security.js';
+import { extractStorageKeysFromJob } from './pdfImportService.js';
 import type { StorageAdapter } from './storage/index.js';
 
 export interface RetentionRunSummary {
@@ -129,6 +130,8 @@ export class RetentionService {
       hashIp('system', this.env.IP_HASH_SALT),
     );
 
+    await this.purgeExpiredPdfImports(now);
+
     return {
       scanned: activeImages.length,
       deleted,
@@ -136,6 +139,35 @@ export class RetentionService {
       storageErrors,
       cutoffIso: cutoff.toISOString(),
     };
+  }
+
+  /** Deletes expired PDF import artifacts (raw PDFs + rendered preview pages) and DB jobs. */
+  async purgeExpiredPdfImports(
+    now = new Date(),
+  ): Promise<{ deletedJobs: number; storageErrors: number }> {
+    const expiredJobs = await this.prisma.pdfImportJob.findMany({
+      where: { expiresAt: { lt: now } },
+    });
+    let deletedJobs = 0;
+    let storageErrors = 0;
+
+    for (const job of expiredJobs) {
+      const keys = extractStorageKeysFromJob(job);
+      for (const key of keys) {
+        try {
+          await this.storage.deleteObject(key);
+        } catch (err) {
+          if (!isMissingObjectError(err)) {
+            storageErrors += 1;
+            this.logger?.warn({ jobId: job.id, key, err }, 'Failed to purge PDF import object');
+          }
+        }
+      }
+      await this.prisma.pdfImportJob.deleteMany({ where: { id: job.id } });
+      deletedJobs += 1;
+    }
+
+    return { deletedJobs, storageErrors };
   }
 
   /**

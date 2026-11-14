@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     ai_blur_laplacian_min: float = 45.0
     ai_request_timeout_seconds: float = 35.0
     ai_sympy_timeout_seconds: float = 3.0
+    pdf_max_pages: int = 40
+    pdf_render_dpi: int = 200
+    pdf_ocr_timeout_seconds: float = 90.0
+    pdf_max_tokens: int = 4096
     redis_url: str = "redis://localhost:6379"
     log_level: str = "INFO"
 

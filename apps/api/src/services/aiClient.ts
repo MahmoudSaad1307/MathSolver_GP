@@ -1,4 +1,4 @@
-import type { GradingErrorType, ReviewReason } from '@mathlens/shared';
+import type { GradingErrorType, PdfImportPreviewPayload, ReviewReason } from '@mathlens/shared';
 import type { AppEnv } from '../config/env.js';
 
 export interface AiGradeEssayInput {
@@ -218,12 +218,52 @@ export interface BetweenStatsResponsePayload {
   interpretation_en: string;
 }
 
+export interface AiPdfModelInput {
+  modelNumber: 1 | 2;
+  title: string;
+  durationMinutes: number;
+  pdfBase64: string;
+}
+
+export interface AiPdfTwinReferenceQuestion {
+  conceptKey: string;
+  promptLatex: string;
+  type: 'MCQ' | 'ESSAY';
+}
+
+export interface AiExtractExamPdfInput {
+  preModel?: AiPdfModelInput;
+  postModel?: AiPdfModelInput;
+  referenceModel1Questions?: AiPdfTwinReferenceQuestion[];
+}
+
+export interface AiRenderedPdfPage {
+  modelNumber: 1 | 2;
+  pageNumber: number;
+  imageBase64: string;
+  mimeType: 'image/jpeg';
+  role: 'QUESTIONS' | 'MODEL_ANSWERS' | 'MIXED' | 'COVER_BLANK';
+  hasTextLayer: boolean;
+  isBlank: boolean;
+}
+
+export interface AiExtractExamPdfResponse {
+  models: PdfImportPreviewPayload['models'];
+  renderedPages: AiRenderedPdfPage[];
+  twinSummary: PdfImportPreviewPayload['twinSummary'];
+  telemetry: PdfImportPreviewPayload['telemetry'];
+}
+
 export interface AiServiceClient {
   gradeEssay(input: AiGradeEssayInput): Promise<AiGradeEssayResponse>;
   transcribeOnly(input: {
     images: AiGradeEssayInput['images'];
     questionPromptLatex?: string;
   }): Promise<AiTranscriptionResult>;
+  extractExamPdf(
+    input: AiExtractExamPdfInput,
+    timeoutMs?: number,
+  ): Promise<AiExtractExamPdfResponse>;
 }
 
 export interface StatsServiceClient {
@@ -246,7 +286,7 @@ export class AiServiceHttpError extends Error {
 export class HttpAiServiceClient implements AiServiceClient, StatsServiceClient {
   constructor(private readonly env: AppEnv) {}
 
-  private async postJson<T>(path: string, body: unknown): Promise<T> {
+  private async postJson<T>(path: string, body: unknown, timeoutMs?: number): Promise<T> {
     const baseUrl = this.env.AI_SERVICE_URL.replace(/\/+$/, '');
     const res = await fetch(`${baseUrl}${path}`, {
       method: 'POST',
@@ -255,7 +295,7 @@ export class HttpAiServiceClient implements AiServiceClient, StatsServiceClient 
         'X-Internal-Key': this.env.AI_INTERNAL_KEY,
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(this.env.AI_REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs ?? this.env.AI_REQUEST_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -283,6 +323,13 @@ export class HttpAiServiceClient implements AiServiceClient, StatsServiceClient 
     questionPromptLatex?: string;
   }): Promise<AiTranscriptionResult> {
     return this.postJson<AiTranscriptionResult>('/v1/transcribe', input);
+  }
+
+  async extractExamPdf(
+    input: AiExtractExamPdfInput,
+    timeoutMs?: number,
+  ): Promise<AiExtractExamPdfResponse> {
+    return this.postJson<AiExtractExamPdfResponse>('/v1/extract-exam-pdf', input, timeoutMs);
   }
 
   async computePairedStats(input: PairedStatsRequestPayload): Promise<PairedStatsResponsePayload> {
