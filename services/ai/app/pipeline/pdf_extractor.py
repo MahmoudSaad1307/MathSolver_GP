@@ -80,7 +80,10 @@ def _strip_math_delimiters(expr: str) -> str:
 
 
 def _extract_rhs_candidate(step_text: str) -> str:
-    cleaned = _strip_math_delimiters(step_text)
+    # Prefer the final inline/display math span when solution steps wrap equations in prose
+    math_spans = re.findall(r"\$\$?([^$]+)\$\$?", step_text)
+    target = math_spans[-1].strip() if math_spans else step_text
+    cleaned = _strip_math_delimiters(target)
     if "=" in cleaned:
         return cleaned.split("=")[-1].strip()
     return cleaned
@@ -189,9 +192,22 @@ async def _segment_pages(
     a_found: set[int] = set()
 
     system_prompt = load_prompt(PROMPT_VERSION_PDF_SEGMENT)
-    batch_size = 6
-    for i in range(0, len(non_blank), batch_size):
-        batch = non_blank[i : i + batch_size]
+    # Keep batches <= 3 pages and <= 2.6 MB base64 for Groq/Anthropic vision request caps
+    batches: list[list[PreprocessedPdfPage]] = []
+    cur_batch: list[PreprocessedPdfPage] = []
+    cur_bytes = 0
+    for page in non_blank:
+        page_len = len(page.image_b64)
+        if cur_batch and (len(cur_batch) >= 3 or cur_bytes + page_len > 2_600_000):
+            batches.append(cur_batch)
+            cur_batch = []
+            cur_bytes = 0
+        cur_batch.append(page)
+        cur_bytes += page_len
+    if cur_batch:
+        batches.append(cur_batch)
+
+    for batch in batches:
         prompt_parts = [
             (
                 f"[PAGE {p.page_number}]\nNative text hint:\n"
@@ -243,7 +259,15 @@ def _build_windows(
         return []
     if len(active) == 1:
         return [active]
-    return [[active[i], active[i + 1]] for i in range(len(active) - 1)]
+    windows: list[list[PreprocessedPdfPage]] = []
+    for i in range(len(active) - 1):
+        pair = [active[i], active[i + 1]]
+        if len(pair[0].image_b64) + len(pair[1].image_b64) <= 2_800_000:
+            windows.append(pair)
+        else:
+            windows.append([pair[0]])
+            windows.append([pair[1]])
+    return windows
 
 
 async def _transcribe_windows(
@@ -631,6 +655,12 @@ async def _extract_single_model(
                 )
 
         raw_ma = cast(dict[str, Any] | None, rq.get("modelAnswer"))
+        raw_mistakes = raw_ma.get("commonMistakes", "") if raw_ma is not None else ""
+        common_mistakes = (
+            "; ".join(str(item).strip() for item in raw_mistakes if str(item).strip())
+            if isinstance(raw_mistakes, list)
+            else str(raw_mistakes or "")
+        )
         model_answer = (
             ModelAnswerOut(
                 solutionStepsLatex=[
@@ -638,7 +668,7 @@ async def _extract_single_model(
                 ],
                 finalAnswerLatex=str(raw_ma.get("finalAnswerLatex", "")),
                 finalAnswerSympy=cast(str | None, raw_ma.get("finalAnswerSympy")),
-                commonMistakes=str(raw_ma.get("commonMistakes", "")),
+                commonMistakes=common_mistakes,
             )
             if raw_ma is not None
             else None

@@ -8,7 +8,7 @@ from app.config import Settings, get_settings
 from app.pipeline.pdf_extractor import extract_exam_pdfs
 from app.pipeline.pdf_preprocess import PdfValidationError
 from app.providers import get_provider_cached, get_secondary_provider_cached
-from app.providers.base import ProviderUpstreamError
+from app.providers.base import CircuitOpenError, ProviderRequestError, ProviderUpstreamError
 from app.schemas_pdf import ExtractExamPdfRequest, ExtractExamPdfResponse
 from app.security import require_internal_key
 
@@ -33,6 +33,9 @@ async def extract_exam_pdf_route(
         settings.groq_vision_model,
         settings.groq_grade_model,
         settings.ai_request_timeout_seconds,
+        settings.gemini_api_key,
+        settings.gemini_vision_model,
+        settings.gemini_grade_model,
     )
     secondary = get_secondary_provider_cached(
         settings.ai_provider,
@@ -43,6 +46,9 @@ async def extract_exam_pdf_route(
         settings.groq_vision_model,
         settings.groq_grade_model,
         settings.ai_request_timeout_seconds,
+        settings.gemini_api_key,
+        settings.gemini_vision_model,
+        settings.gemini_grade_model,
     )
     try:
         return await extract_exam_pdfs(
@@ -56,7 +62,7 @@ async def extract_exam_pdf_route(
             status_code=exc.status_code,
             detail={"code": exc.code, "message": exc.message},
         ) from exc
-    except ProviderUpstreamError as exc:
+    except (ProviderUpstreamError, ProviderRequestError, CircuitOpenError) as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail={"code": "PDF_EXTRACTION_FAILED", "message": str(exc)},

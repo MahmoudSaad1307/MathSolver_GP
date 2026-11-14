@@ -1,18 +1,36 @@
 from __future__ import annotations
 
 import base64
+import json
 from collections.abc import Awaitable, Callable
+from types import SimpleNamespace
 from typing import Any
 
+import groq
+import httpx
 import pymupdf  # type: ignore[import-untyped]
 import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings, get_settings
 from app.main import create_app
-from app.pipeline.pdf_extractor import extract_exam_pdfs
+from app.pipeline.pdf_extractor import _extract_rhs_candidate, extract_exam_pdfs
 from app.pipeline.pdf_preprocess import PdfValidationError, preprocess_pdf_document
-from app.providers.base import LLMProvider, RawProviderCall
+from app.providers import (
+    create_provider,
+    create_secondary_provider,
+    resolve_primary_provider_name,
+)
+from app.providers.base import (
+    FailoverLLMProvider,
+    LLMProvider,
+    ProviderRequestError,
+    RawProviderCall,
+    extract_json_object,
+)
+from app.providers.gemini_provider import GeminiProvider
+from app.providers.groq_provider import GroqProvider
+from app.schemas import ModelAnswerIn, RubricCriterionIn
 from app.schemas_pdf import ExtractExamPdfRequest, PdfExtractModelRequest
 
 
@@ -338,3 +356,278 @@ async def test_sympy_conflict_arabic_labels_rubric_sum_and_dual_ocr_disagreement
     q3_codes = {w.code for w in q3.warnings}
     assert "UNMATCHED_QUESTION" in q3_codes
     assert q3.needsTeacherConfirmation is True
+
+
+@pytest.mark.asyncio
+async def test_groq_fallback_json_latex_recovery_and_rhs_inline_math() -> None:
+    # 1. JSON recovery ignores <think> braces and raw single-backslash LaTeX commands
+    raw_llm = (
+        '<think>Reasoning with set {1, 2} and \\alpha</think>\n'
+        '```json\n{"promptLatex": "Solve $\\sqrt{x} = 4$", "ok": true}\n```'
+    )
+    parsed = extract_json_object(raw_llm)
+    assert parsed["ok"] is True
+    assert "\\sqrt{x}" in parsed["promptLatex"]
+
+    # Also test literal single backslash `\s` (non-JSON escape)
+    raw_unescaped = r'<think>{x}</think> {"expr": "$\sqrt{x} + \cdot 2$"}'
+    parsed_unescaped = extract_json_object(raw_unescaped)
+    assert "expr" in parsed_unescaped
+
+    # 2. Inline prose math extraction extracts RHS equation cleanly for SymPy
+    assert _extract_rhs_candidate("Combine terms to get $f'(x) = 2x + 3$.") == "2x + 3"
+
+    # 3. GroqProvider falls back from deprecated model (404) to qwen/qwen3.8-27b cleanly
+    gp = GroqProvider(
+        api_key="gsk-test",
+        vision_model="meta-llama/llama-4-scout-17b-16e-instruct",
+        grade_model="meta-llama/llama-4-scout-17b-16e-instruct",
+    )
+    models_tried: list[str] = []
+
+    async def mock_create(**kwargs: Any) -> Any:
+        m = kwargs["model"]
+        models_tried.append(m)
+        if m == "meta-llama/llama-4-scout-17b-16e-instruct":
+            req = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+            resp = httpx.Response(404, request=req)
+            raise groq.NotFoundError("model_not_found", response=resp, body=None)
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content='{"pages": []}'))],
+            usage=SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+        )
+
+    gp._client = SimpleNamespace(  # type: ignore[assignment]
+        chat=SimpleNamespace(completions=SimpleNamespace(create=mock_create))
+    )
+    res = await gp.extract_json_with_images(
+        processed_images=[("aGVsbG8=", "image/jpeg")],
+        system_prompt="segment",
+        user_prompt="page 1",
+    )
+    assert res.parsed_json == {"pages": []}
+    assert models_tried == [
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "qwen/qwen3.8-27b",
+    ]
+
+    # 4. Non-retryable 400 becomes ProviderRequestError (mapped to 502 instead of HTTP 500)
+    async def mock_bad_req(**_kwargs: Any) -> Any:
+        req = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+        resp = httpx.Response(400, request=req)
+        raise groq.BadRequestError("too many images", response=resp, body=None)
+
+    gp._client = SimpleNamespace(  # type: ignore[assignment]
+        chat=SimpleNamespace(completions=SimpleNamespace(create=mock_bad_req))
+    )
+    with pytest.raises(ProviderRequestError):
+        await gp.extract_json_with_images(
+            processed_images=[("aGVsbG8=", "image/jpeg")],
+            system_prompt="segment",
+            user_prompt="page 1",
+        )
+
+
+@pytest.mark.asyncio
+async def test_segmentation_batches_respect_image_cap_and_route_maps_request_errors() -> None:
+    pdf_b64 = _build_pdf_b64([f"Page {i} text content here" for i in range(1, 6)])
+    batch_sizes: list[int] = []
+
+    class _CountingProvider(LLMProvider):
+        provider_name = "counting"
+
+        async def transcribe(self, **kwargs: Any) -> RawProviderCall:  # type: ignore[override]
+            raise NotImplementedError
+
+        async def grade(self, **kwargs: Any) -> RawProviderCall:  # type: ignore[override]
+            raise NotImplementedError
+
+        async def extract_json_with_images(
+            self,
+            *,
+            processed_images: list[tuple[str, str]],
+            system_prompt: str,
+            user_prompt: str,
+            max_tokens: int = 4096,
+            timeout_seconds: float | None = None,
+            hint_tag: str | None = None,
+        ) -> RawProviderCall:
+            del system_prompt, user_prompt, max_tokens, timeout_seconds
+            if hint_tag == "pdf_segment":
+                batch_sizes.append(len(processed_images))
+                return RawProviderCall(
+                    raw_text="{}",
+                    parsed_json={
+                        "pages": [{"pageNumber": i, "role": "QUESTIONS"} for i in range(1, 6)]
+                    },
+                    input_tokens=10,
+                    output_tokens=10,
+                    cost_usd=0.0,
+                    latency_ms=1,
+                    model_name="counting",
+                    schema_retry_used=False,
+                )
+            if hint_tag == "pdf_structure_pair":
+                return RawProviderCall(
+                    raw_text="{}",
+                    parsed_json={"questions": []},
+                    input_tokens=10,
+                    output_tokens=10,
+                    cost_usd=0.0,
+                    latency_ms=1,
+                    model_name="counting",
+                    schema_retry_used=False,
+                )
+            return RawProviderCall(
+                raw_text="{}",
+                parsed_json={"blocks": []},
+                input_tokens=10,
+                output_tokens=10,
+                cost_usd=0.0,
+                latency_ms=1,
+                model_name="counting",
+                schema_retry_used=False,
+            )
+
+    await extract_exam_pdfs(
+        ExtractExamPdfRequest(
+            preModel=PdfExtractModelRequest(modelNumber=1, title="5 Pages", pdfBase64=pdf_b64)
+        ),
+        primary_provider=_CountingProvider(),
+        secondary_provider=None,
+        settings=_override_settings(),
+    )
+    assert batch_sizes
+    assert max(batch_sizes) <= 3
+
+    # Verify /v1/extract-exam-pdf maps ProviderRequestError -> HTTP 502 (never bare HTTP 500)
+    app = create_app()
+    app.dependency_overrides[get_settings] = _override_settings
+    client = TestClient(app)
+
+    from app import routes_pdf
+
+    class _FailingProvider(_CountingProvider):
+        async def extract_json_with_images(self, **_kwargs: Any) -> RawProviderCall:
+            raise ProviderRequestError("Simulated upstream 400")
+
+    orig = routes_pdf.get_provider_cached
+    routes_pdf.get_provider_cached = lambda *_args, **_kwargs: _FailingProvider()  # type: ignore[assignment]
+    try:
+        resp = client.post(
+            "/v1/extract-exam-pdf",
+            headers={"X-Internal-Key": "test_internal_key"},
+            json={"preModel": {"modelNumber": 1, "title": "Pre", "pdfBase64": pdf_b64}},
+        )
+        assert resp.status_code == 502
+        assert resp.json()["detail"]["code"] == "PDF_EXTRACTION_FAILED"
+    finally:
+        routes_pdf.get_provider_cached = orig  # type: ignore[assignment]
+
+
+@pytest.mark.asyncio
+async def test_gemini_priority_routing_mock_client_and_failover() -> None:
+    # 1. Gemini takes top priority even if AI_PROVIDER=groq in Render/local env
+    s_both = Settings(
+        ai_internal_key="k",
+        ai_provider="groq",
+        gemini_api_key="AQ.test-key",
+        groq_api_key="gsk-test-key",
+    )
+    assert resolve_primary_provider_name(s_both) == "gemini"
+    primary = create_provider(s_both)
+    secondary = create_secondary_provider(s_both)
+    assert primary.provider_name == "gemini"
+    assert isinstance(primary, FailoverLLMProvider)
+    assert secondary is not None
+    assert secondary.provider_name == "groq"
+
+    # Fake mode keeps deterministic isolation even when real keys exist in environment
+    s_fake = Settings(
+        ai_internal_key="k",
+        ai_provider="fake",
+        gemini_api_key="AQ.test-key",
+        groq_api_key="gsk-test-key",
+    )
+    assert resolve_primary_provider_name(s_fake) == "fake"
+    assert create_secondary_provider(s_fake) is None
+
+    # 2. GeminiProvider handles generateContent JSON, 503 model fallback, and usage tokens
+    called_models: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if "gemini-3.8-flash:generateContent" in url:
+            called_models.append("gemini-3.8-flash")
+            return httpx.Response(503, json={"error": {"message": "high demand"}})
+        if "gemini-flash-latest:generateContent" in url:
+            called_models.append("gemini-flash-latest")
+            body = json.loads(request.content.decode("utf-8"))
+            assert body["generationConfig"]["responseMimeType"] == "application/json"
+            return httpx.Response(
+                200,
+                json={
+                    "candidates": [
+                        {
+                            "content": {
+                                "parts": [{"text": '{"pages": [{"pageNumber": 1}], "ok": true}'}]
+                            }
+                        }
+                    ],
+                    "usageMetadata": {
+                        "promptTokenCount": 120,
+                        "candidatesTokenCount": 30,
+                        "thoughtsTokenCount": 10,
+                    },
+                },
+            )
+        return httpx.Response(400, json={"error": {"message": "unexpected"}})
+
+    async_client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    gem = GeminiProvider(
+        api_key="AQ.test-key",
+        vision_model="gemini-3.8-flash",
+        grade_model="gemini-3.8-flash",
+        client=async_client,
+    )
+    out = await gem.extract_json_with_images(
+        processed_images=[("aGVsbG8=", "image/jpeg")],
+        system_prompt="segment",
+        user_prompt="page 1",
+    )
+    assert called_models == ["gemini-3.8-flash", "gemini-flash-latest"]
+    assert out.parsed_json["ok"] is True
+    assert out.input_tokens == 120
+    assert out.output_tokens == 40
+
+    g_out = await gem.grade(
+        system_prompt="grade",
+        question_prompt_latex="2+2",
+        model_answer=ModelAnswerIn(solutionStepsLatex=["$4$"], finalAnswerLatex="$4$"),
+        rubric_criteria=[
+            RubricCriterionIn(key="c1", descriptionEn="d", descriptionAr="و", maxPoints=5)
+        ],
+        wrapped_student_work="<UNTRUSTED_STUDENT_WORK>4</UNTRUSTED_STUDENT_WORK>",
+        processed_images=[("aGVsbG8=", "image/jpeg")],
+        include_images=True,
+    )
+    assert g_out.parsed_json["ok"] is True
+
+    # 3. FailoverLLMProvider falls back cleanly to backup provider when primary rejects (400)
+    def bad_handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(400, json={"error": {"message": "invalid argument"}})
+
+    bad_gem = GeminiProvider(
+        api_key="AQ.test-key",
+        vision_model="gemini-flash-latest",
+        client=httpx.AsyncClient(transport=httpx.MockTransport(bad_handler)),
+    )
+    backup = _ScriptedProvider("groq", lambda _tag, _prompt: {"pages": [{"pageNumber": 1}]})
+    failover = FailoverLLMProvider(bad_gem, backup)
+    fo_out = await failover.extract_json_with_images(
+        processed_images=[("aGVsbG8=", "image/jpeg")],
+        system_prompt="segment",
+        user_prompt="page 1",
+    )
+    assert fo_out.model_name == "groq"
+    await async_client.aclose()

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.config import get_settings
+from app.providers import resolve_primary_provider_name
 from app.routes_grading import router as grading_router
 from app.routes_pdf import router as pdf_router
 from app.routes_stats import router as stats_router
@@ -63,7 +64,7 @@ def create_app() -> FastAPI:
     @app.get("/readyz")
     def readyz() -> dict[str, str | bool]:
         current = get_settings()
-        return {"ok": True, "provider": current.ai_provider}
+        return {"ok": True, "provider": resolve_primary_provider_name(current)}
 
     @app.get("/metrics")
     def metrics() -> Response:

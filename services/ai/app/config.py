@@ -12,13 +12,16 @@ class Settings(BaseSettings):
     )
 
     ai_internal_key: str = "dev_internal_shared_secret_change_in_prod"
-    ai_provider: Literal["anthropic", "groq", "fake"] = "anthropic"
+    ai_provider: Literal["gemini", "anthropic", "groq", "fake"] = "anthropic"
+    gemini_api_key: str = ""
+    gemini_vision_model: str = "gemini-flash-latest"
+    gemini_grade_model: str = "gemini-3.8-flash"
     anthropic_api_key: str = ""
     groq_api_key: str = ""
     ai_model_transcribe: str = "claude-sonnet-4-20250514"
     ai_model_grade: str = "claude-sonnet-4-20250514"
-    groq_vision_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
-    groq_grade_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
+    groq_vision_model: str = "qwen/qwen3.8-27b"
+    groq_grade_model: str = "qwen/qwen3.8-27b"
     ai_min_confidence: float = 0.75
     ai_max_illegible_ratio: float = 0.20
     ai_pass_grade_image: bool = True

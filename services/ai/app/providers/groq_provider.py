@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
 import groq
@@ -8,11 +10,16 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from app.providers.base import (
     CircuitBreaker,
     LLMProvider,
+    ProviderRequestError,
     ProviderUpstreamError,
     RawProviderCall,
 )
 from app.providers.json_helper import build_grading_user_message, execute_with_json_repair
 from app.schemas import ModelAnswerIn, RubricCriterionIn
+
+logger = logging.getLogger("mathlens.ai.groq")
+
+_FALLBACK_GROQ_MODEL = "qwen/qwen3.8-27b"
 
 
 class GroqProvider(LLMProvider):
@@ -51,9 +58,10 @@ class GroqProvider(LLMProvider):
         self._breaker.before_call()
         client = (
             self._client.with_options(timeout=timeout_seconds)
-            if timeout_seconds is not None
+            if timeout_seconds is not None and hasattr(self._client, "with_options")
             else self._client
         )
+        candidate_model = model
         try:
             messages_payload = cast(
                 Any,
@@ -62,12 +70,35 @@ class GroqProvider(LLMProvider):
                     {"role": "user", "content": content_parts},
                 ],
             )
-            response = await client.chat.completions.create(
-                model=model,
-                temperature=0.0,
-                max_tokens=max_tokens,
-                messages=messages_payload,
-            )
+            try:
+                response = await client.chat.completions.create(
+                    model=candidate_model,
+                    temperature=0.0,
+                    max_tokens=max_tokens,
+                    messages=messages_payload,
+                )
+            except groq.NotFoundError as exc:
+                if candidate_model == _FALLBACK_GROQ_MODEL:
+                    raise ProviderRequestError(
+                        f"Groq model '{candidate_model}' not found: {exc}"
+                    ) from exc
+                logger.warning(
+                    "Groq model '%s' unavailable (%s); falling back to '%s'",
+                    candidate_model,
+                    exc,
+                    _FALLBACK_GROQ_MODEL,
+                )
+                candidate_model = _FALLBACK_GROQ_MODEL
+                if model == self._vision_model:
+                    self._vision_model = _FALLBACK_GROQ_MODEL
+                if model == self._grade_model:
+                    self._grade_model = _FALLBACK_GROQ_MODEL
+                response = await client.chat.completions.create(
+                    model=candidate_model,
+                    temperature=0.0,
+                    max_tokens=max_tokens,
+                    messages=messages_payload,
+                )
             self._breaker.record_success()
             content = response.choices[0].message.content or ""
             usage = getattr(response, "usage", None)
@@ -78,10 +109,26 @@ class GroqProvider(LLMProvider):
             if exc.status_code >= 500 or exc.status_code == 429:
                 self._breaker.record_failure()
                 raise ProviderUpstreamError(f"Groq HTTP {exc.status_code}: {exc}") from exc
-            raise
+            raise ProviderRequestError(f"Groq HTTP {exc.status_code}: {exc}") from exc
         except (groq.APIConnectionError, groq.APITimeoutError) as exc:
             self._breaker.record_failure()
             raise ProviderUpstreamError(f"Groq transport error: {exc}") from exc
+
+    async def _run_json_repair(
+        self,
+        *,
+        model_name: str,
+        initial_call: Callable[[], Awaitable[tuple[str, int, int]]],
+        repair_call: Callable[[str], Awaitable[tuple[str, int, int]]],
+    ) -> RawProviderCall:
+        try:
+            return await execute_with_json_repair(
+                model_name=model_name,
+                initial_call=initial_call,
+                repair_call=repair_call,
+            )
+        except ValueError as exc:
+            raise ProviderRequestError(f"Groq returned invalid JSON: {exc}") from exc
 
     async def transcribe(
         self,
@@ -153,7 +200,7 @@ class GroqProvider(LLMProvider):
         else:
             user_content = user_prompt
 
-        return await execute_with_json_repair(
+        return await self._run_json_repair(
             model_name=model_name,
             initial_call=lambda: self._call_chat(
                 model=model_name,

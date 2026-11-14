@@ -8,7 +8,7 @@ from app.cache import GradeResultCache
 from app.config import Settings, get_settings
 from app.pipeline.service import GradingPipelineService
 from app.providers import get_provider_cached
-from app.providers.base import CircuitOpenError, ProviderUpstreamError
+from app.providers.base import CircuitOpenError, ProviderRequestError, ProviderUpstreamError
 from app.schemas import (
     GradeEssayRequest,
     GradeEssayResponse,
@@ -36,6 +36,9 @@ def get_grading_pipeline(settings: Settings | None = None) -> GradingPipelineSer
         active_settings.groq_vision_model,
         active_settings.groq_grade_model,
         active_settings.ai_request_timeout_seconds,
+        active_settings.gemini_api_key,
+        active_settings.gemini_vision_model,
+        active_settings.gemini_grade_model,
     )
     return GradingPipelineService(
         settings=active_settings,
@@ -58,7 +61,7 @@ async def transcribe_endpoint(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={"code": "AI_CIRCUIT_OPEN", "message": str(exc)},
         ) from exc
-    except ProviderUpstreamError as exc:
+    except (ProviderUpstreamError, ProviderRequestError) as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail={"code": "AI_UPSTREAM_ERROR", "message": str(exc)},
@@ -78,7 +81,7 @@ async def grade_essay_endpoint(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={"code": "AI_CIRCUIT_OPEN", "message": str(exc)},
         ) from exc
-    except ProviderUpstreamError as exc:
+    except (ProviderUpstreamError, ProviderRequestError) as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail={"code": "AI_UPSTREAM_ERROR", "message": str(exc)},

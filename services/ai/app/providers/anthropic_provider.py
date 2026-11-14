@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
 import anthropic
@@ -9,6 +10,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from app.providers.base import (
     CircuitBreaker,
     LLMProvider,
+    ProviderRequestError,
     ProviderUpstreamError,
     RawProviderCall,
 )
@@ -52,7 +54,7 @@ class AnthropicProvider(LLMProvider):
         self._breaker.before_call()
         client = (
             self._client.with_options(timeout=timeout_seconds)
-            if timeout_seconds is not None
+            if timeout_seconds is not None and hasattr(self._client, "with_options")
             else self._client
         )
         try:
@@ -73,10 +75,26 @@ class AnthropicProvider(LLMProvider):
             if exc.status_code >= 500 or exc.status_code == 429:
                 self._breaker.record_failure()
                 raise ProviderUpstreamError(f"Anthropic HTTP {exc.status_code}: {exc}") from exc
-            raise
+            raise ProviderRequestError(f"Anthropic HTTP {exc.status_code}: {exc}") from exc
         except (anthropic.APIConnectionError, anthropic.APITimeoutError) as exc:
             self._breaker.record_failure()
             raise ProviderUpstreamError(f"Anthropic transport error: {exc}") from exc
+
+    async def _run_json_repair(
+        self,
+        *,
+        model_name: str,
+        initial_call: Callable[[], Awaitable[tuple[str, int, int]]],
+        repair_call: Callable[[str], Awaitable[tuple[str, int, int]]],
+    ) -> RawProviderCall:
+        try:
+            return await execute_with_json_repair(
+                model_name=model_name,
+                initial_call=initial_call,
+                repair_call=repair_call,
+            )
+        except ValueError as exc:
+            raise ProviderRequestError(f"Anthropic returned invalid JSON: {exc}") from exc
 
     async def transcribe(
         self,
@@ -142,7 +160,7 @@ class AnthropicProvider(LLMProvider):
             for b64, mime in processed_images
         ]
         blocks.append({"type": "text", "text": user_prompt})
-        return await execute_with_json_repair(
+        return await self._run_json_repair(
             model_name=model_name,
             initial_call=lambda: self._call_messages(
                 model=model_name,
