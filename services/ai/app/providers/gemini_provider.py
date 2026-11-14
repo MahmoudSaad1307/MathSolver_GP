@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -20,7 +21,14 @@ from app.schemas import ModelAnswerIn, RubricCriterionIn
 logger = logging.getLogger("mathlens.ai.gemini")
 
 _GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
-_FALLBACK_GEMINI_MODEL = "gemini-flash-latest"
+_FALLBACK_GEMINI_MODEL = "gemini-flash-lite-latest"
+_GEMINI_FALLBACK_ORDER: tuple[str, ...] = (
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+)
 
 
 class GeminiProvider(LLMProvider):
@@ -43,6 +51,7 @@ class GeminiProvider(LLMProvider):
         self._timeout_seconds = timeout_seconds
         self._client = client or httpx.AsyncClient(timeout=timeout_seconds)
         self._breaker = CircuitBreaker()
+        self._model_cooldowns: dict[str, float] = {}
 
     def _build_payload(
         self,
@@ -93,6 +102,18 @@ class GeminiProvider(LLMProvider):
             timeout=effective_timeout,
         )
 
+    def _candidate_models(self, preferred: str) -> list[str]:
+        now = time.monotonic()
+        ordered = [preferred, *(m for m in _GEMINI_FALLBACK_ORDER if m != preferred)]
+        available = [m for m in ordered if self._model_cooldowns.get(m, 0.0) <= now]
+        return available or ordered
+
+    def _pin_fallback_model(self, failed_model: str, replacement: str) -> None:
+        if failed_model == self._vision_model:
+            self._vision_model = replacement
+        if failed_model == self._grade_model:
+            self._grade_model = replacement
+
     @retry(
         retry=retry_if_exception_type(ProviderUpstreamError),
         stop=stop_after_attempt(2),
@@ -109,41 +130,13 @@ class GeminiProvider(LLMProvider):
         timeout_seconds: float | None = None,
     ) -> tuple[str, int, int, str]:
         self._breaker.before_call()
-        candidate_model = model
-        try:
-            resp = await self._post_generate(
-                model_name=candidate_model,
-                system_prompt=system_prompt,
-                parts=parts,
-                max_tokens=max_tokens,
-                timeout_seconds=timeout_seconds,
-            )
-            if (
-                resp.status_code == 400
-                and "gemini-3" in candidate_model
-                and "thinking" in resp.text.lower()
-            ):
-                resp = await self._post_generate(
-                    model_name=candidate_model,
-                    system_prompt=system_prompt,
-                    parts=parts,
-                    max_tokens=max_tokens,
-                    timeout_seconds=timeout_seconds,
-                    include_thinking=False,
-                )
+        candidates_to_try = self._candidate_models(model)
+        last_upstream_err: str | None = None
+        last_status = 503
 
-            if resp.status_code in (404, 503) and candidate_model != _FALLBACK_GEMINI_MODEL:
-                logger.warning(
-                    "Gemini model '%s' returned HTTP %d; falling back to '%s'",
-                    candidate_model,
-                    resp.status_code,
-                    _FALLBACK_GEMINI_MODEL,
-                )
-                candidate_model = _FALLBACK_GEMINI_MODEL
-                if model == self._vision_model:
-                    self._vision_model = _FALLBACK_GEMINI_MODEL
-                if model == self._grade_model:
-                    self._grade_model = _FALLBACK_GEMINI_MODEL
+        for idx, candidate_model in enumerate(candidates_to_try):
+            has_next = idx + 1 < len(candidates_to_try)
+            try:
                 resp = await self._post_generate(
                     model_name=candidate_model,
                     system_prompt=system_prompt,
@@ -151,60 +144,77 @@ class GeminiProvider(LLMProvider):
                     max_tokens=max_tokens,
                     timeout_seconds=timeout_seconds,
                 )
-        except httpx.TimeoutException as exc:
-            if candidate_model != _FALLBACK_GEMINI_MODEL:
-                logger.warning(
-                    "Gemini model '%s' timed out; falling back once to '%s'",
-                    candidate_model,
-                    _FALLBACK_GEMINI_MODEL,
-                )
-                if model == self._vision_model:
-                    self._vision_model = _FALLBACK_GEMINI_MODEL
-                if model == self._grade_model:
-                    self._grade_model = _FALLBACK_GEMINI_MODEL
-                try:
+                if (
+                    resp.status_code == 400
+                    and "gemini-3" in candidate_model
+                    and "thinking" in resp.text.lower()
+                ):
                     resp = await self._post_generate(
-                        model_name=_FALLBACK_GEMINI_MODEL,
+                        model_name=candidate_model,
                         system_prompt=system_prompt,
                         parts=parts,
                         max_tokens=max_tokens,
                         timeout_seconds=timeout_seconds,
+                        include_thinking=False,
                     )
-                    candidate_model = _FALLBACK_GEMINI_MODEL
-                except httpx.HTTPError as inner_exc:
-                    self._breaker.record_failure()
-                    raise ProviderUpstreamError(
-                        f"Gemini transport error: {inner_exc}"
-                    ) from inner_exc
-            else:
+            except httpx.TimeoutException as exc:
+                self._model_cooldowns[candidate_model] = time.monotonic() + 60.0
+                if has_next:
+                    nxt = candidates_to_try[idx + 1]
+                    logger.warning(
+                        "Gemini model '%s' timed out; switching to '%s'",
+                        candidate_model,
+                        nxt,
+                    )
+                    self._pin_fallback_model(model, nxt)
+                    last_upstream_err = f"Gemini timeout: {exc}"
+                    continue
                 self._breaker.record_failure()
                 raise ProviderUpstreamError(f"Gemini timeout: {exc}") from exc
-        except httpx.HTTPError as exc:
-            self._breaker.record_failure()
-            raise ProviderUpstreamError(f"Gemini transport error: {exc}") from exc
+            except httpx.HTTPError as exc:
+                self._breaker.record_failure()
+                raise ProviderUpstreamError(f"Gemini transport error: {exc}") from exc
 
-        if resp.status_code >= 500 or resp.status_code == 429:
-            self._breaker.record_failure()
-            raise ProviderUpstreamError(f"Gemini HTTP {resp.status_code}: {resp.text[:300]}")
-        if resp.status_code >= 400:
-            raise ProviderRequestError(f"Gemini HTTP {resp.status_code}: {resp.text[:300]}")
+            if resp.status_code in (404, 429, 503) and has_next:
+                cooldown = 300.0 if resp.status_code in (404, 429) else 45.0
+                self._model_cooldowns[candidate_model] = time.monotonic() + cooldown
+                nxt = candidates_to_try[idx + 1]
+                logger.warning(
+                    "Gemini model '%s' returned HTTP %d; falling back to '%s'",
+                    candidate_model,
+                    resp.status_code,
+                    nxt,
+                )
+                self._pin_fallback_model(model, nxt)
+                last_status = resp.status_code
+                last_upstream_err = f"Gemini HTTP {resp.status_code}: {resp.text[:300]}"
+                continue
 
-        self._breaker.record_success()
-        body = resp.json()
-        candidates = body.get("candidates") or []
-        if not candidates:
-            raise ProviderRequestError("Gemini returned no candidates in response")
-        content_parts = (candidates[0].get("content") or {}).get("parts") or []
-        text = "\n".join(str(p.get("text", "")) for p in content_parts if "text" in p).strip()
-        if not text:
-            raise ProviderRequestError("Gemini candidate returned empty text")
+            if resp.status_code >= 500 or resp.status_code == 429:
+                self._breaker.record_failure()
+                raise ProviderUpstreamError(f"Gemini HTTP {resp.status_code}: {resp.text[:300]}")
+            if resp.status_code >= 400:
+                raise ProviderRequestError(f"Gemini HTTP {resp.status_code}: {resp.text[:300]}")
 
-        usage = body.get("usageMetadata") or {}
-        in_tokens = int(usage.get("promptTokenCount", 0) or 0)
-        out_tokens = int(usage.get("candidatesTokenCount", 0) or 0) + int(
-            usage.get("thoughtsTokenCount", 0) or 0
-        )
-        return (text, in_tokens, out_tokens, candidate_model)
+            self._breaker.record_success()
+            body = resp.json()
+            candidates = body.get("candidates") or []
+            if not candidates:
+                raise ProviderRequestError("Gemini returned no candidates in response")
+            content_parts = (candidates[0].get("content") or {}).get("parts") or []
+            text = "\n".join(str(p.get("text", "")) for p in content_parts if "text" in p).strip()
+            if not text:
+                raise ProviderRequestError("Gemini candidate returned empty text")
+
+            usage = body.get("usageMetadata") or {}
+            in_tokens = int(usage.get("promptTokenCount", 0) or 0)
+            out_tokens = int(usage.get("candidatesTokenCount", 0) or 0) + int(
+                usage.get("thoughtsTokenCount", 0) or 0
+            )
+            return (text, in_tokens, out_tokens, candidate_model)
+
+        self._breaker.record_failure()
+        raise ProviderUpstreamError(last_upstream_err or f"Gemini HTTP {last_status}: exhausted")
 
     async def _run_json_repair(
         self,

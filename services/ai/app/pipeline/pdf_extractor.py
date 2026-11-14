@@ -189,6 +189,27 @@ def _normalize_rubric_criteria(
     return parsed
 
 
+def _resolve_batch_page_numbers(
+    entries: list[dict[str, Any]],
+    batch: list[PreprocessedPdfPage],
+) -> list[int]:
+    """Map model-emitted pageNumber values back to global 1-based PDF page indices."""
+    expected = [p.page_number for p in batch]
+    expected_set = set(expected)
+    raw_nums = [int(e.get("pageNumber", 0) or 0) for e in entries]
+    if not raw_nums:
+        return []
+    if len(expected) == 1:
+        return [expected[0] for _ in raw_nums]
+    if all(n in expected_set for n in raw_nums):
+        return raw_nums
+    if len(raw_nums) <= len(expected) and all(1 <= n <= len(expected) for n in raw_nums):
+        return [expected[n - 1] for n in raw_nums]
+    if any(n in expected_set for n in raw_nums):
+        return [n if n in expected_set else 0 for n in raw_nums]
+    return [expected[idx] if idx < len(expected) else 0 for idx in range(len(raw_nums))]
+
+
 async def _segment_pages(
     pages: list[PreprocessedPdfPage],
     *,
@@ -253,8 +274,9 @@ async def _segment_pages(
             raise
 
         telemetry.add(call)
-        for entry in cast(list[dict[str, Any]], call.parsed_json.get("pages", [])):
-            pno = int(entry.get("pageNumber", 0))
+        page_entries = cast(list[dict[str, Any]], call.parsed_json.get("pages", []))
+        resolved_nums = _resolve_batch_page_numbers(page_entries, batch)
+        for entry, pno in zip(page_entries, resolved_nums, strict=False):
             raw_role = str(entry.get("role", "QUESTIONS"))
             role: PdfPageRole = (
                 cast(PdfPageRole, raw_role)
@@ -277,8 +299,17 @@ async def _segment_pages(
             if isinstance(an, int):
                 a_found.add(an)
 
-    for batch in batches:
-        await _run_batch(batch, hint_cap=initial_hint_cap)
+    if provider.provider_name == "groq" or len(batches) <= 1:
+        for batch in batches:
+            await _run_batch(batch, hint_cap=initial_hint_cap)
+    else:
+        seg_sem = asyncio.Semaphore(3)
+
+        async def _bounded_batch(b: list[PreprocessedPdfPage]) -> None:
+            async with seg_sem:
+                await _run_batch(b, hint_cap=initial_hint_cap)
+
+        await asyncio.gather(*(_bounded_batch(b) for b in batches))
 
     return roles, sorted(q_found), sorted(a_found)
 
@@ -295,13 +326,26 @@ def _build_windows(
     if len(active) == 1 or single_page_only:
         return [[p] for p in active]
     windows: list[list[PreprocessedPdfPage]] = []
-    for i in range(len(active) - 1):
-        pair = [active[i], active[i + 1]]
-        if len(pair[0].image_b64) + len(pair[1].image_b64) <= 2_800_000:
-            windows.append(pair)
-        else:
-            windows.append([pair[0]])
-            windows.append([pair[1]])
+    if len(active) <= 3:
+        for i in range(len(active) - 1):
+            pair = [active[i], active[i + 1]]
+            if len(pair[0].image_b64) + len(pair[1].image_b64) <= 2_800_000:
+                windows.append(pair)
+            else:
+                windows.append([pair[0]])
+                windows.append([pair[1]])
+        return windows
+
+    # For 4+ pages on high-capacity providers (Gemini/Anthropic), stitch 3-page stride-2 chunks
+    idx = 0
+    while idx < len(active):
+        chunk = active[idx : idx + 3]
+        while len(chunk) > 1 and sum(len(p.image_b64) for p in chunk) > 2_600_000:
+            chunk = chunk[:-1]
+        windows.append(chunk)
+        if idx + len(chunk) >= len(active):
+            break
+        idx += max(1, len(chunk) - 1)
     return windows
 
 
@@ -353,17 +397,28 @@ async def _transcribe_windows(
             raise
 
         telemetry.add(call)
-        for blk in cast(list[dict[str, Any]], call.parsed_json.get("blocks", [])):
-            pno = int(blk.get("pageNumber", 0))
+        blk_entries = cast(list[dict[str, Any]], call.parsed_json.get("blocks", []))
+        resolved_nums = _resolve_batch_page_numbers(blk_entries, window)
+        for blk, pno in zip(blk_entries, resolved_nums, strict=False):
             if not pno:
                 continue
+            blk["pageNumber"] = pno
             conf = float(blk.get("confidence", 0.9))
             prev = best_blocks.get(pno)
             if prev is None or conf > float(prev.get("confidence", 0.0)):
                 best_blocks[pno] = blk
 
-    for window in windows:
-        await _run_window(window, hint_cap=initial_hint_cap)
+    if single_only or len(windows) <= 1:
+        for window in windows:
+            await _run_window(window, hint_cap=initial_hint_cap)
+    else:
+        win_sem = asyncio.Semaphore(3)
+
+        async def _bounded_window(w: list[PreprocessedPdfPage]) -> None:
+            async with win_sem:
+                await _run_window(w, hint_cap=initial_hint_cap)
+
+        await asyncio.gather(*(_bounded_window(w) for w in windows))
 
     # Cross-check low-confidence pages, [[UNSURE:]] markers, or native-text number divergences
     recheck_provider = secondary or primary
@@ -643,12 +698,17 @@ async def _extract_single_model(
         f"=== TRANSCRIBED QUESTION PAGES ===\n" + ("\n\n".join(q_texts) or "(none)") + "\n\n"
         "=== TRANSCRIBED MODEL ANSWER PAGES ===\n" + ("\n\n".join(a_texts) or "(none)")
     )
+    struct_max_tokens = (
+        settings.pdf_max_tokens
+        if primary.provider_name == "groq"
+        else max(settings.pdf_max_tokens, 8192)
+    )
     try:
         struct_call = await primary.extract_json_with_images(
             processed_images=[],
             system_prompt=struct_system,
             user_prompt=struct_prompt,
-            max_tokens=settings.pdf_max_tokens,
+            max_tokens=struct_max_tokens,
             timeout_seconds=settings.pdf_ocr_timeout_seconds,
             hint_tag="pdf_structure_pair",
         )

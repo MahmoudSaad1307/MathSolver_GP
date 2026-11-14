@@ -72,6 +72,8 @@ def _extract_retry_wait_seconds(exc: groq.APIStatusError) -> float:
     match = re.search(r"try again in ([0-9]+(?:\.[0-9]+)?)s", str(exc), re.IGNORECASE)
     if match:
         return min(max(float(match.group(1)) + 0.5, 1.0), 14.0)
+    if exc.status_code == 429 and "output tokens per minute" in str(exc).lower():
+        return 6.0
     return 0.0
 
 
@@ -261,7 +263,8 @@ class GroqProvider(LLMProvider):
         del hint_tag
         model_name = self._vision_model if processed_images else self._grade_model
         compacted_images = _compact_images_for_groq(processed_images)
-        effective_max_tokens = min(max_tokens, 3000) if compacted_images else max_tokens
+        # Keep vision max_tokens under Groq on_demand 1000 OTPM ceiling
+        effective_max_tokens = min(max_tokens, 950) if compacted_images else max_tokens
         user_content = self._build_json_user_content(compacted_images, user_prompt)
 
         try:

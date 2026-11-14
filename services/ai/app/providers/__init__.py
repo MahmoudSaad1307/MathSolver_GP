@@ -114,8 +114,8 @@ def get_secondary_provider_cached(
     groq_grade_model: str,
     timeout_seconds: float,
     gemini_key: str = "",
-    gemini_vision_model: str = "gemini-flash-latest",
-    gemini_grade_model: str = "gemini-flash-latest",
+    gemini_vision_model: str = "gemini-flash-lite-latest",
+    gemini_grade_model: str = "gemini-flash-lite-latest",
 ) -> LLMProvider | None:
     return create_secondary_provider(
         _build_settings_for_cache(
@@ -145,8 +145,8 @@ def get_provider_cached(
     groq_grade_model: str,
     timeout_seconds: float,
     gemini_key: str = "",
-    gemini_vision_model: str = "gemini-flash-latest",
-    gemini_grade_model: str = "gemini-flash-latest",
+    gemini_vision_model: str = "gemini-flash-lite-latest",
+    gemini_grade_model: str = "gemini-flash-lite-latest",
 ) -> LLMProvider:
     return create_provider(
         _build_settings_for_cache(

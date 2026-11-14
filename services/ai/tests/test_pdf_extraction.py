@@ -14,7 +14,12 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings, get_settings
 from app.main import create_app
-from app.pipeline.pdf_extractor import _extract_rhs_candidate, extract_exam_pdfs
+from app.pipeline.pdf_extractor import (
+    _build_windows,
+    _extract_rhs_candidate,
+    _resolve_batch_page_numbers,
+    extract_exam_pdfs,
+)
 from app.pipeline.pdf_preprocess import PdfValidationError, preprocess_pdf_document
 from app.providers import (
     create_provider,
@@ -829,3 +834,67 @@ async def test_payload_too_large_splits_batches_handles_recheck_and_timeout_pin(
     assert t_gem._grade_model == "gemini-flash-latest"
     assert timeout_models == ["gemini-3.8-flash", "gemini-flash-latest"]
     await t_client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_batch_page_remapping_chunked_windows_and_gemini_429_rotation() -> None:
+    # 1. Positional remapping prevents batch [4,5,6] returning relative [1,2,3] overwriting p1..3
+    pdf8_b64 = _build_pdf_b64([f"Page {i} text content here" for i in range(1, 9)])
+    pages8 = preprocess_pdf_document(pdf8_b64, max_pages=40, dpi=72)
+    mapped = _resolve_batch_page_numbers(
+        [{"pageNumber": 1}, {"pageNumber": 2}, {"pageNumber": 3}],
+        pages8[3:6],
+    )
+    assert mapped == [4, 5, 6]
+
+    # 2. 8-page PDF builds 4 overlapping 3-page stride-2 windows (instead of 7 redundant pairs)
+    windows8 = _build_windows(pages8, {p.page_number: "QUESTIONS" for p in pages8})
+    assert [[p.page_number for p in w] for w in windows8] == [
+        [1, 2, 3],
+        [3, 4, 5],
+        [5, 6, 7],
+        [7, 8],
+    ]
+
+    # 3. GeminiProvider rotates past HTTP 429 daily-quota model to healthy Lite model and cools down
+    calls_429: list[str] = []
+
+    def handler_429(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if "gemini-flash-latest:generateContent" in url:
+            calls_429.append("gemini-flash-latest")
+            return httpx.Response(429, json={"error": {"message": "quota exceeded"}})
+        calls_429.append("gemini-flash-lite-latest")
+        return httpx.Response(
+            200,
+            json={
+                "candidates": [{"content": {"parts": [{"text": '{"ok": true}'}]}}],
+                "usageMetadata": {"promptTokenCount": 30, "candidatesTokenCount": 8},
+            },
+        )
+
+    client_429 = httpx.AsyncClient(transport=httpx.MockTransport(handler_429))
+    gem_429 = GeminiProvider(
+        api_key="AQ.test-key",
+        vision_model="gemini-flash-latest",
+        grade_model="gemini-flash-latest",
+        client=client_429,
+    )
+    r1 = await gem_429.extract_json_with_images(
+        processed_images=[("aGVsbG8=", "image/jpeg")],
+        system_prompt="s",
+        user_prompt="u1",
+    )
+    r2 = await gem_429.extract_json_with_images(
+        processed_images=[("aGVsbG8=", "image/jpeg")],
+        system_prompt="s",
+        user_prompt="u2",
+    )
+    assert r1.parsed_json["ok"] is True
+    assert r2.parsed_json["ok"] is True
+    assert calls_429 == [
+        "gemini-flash-latest",
+        "gemini-flash-lite-latest",
+        "gemini-flash-lite-latest",
+    ]
+    await client_429.aclose()
