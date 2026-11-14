@@ -67,6 +67,10 @@ class ProviderRequestError(RuntimeError):
     """Non-retryable upstream request, model availability, or schema parse error."""
 
 
+class PayloadTooLargeError(ProviderRequestError):
+    """Upstream provider rejected request size or ITPM token ceiling (HTTP 413)."""
+
+
 class CircuitOpenError(RuntimeError):
     """Raised when provider circuit breaker is open after repeated failures."""
 

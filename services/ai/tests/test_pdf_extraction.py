@@ -24,6 +24,7 @@ from app.providers import (
 from app.providers.base import (
     FailoverLLMProvider,
     LLMProvider,
+    PayloadTooLargeError,
     ProviderRequestError,
     RawProviderCall,
     extract_json_object,
@@ -631,3 +632,200 @@ async def test_gemini_priority_routing_mock_client_and_failover() -> None:
     )
     assert fo_out.model_name == "groq"
     await async_client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_payload_too_large_splits_batches_handles_recheck_and_timeout_pin() -> None:
+    pdf_b64 = _build_pdf_b64(["Page 1 Q1: 2x=4", "Page 2 Q2: 3x=9", "Page 3 Answers: A1=2, A2=3"])
+
+    # 1. Multi-page batches split down to 1-page calls on PayloadTooLargeError (HTTP 413),
+    #    structuring retries compactly, and secondary 413 during recheck never crashes extraction.
+    seg_sizes: list[int] = []
+    win_sizes: list[int] = []
+    struct_attempts = 0
+
+    class _SplitOn413Provider(LLMProvider):
+        provider_name = "gemini"
+
+        async def extract_json_with_images(
+            self,
+            *,
+            processed_images: list[tuple[str, str]],
+            system_prompt: str,
+            user_prompt: str,
+            max_tokens: int = 4096,
+            timeout_seconds: float | None = None,
+            hint_tag: str | None = None,
+        ) -> RawProviderCall:
+            nonlocal struct_attempts
+            del system_prompt, user_prompt, max_tokens, timeout_seconds
+            if hint_tag == "pdf_segment":
+                seg_sizes.append(len(processed_images))
+                if len(processed_images) > 1:
+                    raise PayloadTooLargeError("Groq HTTP 413: too many pages")
+                pno = 1 if seg_sizes.count(1) == 1 else (2 if seg_sizes.count(1) == 2 else 3)
+                role = "MODEL_ANSWERS" if pno == 3 else "QUESTIONS"
+                return RawProviderCall(
+                    raw_text="{}",
+                    parsed_json={
+                        "pages": [{"pageNumber": pno, "role": role}],
+                        "questionNumbersFound": [1, 2],
+                        "answerNumbersFound": [1, 2],
+                    },
+                    input_tokens=50,
+                    output_tokens=20,
+                    cost_usd=0.0,
+                    latency_ms=1,
+                    model_name="split-test",
+                    schema_retry_used=False,
+                )
+            if hint_tag in ("pdf_ocr_window", "pdf_ocr_recheck"):
+                win_sizes.append(len(processed_images))
+                if len(processed_images) > 1:
+                    raise PayloadTooLargeError("Groq HTTP 413: window too large")
+                idx = min(3, max(1, win_sizes.count(1)))
+                return RawProviderCall(
+                    raw_text="{}",
+                    parsed_json={
+                        "blocks": [
+                            {
+                                "pageNumber": idx,
+                                "confidence": 0.7 if idx == 1 else 0.95,
+                                "text": "ok",
+                            }
+                        ]
+                    },
+                    input_tokens=50,
+                    output_tokens=20,
+                    cost_usd=0.0,
+                    latency_ms=1,
+                    model_name="split-test",
+                    schema_retry_used=False,
+                )
+            struct_attempts += 1
+            if struct_attempts == 1:
+                raise PayloadTooLargeError("Groq HTTP 413: struct prompt too large")
+            return RawProviderCall(
+                raw_text="{}",
+                parsed_json={
+                    "questions": [
+                        {
+                            "orderIndex": 1,
+                            "conceptKey": "linear",
+                            "type": "MCQ",
+                            "promptLatex": "Solve $2x=4$",
+                            "points": 2,
+                            "sourceQuestionPages": [1],
+                            "sourceAnswerPages": [3],
+                            "mcqOptions": [
+                                {"label": "A", "textLatex": "$1$", "isCorrect": False},
+                                {"label": "B", "textLatex": "$2$", "isCorrect": True},
+                                {"label": "C", "textLatex": "$3$", "isCorrect": False},
+                                {"label": "D", "textLatex": "$4$", "isCorrect": False},
+                            ],
+                        }
+                    ],
+                    "unmatchedQuestionNumbers": [],
+                    "unmatchedAnswerNumbers": [],
+                },
+                input_tokens=40,
+                output_tokens=20,
+                cost_usd=0.0,
+                latency_ms=1,
+                model_name="split-test",
+                schema_retry_used=False,
+            )
+
+        async def transcribe(self, **_kwargs: Any) -> RawProviderCall:
+            raise NotImplementedError
+
+        async def grade(self, **_kwargs: Any) -> RawProviderCall:
+            raise NotImplementedError
+
+    class _FailingSecondary413(_SplitOn413Provider):
+        provider_name = "groq"
+
+        async def extract_json_with_images(self, **_kwargs: Any) -> RawProviderCall:
+            raise PayloadTooLargeError("Groq HTTP 413 during secondary recheck")
+
+    res = await extract_exam_pdfs(
+        ExtractExamPdfRequest(
+            preModel=PdfExtractModelRequest(modelNumber=1, title="Split413", pdfBase64=pdf_b64)
+        ),
+        primary_provider=_SplitOn413Provider(),
+        secondary_provider=_FailingSecondary413(),
+        settings=_override_settings(),
+    )
+    assert seg_sizes == [3, 1, 1, 1]
+    assert 2 in win_sizes and 1 in win_sizes
+    assert struct_attempts == 2
+    assert len(res.models[0].questions) == 1
+
+    # 2. GroqProvider raises PayloadTooLargeError on 413 when multi-image,
+    #    and recovers via single-image compacted retry when single-image returns 413 once.
+    groq_prov = GroqProvider(
+        api_key="gsk-test",
+        vision_model="qwen/qwen3.8-27b",
+        grade_model="qwen/qwen3.8-27b",
+    )
+    req_count = 0
+
+    async def _fake_create_413_then_ok(**_kwargs: Any) -> Any:
+        nonlocal req_count
+        req_count += 1
+        if req_count == 1:
+            fake_req = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+            fake_resp = httpx.Response(413, request=fake_req)
+            raise groq.APIStatusError(
+                "too large",
+                response=fake_resp,
+                body={"error": {"code": "rate_limit_exceeded"}},
+            )
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content='{"ok": true}'))],
+            usage=SimpleNamespace(prompt_tokens=30, completion_tokens=10),
+        )
+
+    groq_prov._client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=_fake_create_413_then_ok))
+    )  # type: ignore[assignment]
+    g_res = await groq_prov.extract_json_with_images(
+        processed_images=[("aGVsbG8=", "image/jpeg")],
+        system_prompt="s",
+        user_prompt="u" * 3000,
+    )
+    assert g_res.parsed_json["ok"] is True
+    assert req_count == 2
+
+    # 3. GeminiProvider pins gemini-flash-latest when preview model times out
+    timeout_models: list[str] = []
+
+    def timeout_handler(request: httpx.Request) -> httpx.Response:
+        if "gemini-3.8-flash:generateContent" in str(request.url):
+            timeout_models.append("gemini-3.8-flash")
+            raise httpx.ReadTimeout("timed out", request=request)
+        timeout_models.append("gemini-flash-latest")
+        return httpx.Response(
+            200,
+            json={
+                "candidates": [{"content": {"parts": [{"text": '{"ok": true}'}]}}],
+                "usageMetadata": {"promptTokenCount": 20, "candidatesTokenCount": 5},
+            },
+        )
+
+    t_client = httpx.AsyncClient(transport=httpx.MockTransport(timeout_handler))
+    t_gem = GeminiProvider(
+        api_key="AQ.test-key",
+        vision_model="gemini-3.8-flash",
+        grade_model="gemini-3.8-flash",
+        client=t_client,
+    )
+    t_out = await t_gem.extract_json_with_images(
+        processed_images=[],
+        system_prompt="s",
+        user_prompt="u",
+    )
+    assert t_out.parsed_json["ok"] is True
+    assert t_gem._grade_model == "gemini-flash-latest"
+    assert timeout_models == ["gemini-3.8-flash", "gemini-flash-latest"]
+    await t_client.aclose()

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     ai_provider: Literal["gemini", "anthropic", "groq", "fake"] = "anthropic"
     gemini_api_key: str = ""
     gemini_vision_model: str = "gemini-flash-latest"
-    gemini_grade_model: str = "gemini-3.8-flash"
+    gemini_grade_model: str = "gemini-flash-latest"
     anthropic_api_key: str = ""
     groq_api_key: str = ""
     ai_model_transcribe: str = "claude-sonnet-4-20250514"

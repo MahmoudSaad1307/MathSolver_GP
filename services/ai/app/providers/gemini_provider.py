@@ -31,8 +31,8 @@ class GeminiProvider(LLMProvider):
         *,
         api_key: str,
         vision_model: str = _FALLBACK_GEMINI_MODEL,
-        grade_model: str = "gemini-3.8-flash",
-        timeout_seconds: float = 45.0,
+        grade_model: str = _FALLBACK_GEMINI_MODEL,
+        timeout_seconds: float = 35.0,
         client: httpx.AsyncClient | None = None,
     ) -> None:
         if not api_key:
@@ -85,17 +85,18 @@ class GeminiProvider(LLMProvider):
             max_tokens=max_tokens,
             include_thinking=include_thinking,
         )
+        effective_timeout = min(timeout_seconds or self._timeout_seconds, 35.0)
         return await self._client.post(
             url,
             headers={"x-goog-api-key": self._api_key, "Content-Type": "application/json"},
             json=payload,
-            timeout=timeout_seconds or self._timeout_seconds,
+            timeout=effective_timeout,
         )
 
     @retry(
         retry=retry_if_exception_type(ProviderUpstreamError),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=0.8, min=0.8, max=6.0),
+        stop=stop_after_attempt(2),
+        wait=wait_exponential(multiplier=0.5, min=0.5, max=2.5),
         reraise=True,
     )
     async def _call_generate(
@@ -157,6 +158,10 @@ class GeminiProvider(LLMProvider):
                     candidate_model,
                     _FALLBACK_GEMINI_MODEL,
                 )
+                if model == self._vision_model:
+                    self._vision_model = _FALLBACK_GEMINI_MODEL
+                if model == self._grade_model:
+                    self._grade_model = _FALLBACK_GEMINI_MODEL
                 try:
                     resp = await self._post_generate(
                         model_name=_FALLBACK_GEMINI_MODEL,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import re
 import time
 import uuid
@@ -16,7 +17,14 @@ from app.prompts import (
     PROMPT_VERSION_PDF_STRUCTURE_PAIR,
     load_prompt,
 )
-from app.providers.base import LLMProvider, RawProviderCall
+from app.providers.base import (
+    CircuitOpenError,
+    LLMProvider,
+    PayloadTooLargeError,
+    ProviderRequestError,
+    ProviderUpstreamError,
+    RawProviderCall,
+)
 from app.schemas_pdf import (
     ExtractedModelOut,
     ExtractedQuestionOut,
@@ -35,6 +43,8 @@ from app.schemas_pdf import (
     RubricCriterionOut,
     TwinSummaryOut,
 )
+
+logger = logging.getLogger("mathlens.ai.pdf_extractor")
 
 ARABIC_LABEL_MAP: dict[str, Literal["A", "B", "C", "D"]] = {
     "أ": "A",
@@ -192,13 +202,17 @@ async def _segment_pages(
     a_found: set[int] = set()
 
     system_prompt = load_prompt(PROMPT_VERSION_PDF_SEGMENT)
-    # Keep batches <= 3 pages and <= 2.6 MB base64 for Groq/Anthropic vision request caps
+    # Groq on-demand ITPM cap (7000 tokens) requires 1-page batches; Gemini/Anthropic handle <= 3
+    max_pages_per_batch = 1 if provider.provider_name == "groq" else 3
+    initial_hint_cap = 900 if provider.provider_name == "groq" else 1500
     batches: list[list[PreprocessedPdfPage]] = []
     cur_batch: list[PreprocessedPdfPage] = []
     cur_bytes = 0
     for page in non_blank:
         page_len = len(page.image_b64)
-        if cur_batch and (len(cur_batch) >= 3 or cur_bytes + page_len > 2_600_000):
+        if cur_batch and (
+            len(cur_batch) >= max_pages_per_batch or cur_bytes + page_len > 2_600_000
+        ):
             batches.append(cur_batch)
             cur_batch = []
             cur_bytes = 0
@@ -207,22 +221,37 @@ async def _segment_pages(
     if cur_batch:
         batches.append(cur_batch)
 
-    for batch in batches:
+    async def _run_batch(batch: list[PreprocessedPdfPage], *, hint_cap: int) -> None:
         prompt_parts = [
             (
                 f"[PAGE {p.page_number}]\nNative text hint:\n"
-                f"{p.native_text[:1500] or '(no native text)'}"
+                f"{(p.native_text[:hint_cap] if hint_cap > 0 else '') or '(omitted)'}"
             )
             for p in batch
         ]
-        call = await provider.extract_json_with_images(
-            processed_images=[(p.image_b64, p.mime_type) for p in batch],
-            system_prompt=system_prompt,
-            user_prompt="\n\n".join(prompt_parts),
-            max_tokens=settings.pdf_max_tokens,
-            timeout_seconds=settings.pdf_ocr_timeout_seconds,
-            hint_tag="pdf_segment",
-        )
+        try:
+            call = await provider.extract_json_with_images(
+                processed_images=[(p.image_b64, p.mime_type) for p in batch],
+                system_prompt=system_prompt,
+                user_prompt="\n\n".join(prompt_parts),
+                max_tokens=settings.pdf_max_tokens,
+                timeout_seconds=settings.pdf_ocr_timeout_seconds,
+                hint_tag="pdf_segment",
+            )
+        except PayloadTooLargeError:
+            if len(batch) > 1:
+                logger.warning(
+                    "Segmentation batch of %d pages hit payload ceiling; splitting to 1-page calls",
+                    len(batch),
+                )
+                for single in batch:
+                    await _run_batch([single], hint_cap=min(hint_cap, 800))
+                return
+            if hint_cap > 0:
+                await _run_batch(batch, hint_cap=0)
+                return
+            raise
+
         telemetry.add(call)
         for entry in cast(list[dict[str, Any]], call.parsed_json.get("pages", [])):
             pno = int(entry.get("pageNumber", 0))
@@ -248,17 +277,23 @@ async def _segment_pages(
             if isinstance(an, int):
                 a_found.add(an)
 
+    for batch in batches:
+        await _run_batch(batch, hint_cap=initial_hint_cap)
+
     return roles, sorted(q_found), sorted(a_found)
 
 
 def _build_windows(
-    pages: list[PreprocessedPdfPage], roles: dict[int, PdfPageRole]
+    pages: list[PreprocessedPdfPage],
+    roles: dict[int, PdfPageRole],
+    *,
+    single_page_only: bool = False,
 ) -> list[list[PreprocessedPdfPage]]:
     active = [p for p in pages if roles.get(p.page_number, "QUESTIONS") != "COVER_BLANK"]
     if not active:
         return []
-    if len(active) == 1:
-        return [active]
+    if len(active) == 1 or single_page_only:
+        return [[p] for p in active]
     windows: list[list[PreprocessedPdfPage]] = []
     for i in range(len(active) - 1):
         pair = [active[i], active[i + 1]]
@@ -279,26 +314,44 @@ async def _transcribe_windows(
     settings: Settings,
     telemetry: _TelemetryAccumulator,
 ) -> tuple[dict[int, dict[str, Any]], dict[int, bool]]:
-    windows = _build_windows(pages, roles)
+    single_only = primary.provider_name == "groq"
+    initial_hint_cap = 1000 if single_only else 2500
+    windows = _build_windows(pages, roles, single_page_only=single_only)
     system_prompt = load_prompt(PROMPT_VERSION_PDF_OCR_WINDOW)
     page_by_num = {p.page_number: p for p in pages}
     best_blocks: dict[int, dict[str, Any]] = {}
     dual_agreed: dict[int, bool] = {p.page_number: True for p in pages}
 
-    for window in windows:
+    async def _run_window(window: list[PreprocessedPdfPage], *, hint_cap: int) -> None:
         prompt_sections = [
             f"[PAGE {p.page_number}] (Role hint: {roles.get(p.page_number, 'QUESTIONS')})\n"
-            f"Native text hint:\n{p.native_text[:2500] or '(image-only page)'}"
+            "Native text hint:\n"
+            f"{(p.native_text[:hint_cap] if hint_cap > 0 else '') or '(omitted)'}"
             for p in window
         ]
-        call = await primary.extract_json_with_images(
-            processed_images=[(p.image_b64, p.mime_type) for p in window],
-            system_prompt=system_prompt,
-            user_prompt="\n\n".join(prompt_sections),
-            max_tokens=settings.pdf_max_tokens,
-            timeout_seconds=settings.pdf_ocr_timeout_seconds,
-            hint_tag="pdf_ocr_window",
-        )
+        try:
+            call = await primary.extract_json_with_images(
+                processed_images=[(p.image_b64, p.mime_type) for p in window],
+                system_prompt=system_prompt,
+                user_prompt="\n\n".join(prompt_sections),
+                max_tokens=settings.pdf_max_tokens,
+                timeout_seconds=settings.pdf_ocr_timeout_seconds,
+                hint_tag="pdf_ocr_window",
+            )
+        except PayloadTooLargeError:
+            if len(window) > 1:
+                logger.warning(
+                    "OCR window of %d pages hit payload ceiling; splitting into single-page calls",
+                    len(window),
+                )
+                for single in window:
+                    await _run_window([single], hint_cap=min(hint_cap, 900))
+                return
+            if hint_cap > 0:
+                await _run_window(window, hint_cap=0)
+                return
+            raise
+
         telemetry.add(call)
         for blk in cast(list[dict[str, Any]], call.parsed_json.get("blocks", [])):
             pno = int(blk.get("pageNumber", 0))
@@ -308,6 +361,9 @@ async def _transcribe_windows(
             prev = best_blocks.get(pno)
             if prev is None or conf > float(prev.get("confidence", 0.0)):
                 best_blocks[pno] = blk
+
+    for window in windows:
+        await _run_window(window, hint_cap=initial_hint_cap)
 
     # Cross-check low-confidence pages, [[UNSURE:]] markers, or native-text number divergences
     recheck_provider = secondary or primary
@@ -326,25 +382,61 @@ async def _transcribe_windows(
 
         needs_recheck = conf < 0.80 or "[[UNSURE:" in text or text_disagrees
         if needs_recheck and page_meta is not None:
-            re_call = await recheck_provider.extract_json_with_images(
-                processed_images=[(page_meta.image_b64, page_meta.mime_type)],
-                system_prompt=system_prompt,
-                user_prompt=(
-                    f"[PAGE {pno}] Focused accuracy re-verification pass.\n"
-                    f"Previous transcription (confidence={conf:.2f}):\n{text[:2000]}\n"
-                    f"Native text hint:\n{page_meta.native_text[:2000] or '(none)'}"
-                ),
-                max_tokens=settings.pdf_max_tokens,
-                timeout_seconds=settings.pdf_ocr_timeout_seconds,
-                hint_tag=recheck_tag,
+            recheck_prompt = (
+                f"[PAGE {pno}] Focused accuracy re-verification pass.\n"
+                f"Previous transcription (confidence={conf:.2f}):\n{text[:1500]}\n"
+                f"Native text hint:\n{page_meta.native_text[:1500] or '(none)'}"
             )
+            used_secondary = secondary is not None
+            re_call: RawProviderCall | None = None
+            try:
+                re_call = await recheck_provider.extract_json_with_images(
+                    processed_images=[(page_meta.image_b64, page_meta.mime_type)],
+                    system_prompt=system_prompt,
+                    user_prompt=recheck_prompt,
+                    max_tokens=settings.pdf_max_tokens,
+                    timeout_seconds=settings.pdf_ocr_timeout_seconds,
+                    hint_tag=recheck_tag,
+                )
+            except (ProviderUpstreamError, ProviderRequestError, CircuitOpenError) as exc:
+                logger.warning(
+                    "OCR recheck with '%s' on page %d failed (%s)",
+                    recheck_provider.provider_name,
+                    pno,
+                    exc,
+                )
+                if used_secondary:
+                    used_secondary = False
+                    try:
+                        re_call = await primary.extract_json_with_images(
+                            processed_images=[(page_meta.image_b64, page_meta.mime_type)],
+                            system_prompt=system_prompt,
+                            user_prompt=recheck_prompt,
+                            max_tokens=settings.pdf_max_tokens,
+                            timeout_seconds=settings.pdf_ocr_timeout_seconds,
+                            hint_tag="pdf_ocr_recheck",
+                        )
+                    except (
+                        ProviderUpstreamError,
+                        ProviderRequestError,
+                        CircuitOpenError,
+                    ) as inner_exc:
+                        logger.warning(
+                            "Primary fallback OCR recheck on page %d failed (%s); keeping OCR",
+                            pno,
+                            inner_exc,
+                        )
+                        re_call = None
+
+            if re_call is None:
+                continue
             telemetry.add(re_call)
             re_blocks = cast(list[dict[str, Any]], re_call.parsed_json.get("blocks", []))
             if re_blocks:
                 re_blk = re_blocks[0]
                 re_text = str(re_blk.get("text", ""))
                 re_conf = float(re_blk.get("confidence", conf))
-                if secondary is not None:
+                if used_secondary:
                     # Check numeric agreement between primary and secondary readers
                     if _significant_numbers(text) != _significant_numbers(re_text):
                         dual_agreed[pno] = False
@@ -537,21 +629,48 @@ async def _extract_single_model(
         if role in ("MODEL_ANSWERS", "MIXED"):
             a_texts.append(header)
 
+    def _compact_entries(entries: list[str], budget: int) -> str:
+        if not entries:
+            return "(none)"
+        per_item = max(300, budget // len(entries))
+        return "\n\n".join(item[:per_item] for item in entries)
+
     ref_json = json.dumps([r.model_dump() for r in reference_questions], ensure_ascii=False)
+    struct_system = load_prompt(PROMPT_VERSION_PDF_STRUCTURE_PAIR)
     struct_prompt = (
         f"Exam Model Number: {req.modelNumber}\n"
         f"Reference Model 1 Questions (for conceptKey twin alignment):\n{ref_json}\n\n"
         f"=== TRANSCRIBED QUESTION PAGES ===\n" + ("\n\n".join(q_texts) or "(none)") + "\n\n"
         "=== TRANSCRIBED MODEL ANSWER PAGES ===\n" + ("\n\n".join(a_texts) or "(none)")
     )
-    struct_call = await primary.extract_json_with_images(
-        processed_images=[],
-        system_prompt=load_prompt(PROMPT_VERSION_PDF_STRUCTURE_PAIR),
-        user_prompt=struct_prompt,
-        max_tokens=settings.pdf_max_tokens,
-        timeout_seconds=settings.pdf_ocr_timeout_seconds,
-        hint_tag="pdf_structure_pair",
-    )
+    try:
+        struct_call = await primary.extract_json_with_images(
+            processed_images=[],
+            system_prompt=struct_system,
+            user_prompt=struct_prompt,
+            max_tokens=settings.pdf_max_tokens,
+            timeout_seconds=settings.pdf_ocr_timeout_seconds,
+            hint_tag="pdf_structure_pair",
+        )
+    except PayloadTooLargeError:
+        compact_ref = json.dumps(
+            [{"conceptKey": r.conceptKey, "type": r.type} for r in reference_questions],
+            ensure_ascii=False,
+        )
+        compact_prompt = (
+            f"Exam Model Number: {req.modelNumber}\n"
+            f"Reference Model 1 Concept Keys:\n{compact_ref[:2500]}\n\n"
+            f"=== TRANSCRIBED QUESTION PAGES ===\n{_compact_entries(q_texts, 5500)}\n\n"
+            f"=== TRANSCRIBED MODEL ANSWER PAGES ===\n{_compact_entries(a_texts, 5500)}"
+        )
+        struct_call = await primary.extract_json_with_images(
+            processed_images=[],
+            system_prompt=struct_system,
+            user_prompt=compact_prompt,
+            max_tokens=min(settings.pdf_max_tokens, 3000),
+            timeout_seconds=settings.pdf_ocr_timeout_seconds,
+            hint_tag="pdf_structure_pair",
+        )
     telemetry.add(struct_call)
 
     raw_questions = cast(list[dict[str, Any]], struct_call.parsed_json.get("questions", []))

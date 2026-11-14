@@ -1,15 +1,21 @@
 from __future__ import annotations
 
+import asyncio
+import base64
+import io
 import logging
+import re
 from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
 import groq
+from PIL import Image
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.providers.base import (
     CircuitBreaker,
     LLMProvider,
+    PayloadTooLargeError,
     ProviderRequestError,
     ProviderUpstreamError,
     RawProviderCall,
@@ -20,6 +26,53 @@ from app.schemas import ModelAnswerIn, RubricCriterionIn
 logger = logging.getLogger("mathlens.ai.groq")
 
 _FALLBACK_GROQ_MODEL = "qwen/qwen3.8-27b"
+
+
+def _shrink_image_for_groq(
+    b64: str, mime: str, *, max_side: int, quality: int = 80
+) -> tuple[str, str]:
+    try:
+        raw = base64.b64decode(b64, validate=True)
+        with Image.open(io.BytesIO(raw)) as img:
+            if max(img.width, img.height) <= max_side and len(b64) <= 220_000:
+                return b64, mime
+            resized = img.convert("RGB")
+            resized.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
+            buf = io.BytesIO()
+            resized.save(buf, format="JPEG", quality=quality, optimize=True)
+            return base64.b64encode(buf.getvalue()).decode("ascii"), "image/jpeg"
+    except Exception:
+        return b64, mime
+
+
+def _compact_images_for_groq(
+    images: list[tuple[str, str]],
+    *,
+    max_side: int | None = None,
+    quality: int = 80,
+) -> list[tuple[str, str]]:
+    if not images:
+        return []
+    target_side = max_side or (1280 if len(images) == 1 else (960 if len(images) == 2 else 768))
+    return [
+        _shrink_image_for_groq(b64, mime, max_side=target_side, quality=quality)
+        for b64, mime in images
+    ]
+
+
+def _extract_retry_wait_seconds(exc: groq.APIStatusError) -> float:
+    response = getattr(exc, "response", None)
+    if response is not None:
+        raw_header = response.headers.get("retry-after")
+        if raw_header:
+            try:
+                return min(max(float(raw_header) + 0.5, 1.0), 14.0)
+            except ValueError:
+                pass
+    match = re.search(r"try again in ([0-9]+(?:\.[0-9]+)?)s", str(exc), re.IGNORECASE)
+    if match:
+        return min(max(float(match.group(1)) + 0.5, 1.0), 14.0)
+    return 0.0
 
 
 class GroqProvider(LLMProvider):
@@ -106,7 +159,13 @@ class GroqProvider(LLMProvider):
             out_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
             return (content, in_tokens, out_tokens)
         except groq.APIStatusError as exc:
+            if exc.status_code == 413:
+                raise PayloadTooLargeError(f"Groq HTTP {exc.status_code}: {exc}") from exc
             if exc.status_code >= 500 or exc.status_code == 429:
+                if exc.status_code == 429:
+                    wait_s = _extract_retry_wait_seconds(exc)
+                    if wait_s > 0:
+                        await asyncio.sleep(wait_s)
                 self._breaker.record_failure()
                 raise ProviderUpstreamError(f"Groq HTTP {exc.status_code}: {exc}") from exc
             raise ProviderRequestError(f"Groq HTTP {exc.status_code}: {exc}") from exc
@@ -141,7 +200,7 @@ class GroqProvider(LLMProvider):
     ) -> RawProviderCall:
         del hint_tag, image_warnings
         parts: list[dict[str, Any]] = []
-        for b64, mime in processed_images:
+        for b64, mime in _compact_images_for_groq(processed_images, max_side=1280):
             parts.append(
                 {
                     "type": "image_url",
@@ -174,6 +233,21 @@ class GroqProvider(LLMProvider):
             ),
         )
 
+    def _build_json_user_content(
+        self, processed_images: list[tuple[str, str]], user_prompt: str
+    ) -> list[dict[str, Any]] | str:
+        if not processed_images:
+            return user_prompt
+        parts: list[dict[str, Any]] = [
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:{mime};base64,{b64}"},
+            }
+            for b64, mime in processed_images
+        ]
+        parts.append({"type": "text", "text": user_prompt})
+        return parts
+
     async def extract_json_with_images(
         self,
         *,
@@ -186,37 +260,51 @@ class GroqProvider(LLMProvider):
     ) -> RawProviderCall:
         del hint_tag
         model_name = self._vision_model if processed_images else self._grade_model
-        user_content: list[dict[str, Any]] | str
-        if processed_images:
-            parts: list[dict[str, Any]] = [
-                {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:{mime};base64,{b64}"},
-                }
-                for b64, mime in processed_images
-            ]
-            parts.append({"type": "text", "text": user_prompt})
-            user_content = parts
-        else:
-            user_content = user_prompt
+        compacted_images = _compact_images_for_groq(processed_images)
+        effective_max_tokens = min(max_tokens, 3000) if compacted_images else max_tokens
+        user_content = self._build_json_user_content(compacted_images, user_prompt)
 
-        return await self._run_json_repair(
-            model_name=model_name,
-            initial_call=lambda: self._call_chat(
-                model=model_name,
-                system_prompt=system_prompt,
-                content_parts=user_content,
-                max_tokens=max_tokens,
-                timeout_seconds=timeout_seconds,
-            ),
-            repair_call=lambda prompt: self._call_chat(
-                model=model_name,
-                system_prompt=system_prompt,
-                content_parts=prompt,
-                max_tokens=max_tokens,
-                timeout_seconds=timeout_seconds,
-            ),
-        )
+        try:
+            return await self._run_json_repair(
+                model_name=model_name,
+                initial_call=lambda: self._call_chat(
+                    model=model_name,
+                    system_prompt=system_prompt,
+                    content_parts=user_content,
+                    max_tokens=effective_max_tokens,
+                    timeout_seconds=timeout_seconds,
+                ),
+                repair_call=lambda prompt: self._call_chat(
+                    model=model_name,
+                    system_prompt=system_prompt,
+                    content_parts=prompt,
+                    max_tokens=effective_max_tokens,
+                    timeout_seconds=timeout_seconds,
+                ),
+            )
+        except PayloadTooLargeError:
+            if len(processed_images) != 1:
+                raise
+            smaller_images = _compact_images_for_groq(processed_images, max_side=720, quality=72)
+            smaller_content = self._build_json_user_content(smaller_images, user_prompt[:2500])
+            retry_max_tokens = min(effective_max_tokens, 2048)
+            return await self._run_json_repair(
+                model_name=model_name,
+                initial_call=lambda: self._call_chat(
+                    model=model_name,
+                    system_prompt=system_prompt,
+                    content_parts=smaller_content,
+                    max_tokens=retry_max_tokens,
+                    timeout_seconds=timeout_seconds,
+                ),
+                repair_call=lambda prompt: self._call_chat(
+                    model=model_name,
+                    system_prompt=system_prompt,
+                    content_parts=prompt,
+                    max_tokens=retry_max_tokens,
+                    timeout_seconds=timeout_seconds,
+                ),
+            )
 
     async def grade(
         self,
@@ -233,7 +321,7 @@ class GroqProvider(LLMProvider):
         del hint_tag
         parts: list[dict[str, Any]] = []
         if include_images:
-            for b64, mime in processed_images:
+            for b64, mime in _compact_images_for_groq(processed_images, max_side=1280):
                 parts.append(
                     {
                         "type": "image_url",
