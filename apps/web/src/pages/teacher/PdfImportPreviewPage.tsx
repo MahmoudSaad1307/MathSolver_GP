@@ -108,7 +108,10 @@ export default function PdfImportPreviewPage() {
             modelNumber: m.modelNumber,
             title: m.title,
             durationMinutes: m.durationMinutes,
-            questions: m.questions,
+            questions: m.questions.map((q) => ({
+              ...q,
+              solutionUrl: q.solutionUrl?.trim() ? q.solutionUrl.trim() : null,
+            })),
           })),
         }),
       });
@@ -149,7 +152,10 @@ export default function PdfImportPreviewPage() {
             modelNumber: m.modelNumber,
             title: m.title,
             durationMinutes: m.durationMinutes,
-            questions: m.questions,
+            questions: m.questions.map((q) => ({
+              ...q,
+              solutionUrl: q.solutionUrl?.trim() ? q.solutionUrl.trim() : null,
+            })),
           })),
         }),
       });

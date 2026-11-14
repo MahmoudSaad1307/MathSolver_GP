@@ -253,6 +253,14 @@ describe('PDF import upload & teacher preview UI', () => {
       screen.getByText(/1 flagged question\(s\) still need verification/i),
     ).toBeInTheDocument();
 
+    // Add YouTube solution link for Q1 directly on the preview card
+    const videoInputs = screen.getAllByPlaceholderText('https://www.youtube.com/watch?v=...');
+    expect(videoInputs).toHaveLength(2);
+    fireEvent.change(videoInputs[0]!, {
+      target: { value: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+    });
+    expect(screen.getByText(/Video ID: dQw4w9WgXcQ/i)).toBeInTheDocument();
+
     // Verify Q2 and apply successfully
     const verifyBtns = screen.getAllByRole('button', { name: /Mark Verified/i });
     fireEvent.click(verifyBtns[1]!);
@@ -261,5 +269,16 @@ describe('PDF import upload & teacher preview UI', () => {
     await waitFor(() => {
       expect(screen.getByText('TOPIC_BUILDER_DEST')).toBeInTheDocument();
     });
+
+    const applyCall = fetchMock.mock.calls.find(([url]) =>
+      String(url).endsWith(`/pdf-imports/${job.id}/apply`),
+    );
+    expect(applyCall).toBeDefined();
+    const applyBody = JSON.parse(String(applyCall?.[1]?.body)) as {
+      models: Array<{ questions: Array<{ solutionUrl: string | null }> }>;
+    };
+    expect(applyBody.models[0]?.questions[0]?.solutionUrl).toBe(
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    );
   });
 });

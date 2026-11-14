@@ -1,4 +1,5 @@
-import { AlertTriangle, CheckCircle2, Eye, Pencil } from 'lucide-react';
+import { extractYoutubeVideoId, isValidHttpUrl } from '@mathlens/shared';
+import { AlertTriangle, CheckCircle2, ExternalLink, Eye, Pencil, Video } from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MathBlock } from '@/components/MathBlock';
@@ -48,6 +49,9 @@ export function PdfQuestionPreviewCard({
   const isFlagged = question.needsTeacherConfirmation && !question.verifiedByTeacher;
   const rubricSum = (question.rubricCriteria ?? []).reduce((acc, c) => acc + c.maxPoints, 0);
   const rubricValid = question.type !== 'ESSAY' || Math.abs(rubricSum - question.points) <= 0.01;
+  const rawSolutionUrl = question.solutionUrl ?? '';
+  const validSolutionUrl = isValidHttpUrl(rawSolutionUrl) ? rawSolutionUrl.trim() : null;
+  const detectedYoutubeId = extractYoutubeVideoId(rawSolutionUrl);
 
   function toggleVerified() {
     onChange({ ...question, verifiedByTeacher: !question.verifiedByTeacher });
@@ -80,6 +84,15 @@ export function PdfQuestionPreviewCard({
           ) : question.needsTeacherConfirmation ? (
             <Badge tone="warning">{t('pdfImport.needsCheckBadge')}</Badge>
           ) : null}
+          {detectedYoutubeId ? (
+            <Badge tone="success" dir="ltr">
+              YouTube: {detectedYoutubeId}
+            </Badge>
+          ) : validSolutionUrl ? (
+            <Badge tone="success">{t('teacher.builder.openSolutionUrl')}</Badge>
+          ) : (
+            <Badge tone="neutral">{t('teacher.builder.noQuestionVideo')}</Badge>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -393,6 +406,52 @@ export function PdfQuestionPreviewCard({
           )}
         </div>
       )}
+
+      {/* Solution YouTube Video URL (always accessible on preview card) */}
+      <div className="mt-3 border-t border-slate-100 pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label
+            htmlFor={`solution-url-${question.tempId}`}
+            className="mb-1 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700"
+          >
+            <Video className="h-3.5 w-3.5 text-brand-600" />
+            <span>{t('teacher.questionEditor.solutionUrl')}</span>
+          </Label>
+          {detectedYoutubeId && (
+            <span className="text-xs font-medium text-emerald-700" dir="ltr">
+              {t('teacher.builder.videoIdDetected', { id: detectedYoutubeId })}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            id={`solution-url-${question.tempId}`}
+            type="url"
+            dir="ltr"
+            value={question.solutionUrl ?? ''}
+            placeholder={t('teacher.questionEditor.solutionUrlPlaceholder')}
+            onChange={(e) => {
+              const raw = e.target.value;
+              onChange({
+                ...question,
+                solutionUrl: raw.trim().length > 0 ? raw : null,
+              });
+            }}
+          />
+          {validSolutionUrl && (
+            <a
+              href={validSolutionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-[40px] shrink-0 items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-brand-700 hover:bg-slate-50"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span>{t('teacher.questionEditor.testSolutionUrl')}</span>
+            </a>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-slate-500">{t('teacher.questionEditor.solutionUrlHint')}</p>
+      </div>
     </div>
   );
 }
