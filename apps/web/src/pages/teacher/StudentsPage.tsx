@@ -42,9 +42,7 @@ export default function StudentsPage() {
   const meQuery = useTeacherAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [cohortFilter, setCohortFilter] = React.useState(
-    () => searchParams.get('cohortId') ?? '',
-  );
+  const [cohortFilter, setCohortFilter] = React.useState(() => searchParams.get('cohortId') ?? '');
   const [stageFilter, setStageFilter] = React.useState<StageFilter>('ALL');
   const [search, setSearch] = React.useState('');
   const [selectedStudentId, setSelectedStudentId] = React.useState<string | null>(
@@ -345,17 +343,25 @@ export default function StudentsPage() {
               <table className="w-full text-start text-sm">
                 <thead className="border-b border-slate-200 text-xs text-slate-500">
                   <tr>
-                    <th className="py-2.5 pe-3 text-start font-semibold">{t('students.colName')}</th>
+                    <th className="py-2.5 pe-3 text-start font-semibold">
+                      {t('students.colName')}
+                    </th>
                     <th className="px-3 py-2.5 text-start font-semibold">
                       {t('students.colCohort')}
                     </th>
-                    <th className="px-3 py-2.5 text-start font-semibold">{t('students.colStep')}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold">
+                      {t('students.colStep')}
+                    </th>
                     <th className="px-3 py-2.5 text-start font-semibold">{t('students.colPre')}</th>
                     <th className="px-3 py-2.5 text-start font-semibold">
                       {t('students.colVideo')}
                     </th>
-                    <th className="px-3 py-2.5 text-start font-semibold">{t('students.colPost')}</th>
-                    <th className="px-3 py-2.5 text-start font-semibold">{t('students.colGain')}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold">
+                      {t('students.colPost')}
+                    </th>
+                    <th className="px-3 py-2.5 text-start font-semibold">
+                      {t('students.colGain')}
+                    </th>
                     <th className="py-2.5 ps-3 text-end font-semibold" />
                   </tr>
                 </thead>
@@ -666,11 +672,7 @@ export default function StudentsPage() {
                       className="flex flex-wrap items-center justify-between gap-3"
                     >
                       <span>
-                        {getApiErrorMessage(
-                          detailQuery.error,
-                          locale,
-                          t('ux.teacher.errorDetail'),
-                        )}
+                        {getApiErrorMessage(detailQuery.error, locale, t('ux.teacher.errorDetail'))}
                       </span>
                       <Button
                         size="sm"
@@ -746,7 +748,10 @@ export default function StudentsPage() {
                                   {Math.round(att.percentage)}%
                                 </Badge>
                               )}
-                              <span className="font-mono text-sm font-bold text-slate-900" dir="ltr">
+                              <span
+                                className="font-mono text-sm font-bold text-slate-900"
+                                dir="ltr"
+                              >
                                 {att.totalScore ?? '—'} / {att.maxScore}
                               </span>
                             </div>
@@ -755,9 +760,7 @@ export default function StudentsPage() {
                           <div className="space-y-2.5">
                             {att.answers.map((ans) => {
                               const isFullScore =
-                                ans.score !== null &&
-                                ans.maxScore > 0 &&
-                                ans.score >= ans.maxScore;
+                                ans.score !== null && ans.maxScore > 0 && ans.score >= ans.maxScore;
                               const isZeroScore = ans.score === 0;
                               const needsReview =
                                 Boolean(ans.latestGrading?.needsReview) ||

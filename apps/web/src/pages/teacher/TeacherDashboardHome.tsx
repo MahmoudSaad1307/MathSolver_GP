@@ -1,13 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  BarChart3,
-  BookOpen,
-  CheckSquare,
-  Coins,
-  Eye,
-  Users,
-  UsersRound,
-} from 'lucide-react';
+import { BarChart3, BookOpen, CheckSquare, Coins, Eye, Users, UsersRound } from 'lucide-react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate } from 'react-router-dom';
@@ -39,7 +31,8 @@ export default function TeacherDashboardHome() {
 
   const studentsQuery = useQuery({
     queryKey: ['teacher', 'students', '', ''],
-    queryFn: () => apiRequest<{ students: TeacherStudentRow[] }>('/students', { retryRefresh: true }),
+    queryFn: () =>
+      apiRequest<{ students: TeacherStudentRow[] }>('/students', { retryRefresh: true }),
     enabled: Boolean(meQuery.data?.teacher),
   });
 

@@ -289,7 +289,9 @@ export default function StudentPortalPage() {
                     >
                       <div className="flex items-center justify-between gap-1">
                         <span className="text-xs font-bold">{item.title}</span>
-                        {isDone && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
+                        {isDone && (
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                        )}
                       </div>
                       <p className="mt-0.5 text-[11px] opacity-80">{item.sub}</p>
                     </div>

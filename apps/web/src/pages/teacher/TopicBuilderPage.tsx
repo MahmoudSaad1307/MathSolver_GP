@@ -315,11 +315,7 @@ export default function TopicBuilderPage() {
                       >
                         {t('ux.teacher.confirmDeleteYes')}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setConfirmDeleteQId(null)}
-                      >
+                      <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteQId(null)}>
                         {t('app.cancel')}
                       </Button>
                     </div>

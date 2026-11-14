@@ -463,9 +463,7 @@ export default function LandingPage() {
               <div className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 font-mono text-xs font-bold text-brand-700">
                 01
               </div>
-              <h3 className="text-sm font-bold text-slate-900">
-                {t('ux.landing.feature1Title')}
-              </h3>
+              <h3 className="text-sm font-bold text-slate-900">{t('ux.landing.feature1Title')}</h3>
               <p className="text-xs leading-relaxed text-slate-600">
                 {t('ux.landing.feature1Desc')}
               </p>
@@ -477,9 +475,7 @@ export default function LandingPage() {
               <div className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 font-mono text-xs font-bold text-emerald-700">
                 02
               </div>
-              <h3 className="text-sm font-bold text-slate-900">
-                {t('ux.landing.feature2Title')}
-              </h3>
+              <h3 className="text-sm font-bold text-slate-900">{t('ux.landing.feature2Title')}</h3>
               <p className="text-xs leading-relaxed text-slate-600">
                 {t('ux.landing.feature2Desc')}
               </p>
@@ -491,9 +487,7 @@ export default function LandingPage() {
               <div className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 font-mono text-xs font-bold text-amber-700">
                 03
               </div>
-              <h3 className="text-sm font-bold text-slate-900">
-                {t('ux.landing.feature3Title')}
-              </h3>
+              <h3 className="text-sm font-bold text-slate-900">{t('ux.landing.feature3Title')}</h3>
               <p className="text-xs leading-relaxed text-slate-600">
                 {t('ux.landing.feature3Desc')}
               </p>
