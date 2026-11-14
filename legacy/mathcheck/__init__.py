@@ -1,1 +1,0 @@
-"""MathCheck package."""
